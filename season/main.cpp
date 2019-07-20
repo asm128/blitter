@@ -16,26 +16,6 @@
 
 static constexpr const uint32_t			DEFAULT_BLOCK_SIZE				= 1024;
 
-::gpk::error_t							jsonArraySplit					(const ::gpk::SJSONNode & jsonArrayToSplit, const ::gpk::view_array<::gpk::view_const_string> & jsonViews, const uint32_t blockSize, ::gpk::array_obj<::gpk::array_pod<char_t>> & outputJsons)		{
-	const uint32_t								remainder						= jsonArrayToSplit.Children.size() % blockSize;
-	const uint32_t								countParts						= jsonArrayToSplit.Children.size() / blockSize + one_if(remainder);
-	gpk_necall(outputJsons.resize(countParts), "%s", "Out of memory?");
-	uint32_t									iSourceRecord					= 0;
-	for(uint32_t iPart = 0; iPart < outputJsons.size(); ++iPart) {
-		::gpk::array_pod<char_t>					& outputJson					= outputJsons[iPart];
-		gpk_necall(outputJson.push_back('['), "%s", "Out of memory?");
-		for(uint32_t iPartRecord = 0, countPartRecords = (remainder && iPart == countParts - 1) ? remainder : blockSize
-			; iPartRecord < countPartRecords
-			; ++iPartRecord) {
-			gpk_necall(::gpk::jsonWrite(jsonArrayToSplit.Children[iSourceRecord++], jsonViews, outputJson), "%s", "Unknown error!");;
-			if(iPartRecord < countPartRecords - 1)
-				gpk_necall(outputJson.push_back(','), "%s", "Out of memory?");
-		}
-		gpk_necall(outputJson.push_back(']'), "%s", "Out of memory?");
-	}
-	return 0;
-}
-
 struct SSplitParams {
 	::gpk::view_const_string				FileNameSrc						= {};	// First parameter is the only parameter, which is the name of the source file to be split.
 	::gpk::view_const_string				PathWithoutExtension			= {};	// First parameter is the only parameter, which is the name of the source file to be split.
@@ -170,7 +150,7 @@ int										main							(int argc, char ** argv)		{
 	info_printf("Loaded file: %s. Size: %u bytes.", params.FileNameSrc.begin(), jsonFileToSplit.Bytes.size());
 
 	::gpk::array_obj<::gpk::array_pod<char_t>>	outputJsons;
-	gpk_necall(::jsonArraySplit(*jsonFileToSplit.Reader.Tree[0], jsonFileToSplit.Reader.View , params.BlockSize, outputJsons), "%s", "Unknown error!");
+	gpk_necall(::gpk::jsonArraySplit(*jsonFileToSplit.Reader.Tree[0], jsonFileToSplit.Reader.View , params.BlockSize, outputJsons), "%s", "Unknown error!");
 
 	::SWriteCache								blockCache						= {};
 	const ::gpk::view_const_string				folder							= {dbFolderName.begin(), dbFolderName.size()};

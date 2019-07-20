@@ -48,6 +48,18 @@
 	return 0;
 }
 
+::gpk::error_t									blt::tableFileLoad			(::blt::TKeyValBlitterDB & jsonDB, const ::gpk::view_const_string & folder)	{
+	::gpk::array_pod<char_t>							fileName					= folder;
+	gpk_necall(fileName.push_back('/')		, "%s", "Out of memory?");
+	gpk_necall(::blt::tableFileName(fileName, jsonDB.Val.HostType, jsonDB.Key), "%s", "Out of memory?");
+	info_printf("Loading json file: %s.", fileName.begin());
+	const int32_t										idxBlock					= jsonDB.Val.Blocks.push_back({});
+	gpk_necall(idxBlock, "%s", "Out of memory?");
+	gpk_necall(jsonDB.Val.Offsets.push_back(0), "%s", "Out of memory?");
+	gpk_necall(::gpk::fileToMemory({fileName.begin(), fileName.size()}, jsonDB.Val.Blocks[idxBlock].Bytes), "Failed to load file: '%s'", fileName.begin());
+	return ::gpk::jsonParse(jsonDB.Val.Blocks[idxBlock].Reader, {jsonDB.Val.Blocks[idxBlock].Bytes.begin(), jsonDB.Val.Blocks[idxBlock].Bytes.size()});
+}
+
 ::gpk::error_t									crcVerifyAndRemove			(::gpk::array_pod<byte_t> & bytes)	{
 	ree_if(bytes.size() < 8, "Invalid input. No CRC can be found in an array of %u bytes.", bytes.size());
 	uint64_t											check						= 0;
@@ -91,17 +103,6 @@
 	return idxBlock;
 }
 
-::gpk::error_t									blt::tableFileLoad			(::blt::TKeyValBlitterDB & jsonDB, const ::gpk::view_const_string & folder)	{
-	::gpk::array_pod<char_t>							fileName					= folder;
-	gpk_necall(fileName.push_back('/')		, "%s", "Out of memory?");
-	gpk_necall(::blt::tableFileName(fileName, jsonDB.Val.HostType, jsonDB.Key), "%s", "Out of memory?");
-	info_printf("Loading json file: %s.", fileName.begin());
-	const int32_t										idxBlock					= jsonDB.Val.Blocks.push_back({});
-	gpk_necall(idxBlock, "%s", "Out of memory?");
-	gpk_necall(jsonDB.Val.Offsets.push_back(0), "%s", "Out of memory?");
-	gpk_necall(::gpk::fileToMemory({fileName.begin(), fileName.size()}, jsonDB.Val.Blocks[idxBlock].Bytes), "Failed to load file: '%s'", fileName.begin());
-	return ::gpk::jsonParse(jsonDB.Val.Blocks[idxBlock].Reader, {jsonDB.Val.Blocks[idxBlock].Bytes.begin(), jsonDB.Val.Blocks[idxBlock].Bytes.size()});
-}
 
 ::gpk::error_t									blt::configDatabases		(::gpk::array_obj<::blt::TKeyValBlitterDB> & databases, const ::gpk::SJSONReader & configReader, const int32_t indexConfigNode, const ::gpk::view_array<const ::gpk::view_const_string> & databasesToLoad, const ::gpk::view_const_string & folder)	{
 	::gpk::view_const_string							jsonResult					= {};

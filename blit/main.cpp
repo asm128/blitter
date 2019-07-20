@@ -6,34 +6,34 @@
 #include "gpk_find.h"
 #include "gpk_process.h"
 
-::gpk::error_t										requestProcess		(::blt::SBlitterQuery & query, const ::blt::SBlitterRequest & request)						{
+::gpk::error_t									requestProcess				(::blt::SBlitterQuery & query, const ::blt::SBlitterRequest & request)						{
 	{	// --- Retrieve query from request.
-		::gpk::array_obj<::gpk::TKeyValConstString>						qsKeyVals;
-		::gpk::array_obj<::gpk::view_const_string>						queryStringElements			= {};
+		::gpk::array_obj<::gpk::TKeyValConstString>			qsKeyVals;
+		::gpk::array_obj<::gpk::view_const_string>			queryStringElements			= {};
 		gpk_necall(::gpk::querystring_split({request.QueryString.begin(), request.QueryString.size()}, queryStringElements), "%s", "Out of memory?");
 		gpk_necall(qsKeyVals.resize(queryStringElements.size()), "%s", "Out of memory?");
 		for(uint32_t iKeyVal = 0; iKeyVal < qsKeyVals.size(); ++iKeyVal) {
-			::gpk::TKeyValConstString										& keyValDst					= qsKeyVals[iKeyVal];
+			::gpk::TKeyValConstString							& keyValDst					= qsKeyVals[iKeyVal];
 			::gpk::keyval_split(queryStringElements[iKeyVal], keyValDst);
 		}
 		gpk_necall(::blt::queryLoad(query, qsKeyVals), "%s", "Out of memory?");
 	}
 	// --- Generate response
-	query.Database												= (request.Path.size() > 1) 
+	query.Database									= (request.Path.size() > 1) 
 		? (('/' == request.Path[0]) ? ::gpk::view_const_string{&request.Path[1], request.Path.size() - 1} : ::gpk::view_const_string{request.Path.begin(), request.Path.size()})
 		: ::gpk::view_const_string{}
 		;
-	uint64_t														detail						= (uint64_t)-1LL;
+	uint64_t											detail							= (uint64_t)-1LL;
 	{	// --- Retrieve detail part 
-		::gpk::view_const_string										strDetail					= {};
-		const ::gpk::error_t											indexOfLastBar				= ::gpk::rfind('/', query.Database);
-		const uint32_t													startOfDetail				= (uint32_t)(indexOfLastBar + 1);
+		::gpk::view_const_string							strDetail						= {};
+		const ::gpk::error_t								indexOfLastBar					= ::gpk::rfind('/', query.Database);
+		const uint32_t										startOfDetail					= (uint32_t)(indexOfLastBar + 1);
 		if(indexOfLastBar > 0 && startOfDetail < query.Database.size()) {
-			strDetail													= {&query.Database[startOfDetail], query.Database.size() - startOfDetail};
-			query.Database												= {query.Database.begin(), (uint32_t)indexOfLastBar};
+			strDetail										= {&query.Database[startOfDetail], query.Database.size() - startOfDetail};
+			query.Database									= {query.Database.begin(), (uint32_t)indexOfLastBar};
 			if(strDetail.size()) {
 				::gpk::stoull(strDetail, &detail);
-				query.Detail										= (int64_t)detail;
+				query.Detail									= (int64_t)detail;
 			}
 		}
 	}
