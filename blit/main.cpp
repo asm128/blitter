@@ -1,8 +1,9 @@
-#include "blitter_endpoint.h"
+#include "blitter.h"
+
+#include "gpk_cgi_app_impl_v2.h"
+
 #include "gpk_stdstring.h"
 #include "gpk_find.h"
-#include "blitter.h"
-#include "gpk_cgi_app_impl_v2.h"
 #include "gpk_process.h"
 
 ::gpk::error_t										requestProcess		(::blt::SBlitterQuery & query, const ::blt::SBlitterRequest & request)						{

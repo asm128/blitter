@@ -26,9 +26,6 @@
     <ClInclude Include="blitter.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="blitter_endpoint.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="blitter_process.h">
       <Filter>Header Files</Filter>
     </ClInclude>
