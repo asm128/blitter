@@ -65,7 +65,7 @@
 	gpk_necall(::blt::blockFileName(fileName, jsonDB.Key, jsonDB.Val.EncryptionKey, jsonDB.Val.HostType, block), "%s", "Out of memory?");
 
 	const int32_t										idxBlock					= jsonDB.Val.Blocks.push_back({});
-	jsonDB.Val.BlockOffsets.push_back(jsonDB.Val.BlockSize ? block / jsonDB.Val.BlockSize : 0);
+	gpk_necall(jsonDB.Val.Offsets.push_back(jsonDB.Val.BlockSize ? block / jsonDB.Val.BlockSize : 0), "");
 	gpk_necall(idxBlock, "%s", "Out of memory?");
 	if(0 == jsonDB.Val.EncryptionKey.size()) {
 		if(gbit_false(jsonDB.Val.HostType, ::blt::DATABASE_HOST_DEFLATE)) {
@@ -94,8 +94,8 @@
 	gpk_necall(::blt::tableFileName(fileName, jsonDB.Val.HostType, jsonDB.Key), "%s", "Out of memory?");
 	info_printf("Loading json file: %s.", fileName.begin());
 	const int32_t										idxBlock					= jsonDB.Val.Blocks.push_back({});
-	jsonDB.Val.BlockOffsets.push_back(0);
 	gpk_necall(idxBlock, "%s", "Out of memory?");
+	gpk_necall(jsonDB.Val.Offsets.push_back(0), "%s", "Out of memory?");
 	gpk_necall(::gpk::fileToMemory({fileName.begin(), fileName.size()}, jsonDB.Val.Blocks[idxBlock].Bytes), "Failed to load file: '%s'", fileName.begin());
 	return ::gpk::jsonParse(jsonDB.Val.Blocks[idxBlock].Reader, {jsonDB.Val.Blocks[idxBlock].Bytes.begin(), jsonDB.Val.Blocks[idxBlock].Bytes.size()});
 }

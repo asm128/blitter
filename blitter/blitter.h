@@ -17,7 +17,7 @@ namespace blt
 	struct SBlitterDB {
 		::gpk::array_obj<::gpk::view_const_string>									Bindings					= {};
 		uint32_t																	BlockSize					= 0;
-		::gpk::array_obj<uint64_t>													BlockOffsets				= {};
+		::gpk::array_obj<uint64_t>													Offsets						= {};
 		::gpk::array_obj<::gpk::SJSONFile>											Blocks						= {};
 		::gpk::view_const_string													EncryptionKey				= {};
 		::blt::DATABASE_HOST														HostType					= ::blt::DATABASE_HOST_LOCAL;
