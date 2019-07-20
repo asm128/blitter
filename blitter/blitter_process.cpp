@@ -28,7 +28,14 @@
 	, ::gpk::array_pod<char_t>					& output
 	, const ::gpk::view_const_string			& folder
 	) {
-	for(uint32_t iDB = 0; iDB < databases.size(); ++iDB)
+
+	::gpk::array_obj<::gpk::view_const_string>				rangeViews	= {};
+	::gpk::array_pod<::gpk::SMinMax<uint32_t>>				nodeIndices = {};
+	::gpk::SRange<uint32_t>									blockRange	= {};
+	for(uint32_t iDB = 0; iDB < databases.size(); ++iDB) {
+		rangeViews	.clear();
+		nodeIndices	.clear();
+		blockRange											= {};
 		if(query.Database == databases[iDB].Key) {
 			::blt::TKeyValBlitterDB								& database								= databases[iDB];
 			if(0 == database.Val.BlockSize) {
@@ -37,9 +44,18 @@
 			}
 			else {
 				::blt::blockFileLoad(database, (uint32_t)(query.Range.Offset / database.Val.BlockSize));
-				return ::blt::generate_output_for_db(databases, query, output, 0);
+				::blt::recordRange	(database, query.Range, rangeViews, nodeIndices, blockRange);
+				output.push_back('[');
+				for(uint32_t iView = 0; iView < rangeViews.size(); ++iView) {
+					output.append(rangeViews[iView]);
+					if(rangeViews.size() -1 != iView)
+						output.push_back(',');
+				}
+				output.push_back(']');
+				return 0;
 			}
 		}
+	}
 	error_printf("Database not found: %s.", query.Database.begin());
 	return -1;
 }
@@ -222,16 +238,19 @@ static	::gpk::error_t							generate_record_with_expansion			(const ::gpk::view_
 	, uint32_t					& blockIndex
 	, uint32_t					& nodeIndex
 	) {
-	const uint32_t										iBlock									= (0 == database.Val.BlockSize) ? (uint32_t)-1	: (uint32_t)(absoluteIndex / database.Val.BlockSize + one_if(absoluteIndex % database.Val.BlockSize) + 1);
-	gpk_necall(::blt::blockFileLoad(database, iBlock), "Failed to load database block: %s.", "??");
-	const ::gpk::SJSONReader							& readerBlock		= database.Val.Blocks[iBlock].Reader;
+	const uint32_t										indexBlock								= (0 == database.Val.BlockSize) ? (uint32_t)-1	: (uint32_t)(absoluteIndex / database.Val.BlockSize + one_if(absoluteIndex % database.Val.BlockSize) + 1);
+	const int32_t										iBlockElem								= ::blt::blockFileLoad(database, indexBlock);
+	gpk_necall(iBlockElem, "Failed to load database block: %s.", "??");
+
+	const ::gpk::SJSONReader							& readerBlock		= database.Val.Blocks[iBlockElem].Reader;
 	ree_if(0 == readerBlock.Tree.size(), "%s", "Invalid block data.");
+
 	const ::gpk::SJSONNode								& jsonRoot			= *readerBlock.Tree[0];
 	ree_if(::gpk::JSON_TYPE_ARRAY != jsonRoot.Object->Type, "Invalid json type: %s", ::gpk::get_value_label(jsonRoot.Object->Type).begin()); 
-	const uint64_t										offsetRecord		= database.Val.Offsets[iBlock];
+	const uint64_t										offsetRecord		= database.Val.Offsets[iBlockElem];
 	const uint32_t										startRecordRelative	= ::gpk::max(0U, (uint32_t)(absoluteIndex - offsetRecord));
 
-	blockIndex										= iBlock;
+	blockIndex										= iBlockElem;
 	nodeIndex										= ::gpk::jsonArrayValueGet(*readerBlock[0], startRecordRelative);
 	output_record									= readerBlock.View[nodeIndex];
 	return 0;

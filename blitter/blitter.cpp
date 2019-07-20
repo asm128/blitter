@@ -7,6 +7,7 @@
 #include "gpk_json_expression.h"
 #include "gpk_noise.h"
 #include "gpk_parse.h"
+#include "gpk_find.h"
 
 
 ::gpk::error_t									blt::queryLoad				(::blt::SBlitterQuery& query, const ::gpk::view_array<const ::gpk::TKeyValConstString> keyvals)	{
@@ -59,33 +60,35 @@
 }
 
 ::gpk::error_t									blt::blockFileLoad			(::blt::TKeyValBlitterDB & jsonDB, uint32_t block)	{
+	ginfo_if(0 <= ::gpk::find(block, {jsonDB.Val.BlockIndices.begin(), jsonDB.Val.BlockIndices.size()}), "Block already loaded.");
 	::gpk::array_pod<char_t>							fileName					= {};
 	gpk_necall(::blt::tableFolderName(fileName, jsonDB.Key, jsonDB.Val.BlockSize), "%s", "Out of memory?");
 	fileName.push_back('/');
 	gpk_necall(::blt::blockFileName(fileName, jsonDB.Key, jsonDB.Val.EncryptionKey, jsonDB.Val.HostType, block), "%s", "Out of memory?");
 
 	const int32_t										idxBlock					= jsonDB.Val.Blocks.push_back({});
-	gpk_necall(jsonDB.Val.Offsets.push_back(jsonDB.Val.BlockSize ? block / jsonDB.Val.BlockSize : 0), "");
 	gpk_necall(idxBlock, "%s", "Out of memory?");
+	gpk_necall(jsonDB.Val.BlockIndices.push_back(idxBlock), "%s", "Out of memory?");
+	gpk_necall(jsonDB.Val.Offsets.push_back(jsonDB.Val.BlockSize ? block / jsonDB.Val.BlockSize : 0), "");
+	::gpk::SJSONFile									& dbBlock					= jsonDB.Val.Blocks[idxBlock];
 	if(0 == jsonDB.Val.EncryptionKey.size()) {
 		if(gbit_false(jsonDB.Val.HostType, ::blt::DATABASE_HOST_DEFLATE)) {
 			info_printf("Loading sson file: %s.", fileName.begin());
-			gpk_necall(::gpk::fileToMemory({fileName.begin(), fileName.size()}, jsonDB.Val.Blocks[idxBlock].Bytes), "Failed to load file: '%s'", fileName.begin());
-			gpk_necall(::crcVerifyAndRemove(jsonDB.Val.Blocks[idxBlock].Bytes), "CRC check failed: %s.", "??");
-			return ::gpk::jsonParse(jsonDB.Val.Blocks[idxBlock].Reader, {jsonDB.Val.Blocks[idxBlock].Bytes.begin(), jsonDB.Val.Blocks[idxBlock].Bytes.size()});
+			gpk_necall(::gpk::fileToMemory({fileName.begin(), fileName.size()}, dbBlock.Bytes), "Failed to load file: '%s'", fileName.begin());
+			gpk_necall(::crcVerifyAndRemove(dbBlock.Bytes), "CRC check failed: %s.", "??");
+			return ::gpk::jsonParse(dbBlock.Reader, {dbBlock.Bytes.begin(), dbBlock.Bytes.size()});
 		}
 		else {
 			info_printf("Loading json file: %s.", fileName.begin());
-			gpk_necall(::gpk::fileToMemory({fileName.begin(), fileName.size()}, jsonDB.Val.Blocks[idxBlock].Bytes), "Failed to load file: '%s'", fileName.begin());
-			if(jsonDB.Val.Blocks[idxBlock].Bytes.size() >= 8)
-				jsonDB.Val.Blocks[idxBlock].Bytes.resize(jsonDB.Val.Blocks[idxBlock].Bytes.size() - 8);
-			return ::gpk::jsonParse(jsonDB.Val.Blocks[idxBlock].Reader, {jsonDB.Val.Blocks[idxBlock].Bytes.begin(), jsonDB.Val.Blocks[idxBlock].Bytes.size()});
+			gpk_necall(::gpk::fileToMemory({fileName.begin(), fileName.size()}, dbBlock.Bytes), "Failed to load file: '%s'", fileName.begin());
+			gpk_necall(::crcVerifyAndRemove(dbBlock.Bytes), "CRC check failed: %s.", "??");
+			return ::gpk::jsonParse(dbBlock.Reader, {dbBlock.Bytes.begin(), dbBlock.Bytes.size()});
 		}
 	}
 	else {
 	
 	}
-	return 0;
+	return idxBlock;
 }
 
 ::gpk::error_t									blt::tableFileLoad			(::blt::TKeyValBlitterDB & jsonDB, const ::gpk::view_const_string & folder)	{

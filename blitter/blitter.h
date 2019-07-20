@@ -19,6 +19,7 @@ namespace blt
 		uint32_t																	BlockSize					= 0;
 		::gpk::array_obj<uint64_t>													Offsets						= {};
 		::gpk::array_obj<::gpk::SJSONFile>											Blocks						= {};
+		::gpk::array_obj<uint32_t>													BlockIndices				= {};
 		::gpk::view_const_string													EncryptionKey				= {};
 		::blt::DATABASE_HOST														HostType					= ::blt::DATABASE_HOST_LOCAL;
 	};
