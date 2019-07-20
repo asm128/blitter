@@ -14,7 +14,7 @@
 ::gpk::error_t									dbFileExtension				(const ::blt::DATABASE_HOST & hostType, bool bEncrypted, ::gpk::view_const_string & extension) {
 	extension										= bEncrypted
 		? ((::blt::DATABASE_HOST_DEFLATE & hostType) ? "czon" : "cson")
-		: ((::blt::DATABASE_HOST_DEFLATE & hostType) ? "zson" : "json")
+		: ((::blt::DATABASE_HOST_DEFLATE & hostType) ? "zson" : "sson")
 		;
 	return 0;
 }
@@ -61,9 +61,10 @@
 ::gpk::error_t									crcVerifyAndRemove			(::gpk::array_pod<byte_t> & bytes)	{
 	ree_if(bytes.size() < 8, "Invalid input. No CRC can be found in an array of %u bytes.", bytes.size());
 	uint64_t											check						= 0;
-	const uint64_t										found						= (bytes.size() >= 8) ? *(uint64_t*)&bytes[bytes.size() - 8] : (uint64_t)-1LL;
-	for(uint32_t iByte = 0; iByte < bytes.size(); ++iByte)
-		check											= ::gpk::noise1DBase(bytes[iByte], ::blt::CRC_SEED);
+	const uint32_t										startOfCRC					= bytes.size() - 8;
+	const uint64_t										found						= (bytes.size() >= 8) ? *(uint64_t*)&bytes[startOfCRC] : (uint64_t)-1LL;
+	for(uint32_t iByte = 0; iByte < startOfCRC; ++iByte)
+		check											+= ::gpk::noise1DBase(bytes[iByte], ::blt::CRC_SEED);
 	ree_if(check != found, "CRC Check failed: Stored: %llu. Calculated: %llu.", found, check);
 	bytes.resize(bytes.size() - 8);
 	return 0;
@@ -78,34 +79,34 @@
 	gpk_necall(idxBlock, "%s", "Out of memory?");
 	gpk_necall(jsonDB.Val.Offsets.push_back(0), "%s", "Out of memory?");
 	::gpk::SJSONFile									& dbBlock					= jsonDB.Val.Blocks[idxBlock];
-	if(0 == jsonDB.Val.EncryptionKey.size()) {
-		if(gbit_false(jsonDB.Val.HostType, ::blt::DATABASE_HOST_DEFLATE)) {
+	if(gbit_false(jsonDB.Val.HostType, ::blt::DATABASE_HOST_DEFLATE)) {
+		if(0 == jsonDB.Val.EncryptionKey.size()) {
 			gpk_necall(::gpk::fileToMemory({fileName.begin(), fileName.size()}, dbBlock.Bytes), "Failed to load file: '%s'", fileName.begin());
 			gpk_necall(::crcVerifyAndRemove(dbBlock.Bytes), "CRC check failed: %s.", "??");
 			return ::gpk::jsonParse(dbBlock.Reader, {dbBlock.Bytes.begin(), dbBlock.Bytes.size()});
 		}
 		else {
-			::gpk::array_pod<char_t>							deflated;
-			gpk_necall(::gpk::fileToMemory({fileName.begin(), fileName.size()}, deflated), "Failed to load file: '%s'", fileName.begin());
-			gpk_necall(::crcVerifyAndRemove(deflated), "CRC check failed: %s.", "??");
-			gpk_necall(::gpk::arrayDeflate(deflated, dbBlock.Bytes), "Failed to decompress file: '%s'", fileName.begin());
+			::gpk::array_pod<char_t>							encrypted;
+			gpk_necall(::gpk::fileToMemory({fileName.begin(), fileName.size()}, encrypted), "Failed to load file: '%s'", fileName.begin());
+			gpk_necall(::gpk::aesDecode(encrypted, jsonDB.Val.EncryptionKey, ::gpk::AES_LEVEL_256, dbBlock.Bytes), "Failed to decompress file: '%s'", fileName.begin());
+			gpk_necall(::crcVerifyAndRemove(dbBlock.Bytes), "CRC check failed: %s.", "??");
 			return ::gpk::jsonParse(dbBlock.Reader, {dbBlock.Bytes.begin(), dbBlock.Bytes.size()});
 		}
 	}
 	else {
-		::gpk::array_pod<char_t>							encrypted;
-		if(gbit_false(jsonDB.Val.HostType, ::blt::DATABASE_HOST_DEFLATE)) {
-			gpk_necall(::gpk::fileToMemory({fileName.begin(), fileName.size()}, encrypted), "Failed to load file: '%s'", fileName.begin());
-			gpk_necall(::crcVerifyAndRemove(encrypted), "CRC check failed: %s.", "??");
-			gpk_necall(::gpk::aesDecode(encrypted, jsonDB.Val.EncryptionKey, ::gpk::AES_LEVEL_256, dbBlock.Bytes), "Failed to decompress file: '%s'", fileName.begin());
+		::gpk::array_pod<char_t>							deflated;
+		if(0 == jsonDB.Val.EncryptionKey.size()) {
+			gpk_necall(::gpk::fileToMemory({fileName.begin(), fileName.size()}, deflated), "Failed to load file: '%s'", fileName.begin());
+			gpk_necall(::gpk::arrayDeflate({&deflated[sizeof(uint32_t)], deflated.size() - sizeof(uint32_t)}, dbBlock.Bytes), "Failed to decompress file: '%s'", fileName.begin());
+			gpk_necall(::crcVerifyAndRemove(dbBlock.Bytes), "CRC check failed: %s.", "??");
 			return ::gpk::jsonParse(dbBlock.Reader, {dbBlock.Bytes.begin(), dbBlock.Bytes.size()});
 		}
 		else {
+			::gpk::array_pod<char_t>							encrypted;
 			gpk_necall(::gpk::fileToMemory({fileName.begin(), fileName.size()}, encrypted), "Failed to load file: '%s'", fileName.begin());
-			gpk_necall(::crcVerifyAndRemove(encrypted), "CRC check failed: %s.", "??");
-			::gpk::array_pod<char_t>							deflated;
 			gpk_necall(::gpk::aesDecode(encrypted, jsonDB.Val.EncryptionKey, ::gpk::AES_LEVEL_256, deflated), "Failed to decompress file: '%s'", fileName.begin());
-			gpk_necall(::gpk::arrayDeflate(deflated, dbBlock.Bytes), "Failed to decompress file: '%s'", fileName.begin());
+			gpk_necall(::gpk::arrayDeflate({&deflated[sizeof(uint32_t)], deflated.size() - sizeof(uint32_t)}, dbBlock.Bytes), "Failed to decompress file: '%s'", fileName.begin());
+			gpk_necall(::crcVerifyAndRemove(dbBlock.Bytes), "CRC check failed: %s.", "??");
 			return ::gpk::jsonParse(dbBlock.Reader, {dbBlock.Bytes.begin(), dbBlock.Bytes.size()});
 		}
 	}
@@ -134,8 +135,8 @@
 		else {
 			::gpk::array_pod<char_t>							deflated;
 			gpk_necall(::gpk::fileToMemory({fileName.begin(), fileName.size()}, deflated), "Failed to load file: '%s'", fileName.begin());
-			gpk_necall(::crcVerifyAndRemove(deflated), "CRC check failed: %s.", "??");
-			gpk_necall(::gpk::arrayDeflate(deflated, dbBlock.Bytes), "Failed to load file: '%s'", fileName.begin());
+			gpk_necall(::gpk::arrayDeflate({&deflated[sizeof(uint32_t)], deflated.size() - sizeof(uint32_t)}, dbBlock.Bytes), "Failed to load file: '%s'", fileName.begin());
+			gpk_necall(::crcVerifyAndRemove(dbBlock.Bytes), "CRC check failed: %s.", "??");
 			gpk_necall(::gpk::jsonParse(dbBlock.Reader, {dbBlock.Bytes.begin(), dbBlock.Bytes.size()}), "Failed to parse json for database block file: '%s'", fileName.begin());
 		}
 	}
@@ -143,16 +144,16 @@
 		::gpk::array_pod<char_t>							encrypted;
 		if(gbit_false(jsonDB.Val.HostType, ::blt::DATABASE_HOST_DEFLATE)) {
 			gpk_necall(::gpk::fileToMemory({fileName.begin(), fileName.size()}, dbBlock.Bytes), "Failed to load file: '%s'", fileName.begin());
-			gpk_necall(::crcVerifyAndRemove(dbBlock.Bytes), "CRC check failed: %s.", "??");
 			gpk_necall(::gpk::aesDecode(encrypted, jsonDB.Val.EncryptionKey, ::gpk::AES_LEVEL_256, dbBlock.Bytes), "Failed to decrypt file: '%s'", fileName.begin());
+			gpk_necall(::crcVerifyAndRemove(dbBlock.Bytes), "CRC check failed: %s.", "??");
 			gpk_necall(::gpk::jsonParse(dbBlock.Reader, {dbBlock.Bytes.begin(), dbBlock.Bytes.size()}), "Failed to parse json for database block file: '%s'", fileName.begin());
 		}
 		else {
 			gpk_necall(::gpk::fileToMemory({fileName.begin(), fileName.size()}, dbBlock.Bytes), "Failed to load file: '%s'", fileName.begin());
-			gpk_necall(::crcVerifyAndRemove(dbBlock.Bytes), "CRC check failed: %s.", "??");
 			::gpk::array_pod<char_t>							deflated;
 			gpk_necall(::gpk::aesDecode(encrypted, jsonDB.Val.EncryptionKey, ::gpk::AES_LEVEL_256, deflated), "Failed to decrypt file: '%s'", fileName.begin());
-			gpk_necall(::gpk::arrayDeflate(deflated, dbBlock.Bytes), "Failed to decompress file: '%s'", fileName.begin());
+			gpk_necall(::gpk::arrayDeflate({&deflated[sizeof(uint32_t)], deflated.size() - sizeof(uint32_t)}, dbBlock.Bytes), "Failed to decompress file: '%s'", fileName.begin());
+			gpk_necall(::crcVerifyAndRemove(dbBlock.Bytes), "CRC check failed: %s.", "??");
 			gpk_necall(::gpk::jsonParse(dbBlock.Reader, {dbBlock.Bytes.begin(), dbBlock.Bytes.size()}), "Failed to parse json for database block file: '%s'", fileName.begin());
 		}
 	}
