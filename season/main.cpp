@@ -79,16 +79,17 @@ struct SSplitParams {
 	return 0;
 }
 
+#define SEASON_ENABLE_VERIFICATION
+
 struct SWriteCache {
 	::gpk::array_pod<char_t>				PartFileName					= {};
 	::gpk::array_pod<char_t>				PathToWriteTo					= {};
 	::gpk::array_pod<char_t>				Deflated						= {};
 	::gpk::array_pod<char_t>				Encrypted						= {};
+#if defined SEASON_ENABLE_VERIFICATION
 	::gpk::array_pod<char_t>				Verify							= {};
-
+#endif
 };
-
-#define SEASON_ENABLE_VERIFICATION
 
 ::gpk::error_t							writePart						(::SWriteCache & blockCache, const ::SSplitParams & params, const ::gpk::view_const_string dbFolderName, ::gpk::array_pod<char_t> & partBytes, uint32_t iPart)		{
 	::gpk::array_pod<char_t>					& partFileName					= blockCache.PartFileName					;
@@ -98,6 +99,7 @@ struct SWriteCache {
 #if defined SEASON_ENABLE_VERIFICATION
 	::gpk::array_pod<char_t>					& verify						= blockCache.Verify							;
 #endif
+	::gpk::clear(partFileName, pathToWriteTo, deflated, encrypted, verify);
 	uint64_t									crcToStore						= 0;
 	for(uint32_t i=0; i < partBytes.size(); ++i) 
 		crcToStore								+= ::gpk::noise1DBase(partBytes[i], ::blt::CRC_SEED);
@@ -105,7 +107,6 @@ struct SWriteCache {
 	gpk_necall(partBytes.append((char*)&crcToStore, sizeof(uint64_t)), "%s", "Out of memory?");;
 
 	pathToWriteTo							= dbFolderName;
-	partFileName.clear();
 	gpk_necall(::blt::blockFileName(partFileName, params.DBName, params.EncryptionKey, params.DeflatedOutput ? ::blt::DATABASE_HOST_DEFLATE : ::blt::DATABASE_HOST_LOCAL, iPart), "%s", "??");
 	gpk_necall(pathToWriteTo.append(partFileName), "%s", "Out of memory?");
 	if(false == params.DeflatedOutput) {
@@ -118,11 +119,9 @@ struct SWriteCache {
 			info_printf("Saving part file to disk: '%s'. Size: %u.", pathToWriteTo.begin(), encrypted.size());
 			gpk_necall(::gpk::fileFromMemory({pathToWriteTo.begin(), pathToWriteTo.size()}, encrypted), "Failed to write part: %u.", iPart);
 #if defined SEASON_ENABLE_VERIFICATION
-			verify.clear();
 			gpk_necall(::gpk::aesDecode(encrypted, params.EncryptionKey, ::gpk::AES_LEVEL_256, verify), "Failed to inflate part: %u.", iPart);
 			ree_if(verify != partBytes, "Sanity check failed: %s.", "??");
 #endif
-			encrypted.clear();
 		}
 	}
 	else {
@@ -132,11 +131,9 @@ struct SWriteCache {
 			info_printf("Saving part file to disk: '%s'. Size: %u.", pathToWriteTo.begin(), deflated.size());
 			gpk_necall(::gpk::fileFromMemory({pathToWriteTo.begin(), pathToWriteTo.size()}, deflated), "Failed to write part: %u.", iPart);
 #if defined SEASON_ENABLE_VERIFICATION
-			verify.clear();
 			gpk_necall(::gpk::arrayInflate({&deflated[sizeof(uint32_t)], deflated.size() - sizeof(uint32_t)}, verify), "Failed to inflate part: %u.", iPart);
 			ree_if(verify != partBytes, "Sanity check failed: %s.", "??");
 #endif
-			deflated.clear();
 		} else {
 			gpk_necall(::gpk::aesEncode(::gpk::view_const_byte{deflated.begin(), deflated.size()}, params.EncryptionKey, ::gpk::AES_LEVEL_256, encrypted), "Failed to encrypt part: %u.", iPart);
 			info_printf("Saving part file to disk: '%s'. Size: %u.", pathToWriteTo.begin(), encrypted.size());
@@ -144,17 +141,11 @@ struct SWriteCache {
 #if defined SEASON_ENABLE_VERIFICATION
 			deflated.clear();
 			gpk_necall(::gpk::aesDecode(encrypted, params.EncryptionKey, ::gpk::AES_LEVEL_256, deflated), "Failed to inflate part: %u.", iPart);
-			verify.clear();
 			gpk_necall(::gpk::arrayInflate({&deflated[sizeof(uint32_t)], deflated.size() - sizeof(uint32_t)}, verify), "Failed to inflate part: %u.", iPart);
 			ree_if(verify != partBytes, "Sanity check failed: %s.", "??");
 #endif
-			encrypted.clear();
-			deflated.clear();
 		}
 	}
-#if defined SEASON_ENABLE_VERIFICATION
-	verify.clear();
-#endif
 	return 0;
 }
 

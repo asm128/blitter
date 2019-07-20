@@ -52,6 +52,9 @@ GPK_CGI_JSON_APP_IMPL();
 		::gpk::find("QUERY_STRING"	, environViews, requestReceived.QueryString);
 		requestReceived.ContentBody							= runtimeValues.Content.Body;
 	}
+	if(0 == requestReceived.Path.size() && runtimeValues.EntryPointArgs.ArgsCommandLine.size() > 1) {
+		requestReceived.Path	= ::gpk::view_const_string{runtimeValues.EntryPointArgs.ArgsCommandLine[1], (uint32_t)-1};
+	}
 	gpk_necall(::requestProcess(app.Query, requestReceived), "%s", "Failed to process request.");
 	//requestReceived.Path;
 	/*if(0 == ::gpk::keyValVerify(environViews, "REQUEST_METHOD", "GET")) {										*/
