@@ -31,7 +31,7 @@
 	return 0;
 }
 
-::gpk::error_t									blt::tableFolderName			(::gpk::array_pod<char_t> & foldername, const ::gpk::view_const_string & dbName, const uint32_t blockSize) {
+::gpk::error_t									blt::tableFolderName		(::gpk::array_pod<char_t> & foldername, const ::gpk::view_const_string & dbName, const uint32_t blockSize) {
 	foldername.append(dbName);
 	char												temp[64]					= {};
 	sprintf_s(temp, ".%u.db", blockSize);
