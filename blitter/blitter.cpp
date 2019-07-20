@@ -65,7 +65,7 @@
 ::gpk::error_t									crcVerifyAndRemove			(::gpk::array_pod<byte_t> & bytes)	{
 	ree_if(bytes.size() < 8, "Invalid input. No CRC can be found in an array of %u bytes.", bytes.size());
 	uint64_t											check						= 0;
-	uint64_t											found						= (bytes.size() >= 8) ? *(uint64_t*)&bytes[bytes.size() - 8] : (uint64_t)-1LL;
+	const uint64_t										found						= (bytes.size() >= 8) ? *(uint64_t*)&bytes[bytes.size() - 8] : (uint64_t)-1LL;
 	for(uint32_t iByte = 0; iByte < bytes.size(); ++iByte)
 		check											= ::gpk::noise1DBase(bytes[iByte], ::blt::CRC_SEED);
 	ree_if(check != found, "CRC Check failed: Stored: %llu. Calculated: :llu.", );

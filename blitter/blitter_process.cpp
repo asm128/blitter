@@ -22,11 +22,11 @@
 	return -1;
 }
 
-::gpk::error_t							blt::processQuery						
-	( ::gpk::array_obj<::blt::TKeyValBlitterDB>	& databases
-	, const ::blt::SBlitterQuery				& query
-	, ::gpk::array_pod<char_t>					& output
-	, const ::gpk::view_const_string			& folder
+::gpk::error_t									blt::processQuery						
+	( ::gpk::array_obj<::blt::TKeyValBlitterDB>		& databases
+	, const ::blt::SBlitterQuery					& query
+	, ::gpk::array_pod<char_t>						& output
+	, const ::gpk::view_const_string				& folder
 	) {
 
 	::gpk::array_obj<::gpk::view_const_string>				rangeViews	= {};
@@ -39,19 +39,20 @@
 		if(query.Database == databases[iDB].Key) {
 			::blt::TKeyValBlitterDB								& database								= databases[iDB];
 			if(0 == database.Val.BlockSize) {
-				::blt::tableFileLoad(database, folder);
+				gpk_necall(::blt::tableFileLoad(database, folder), "Failed to load table: %s.", databases[iDB].Key.begin());
 				return ::blt::generate_output_for_db(databases, query, output, 0);
 			}
 			else {
-				::blt::blockFileLoad(database, (uint32_t)(query.Range.Offset / database.Val.BlockSize));
-				::blt::recordRange	(database, query.Range, rangeViews, nodeIndices, blockRange);
-				output.push_back('[');
+				uint32_t iBlock = (uint32_t)(query.Range.Offset / database.Val.BlockSize);
+				gpk_necall(::blt::blockFileLoad(database, iBlock), "Failed to load block: %u.", iBlock);
+				gpk_necall(::blt::recordRange(database, query.Range, rangeViews, nodeIndices, blockRange), "Failed to load record range. Offset: %llu. Length: %llu.", query.Range.Offset, query.Range.Count);
+				gpk_necall(output.push_back('['), "%s", "Out of memory?");
 				for(uint32_t iView = 0; iView < rangeViews.size(); ++iView) {
-					output.append(rangeViews[iView]);
+					gpk_necall(output.append(rangeViews[iView]), "%s", "Out of memory?");
 					if(rangeViews.size() -1 != iView)
-						output.push_back(',');
+						gpk_necall(output.push_back(','), "%s", "Out of memory?");
 				}
-				output.push_back(']');
+				gpk_necall(output.push_back(']'), "%s", "Out of memory?");
 				return 0;
 			}
 		}
