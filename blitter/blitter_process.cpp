@@ -209,12 +209,13 @@ static	::gpk::error_t							generate_record_with_expansion			(const ::gpk::view_
 	const uint32_t										blockStop			= (0 == database.Val.BlockSize) ? (uint32_t)-1	: maxRecord / database.Val.BlockSize + one_if(maxRecord % database.Val.BlockSize) + 1;
 	blockRange										= {blockStart, blockStop - blockStart};
 	for(uint32_t iBlock = blockStart; iBlock < blockStop; ++iBlock) {
-		gpk_necall(::blt::blockFileLoad(database, iBlock), "Failed to load database block: %s.", "??");
-		const ::gpk::SJSONReader							& readerBlock		= database.Val.Blocks[iBlock].Reader;
+		int32_t												iNewBlock			= ::blt::blockFileLoad(database, iBlock);
+		gpk_necall(iNewBlock, "Failed to load database block: %s.", "??");
+		const ::gpk::SJSONReader							& readerBlock		= database.Val.Blocks[iNewBlock].Reader;
 		ree_if(0 == readerBlock.Tree.size(), "%s", "Invalid block data.");
 		const ::gpk::SJSONNode								& jsonRoot			= *readerBlock.Tree[0];
 		ree_if(::gpk::JSON_TYPE_ARRAY != jsonRoot.Object->Type, "Invalid json type: %s", ::gpk::get_value_label(jsonRoot.Object->Type).begin()); 
-		const uint64_t										offsetRecord		= database.Val.Offsets[iBlock];
+		const uint64_t										offsetRecord		= database.Val.Offsets[iNewBlock];
 		const uint32_t										startRecordRelative	= ::gpk::max(0U, (uint32_t)(range.Offset - offsetRecord));
 		const uint32_t										stopRecordRelative	= ::gpk::min(database.Val.BlockSize - 1, (uint32_t)((range.Offset + range.Count) - offsetRecord));
 		::gpk::SMinMax<uint32_t>							blockNodeIndices		= {};

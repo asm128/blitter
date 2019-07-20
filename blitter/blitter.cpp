@@ -11,8 +11,10 @@
 
 
 ::gpk::error_t									blt::queryLoad				(::blt::SBlitterQuery& query, const ::gpk::view_array<const ::gpk::TKeyValConstString> keyvals)	{
-	::gpk::keyvalNumeric("offset"	, keyvals, query.Range.Offset	);
-	::gpk::keyvalNumeric("limit"	, keyvals, query.Range.Count	);
+	::gpk::keyvalNumeric("offset", keyvals, query.Range.Offset);
+	if(0 > ::gpk::keyvalNumeric("limit", keyvals, query.Range.Count))
+		::gpk::keyvalNumeric("count", keyvals, query.Range.Count);
+
 	::gpk::error_t										indexExpand					= ::gpk::find("expand", keyvals);
 	if(0 <= indexExpand) 
 		query.Expand									= keyvals[indexExpand].Val;
@@ -72,7 +74,7 @@
 }
 
 ::gpk::error_t									blt::blockFileLoad			(::blt::TKeyValBlitterDB & jsonDB, uint32_t block)	{
-	ginfo_if(0 <= ::gpk::find(block, {jsonDB.Val.BlockIndices.begin(), jsonDB.Val.BlockIndices.size()}), "Block already loaded.");
+	ginfo_if(0 <= ::gpk::find(block, {jsonDB.Val.BlockIndices.begin(), jsonDB.Val.BlockIndices.size()}), "Block already loaded: %u.", block);
 	::gpk::array_pod<char_t>							fileName					= {};
 	gpk_necall(::blt::tableFolderName(fileName, jsonDB.Key, jsonDB.Val.BlockSize), "%s", "Out of memory?");
 	fileName.push_back('/');
@@ -178,12 +180,12 @@
 	return 0;
 }
 
-::gpk::error_t							blt::loadConfig			(::blt::SBlitter & appState, const ::gpk::view_const_string & jsonFileName)	{
+::gpk::error_t									blt::loadConfig			(::blt::SBlitter & appState, const ::gpk::view_const_string & jsonFileName)	{
 	gpk_necall(::gpk::jsonFileRead(appState.Config, jsonFileName), "Failed to load configuration file: %s.", jsonFileName.begin());
-	const ::gpk::error_t						indexApp				= ::gpk::jsonExpressionResolve("application.blitter", appState.Config.Reader, (uint32_t)0, appState.Folder);
-	const ::gpk::error_t						indexDB					= ::gpk::jsonExpressionResolve("database", appState.Config.Reader, (uint32_t)indexApp, appState.Folder);
+	const ::gpk::error_t								indexApp				= ::gpk::jsonExpressionResolve("application.blitter", appState.Config.Reader, (uint32_t)0, appState.Folder);
+	const ::gpk::error_t								indexDB					= ::gpk::jsonExpressionResolve("database", appState.Config.Reader, (uint32_t)indexApp, appState.Folder);
 	gpk_necall(indexDB, "'database' not found in '%s'.", "application.blitter");
-	const ::gpk::error_t						indexPath				= ::gpk::jsonExpressionResolve("path.database", appState.Config.Reader, (uint32_t)indexApp, appState.Folder);
+	const ::gpk::error_t								indexPath				= ::gpk::jsonExpressionResolve("path.database", appState.Config.Reader, (uint32_t)indexApp, appState.Folder);
 	gwarn_if(errored(indexPath), "'path.database' not found in '%s'. Using current path as database root.", "application.blitter");
 	gpk_necall(::blt::configDatabases(appState.Databases, appState.Config.Reader, indexDB, {}, appState.Folder), "%s", "Failed to load query.");
 	return 0;
