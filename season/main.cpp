@@ -87,7 +87,7 @@ struct SWriteCache {
 	gpk_necall(partBytes.append((char*)&crcToStore, sizeof(uint64_t)), "%s", "Out of memory?");;
 
 	pathToWriteTo							= dbFolderName;
-	gpk_necall(::blt::blockFileName(partFileName, params.DBName, params.EncryptionKey, params.DeflatedOutput ? ::blt::DATABASE_HOST_DEFLATE : ::blt::DATABASE_HOST_LOCAL, iPart), "%s", "??");
+	gpk_necall(::blt::blockFileName(partFileName, params.DBName, params.EncryptionKey.size() > 0, params.DeflatedOutput ? ::blt::DATABASE_HOST_DEFLATE : ::blt::DATABASE_HOST_LOCAL, iPart), "%s", "??");
 	gpk_necall(pathToWriteTo.append(partFileName), "%s", "Out of memory?");
 	if(false == params.DeflatedOutput) {
 		if(0 == params.EncryptionKey.size()) {

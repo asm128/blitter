@@ -95,12 +95,12 @@
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <TreatWarningAsError>true</TreatWarningAsError>
-      <AdditionalIncludeDirectories>..\..\blitter\blitter; ..\..\gpk\llc; ..\..\zlib;</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\blitter\blitter; ..\..\gpk\llc;</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>blitter.lib; llc.lib; </AdditionalDependencies>
+      <AdditionalDependencies>blitter.lib; llc.lib; zlibvc.lib; </AdditionalDependencies>
       <AdditionalLibraryDirectories>$(OutDir);</AdditionalLibraryDirectories>
       <TreatLinkerWarningAsErrors>true</TreatLinkerWarningAsErrors>
     </Link>
@@ -114,12 +114,12 @@
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <TreatWarningAsError>true</TreatWarningAsError>
-      <AdditionalIncludeDirectories>..\..\blitter\blitter; ..\..\gpk\llc; ..\..\zlib;</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\blitter\blitter; ..\..\gpk\llc;</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>blitter.lib; llc.lib; </AdditionalDependencies>
+      <AdditionalDependencies>blitter.lib; llc.lib; zlibvc.lib; </AdditionalDependencies>
       <AdditionalLibraryDirectories>$(OutDir);</AdditionalLibraryDirectories>
       <TreatLinkerWarningAsErrors>true</TreatLinkerWarningAsErrors>
     </Link>
@@ -135,14 +135,14 @@
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <TreatWarningAsError>true</TreatWarningAsError>
-      <AdditionalIncludeDirectories>..\..\blitter\blitter; ..\..\gpk\llc; ..\..\zlib;</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\blitter\blitter; ..\..\gpk\llc;</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>blitter.lib; llc.lib; </AdditionalDependencies>
+      <AdditionalDependencies>blitter.lib; llc.lib; zlibvc.lib; </AdditionalDependencies>
       <AdditionalLibraryDirectories>$(OutDir);</AdditionalLibraryDirectories>
       <TreatLinkerWarningAsErrors>true</TreatLinkerWarningAsErrors>
     </Link>
@@ -158,14 +158,14 @@
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <TreatWarningAsError>true</TreatWarningAsError>
-      <AdditionalIncludeDirectories>..\..\blitter\blitter; ..\..\gpk\llc; ..\..\zlib;</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\blitter\blitter; ..\..\gpk\llc;</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>blitter.lib; llc.lib; </AdditionalDependencies>
+      <AdditionalDependencies>blitter.lib; llc.lib; zlibvc.lib; </AdditionalDependencies>
       <AdditionalLibraryDirectories>$(OutDir);</AdditionalLibraryDirectories>
       <TreatLinkerWarningAsErrors>true</TreatLinkerWarningAsErrors>
     </Link>
