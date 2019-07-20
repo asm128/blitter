@@ -40,7 +40,6 @@
 GPK_CGI_JSON_APP_IMPL();
 
 ::gpk::error_t									gpk_cgi_generate_output			(::gpk::SCGIRuntimeValues & runtimeValues, ::gpk::array_pod<char_t> & output)	{	
-	output.append(::gpk::view_const_string{"\r\n"});	
 	::blt::SBlitter										app;
 	::gpk::array_obj<::gpk::TKeyValConstString>			environViews;
 	::gpk::environmentBlockViews(runtimeValues.EntryPointArgs.EnvironmentBlock, environViews);	
@@ -62,6 +61,11 @@ GPK_CGI_JSON_APP_IMPL();
 	/*	return 1;																								*/
 	/*}																											*/
 	gpk_necall(::blt::loadConfig(app, "blitter.json"), "%s", "Failed to load detail.");						
+	::gpk::view_const_string	remoteAddr;
+	if(-1 != ::gpk::find("REMOTE_ADDR", environViews, remoteAddr)) {
+		output.append(::gpk::view_const_string{"Content-type: application/json\r\n"});
+		output.append(::gpk::view_const_string{"\r\n"});	
+	}
 	gpk_necall(::blt::processQuery(app.Databases, app.Query, output, app.Folder), "%s", "Failed to load razor databases.");	
 	if(output.size()) {						
 		OutputDebugStringA(output.begin());	
