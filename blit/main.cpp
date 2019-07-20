@@ -10,13 +10,13 @@
 	{	// --- Retrieve query from request.
 		::gpk::array_obj<::gpk::TKeyValConstString>						qsKeyVals;
 		::gpk::array_obj<::gpk::view_const_string>						queryStringElements			= {};
-		::gpk::querystring_split({request.QueryString.begin(), request.QueryString.size()}, queryStringElements);
-		qsKeyVals.resize(queryStringElements.size());
+		gpk_necall(::gpk::querystring_split({request.QueryString.begin(), request.QueryString.size()}, queryStringElements), "%s", "Out of memory?");
+		gpk_necall(qsKeyVals.resize(queryStringElements.size()), "%s", "Out of memory?");
 		for(uint32_t iKeyVal = 0; iKeyVal < qsKeyVals.size(); ++iKeyVal) {
 			::gpk::TKeyValConstString										& keyValDst					= qsKeyVals[iKeyVal];
 			::gpk::keyval_split(queryStringElements[iKeyVal], keyValDst);
 		}
-		::blt::queryLoad(query, qsKeyVals);
+		gpk_necall(::blt::queryLoad(query, qsKeyVals), "%s", "Out of memory?");
 	}
 	// --- Generate response
 	query.Database												= (request.Path.size() > 1) ? ::gpk::view_const_string{&request.Path[1], request.Path.size() - 1} : ::gpk::view_const_string{};;
@@ -51,20 +51,19 @@ GPK_CGI_JSON_APP_IMPL();
 		::gpk::find("QUERY_STRING"	, environViews, requestReceived.QueryString);
 		requestReceived.ContentBody							= runtimeValues.Content.Body;
 	}
-	if(0 == requestReceived.Path.size() && runtimeValues.EntryPointArgs.ArgsCommandLine.size() > 1) {
-		requestReceived.Path	= ::gpk::view_const_string{runtimeValues.EntryPointArgs.ArgsCommandLine[1], (uint32_t)-1};
-	}
+	if(0 == requestReceived.Path.size() && runtimeValues.EntryPointArgs.ArgsCommandLine.size() > 1)
+		requestReceived.Path							= ::gpk::view_const_string{runtimeValues.EntryPointArgs.ArgsCommandLine[1], (uint32_t)-1};
+
 	gpk_necall(::requestProcess(app.Query, requestReceived), "%s", "Failed to process request.");
-	//requestReceived.Path;
 	/*if(0 == ::gpk::keyValVerify(environViews, "REQUEST_METHOD", "GET")) {										*/
 	/*	output.append(::gpk::view_const_string{"{ \"status\" : 403, \"description\" :\"forbidden\" }\r\n"});	*/
 	/*	return 1;																								*/
 	/*}																											*/
 	gpk_necall(::blt::loadConfig(app, "blitter.json"), "%s", "Failed to load detail.");						
-	::gpk::view_const_string	remoteAddr;
+	::gpk::view_const_string							remoteAddr;
 	if(-1 != ::gpk::find("REMOTE_ADDR", environViews, remoteAddr)) {
-		output.append(::gpk::view_const_string{"Content-type: application/json\r\n"});
-		output.append(::gpk::view_const_string{"\r\n"});	
+		gpk_necall(output.append(::gpk::view_const_string{"Content-type: application/json\r\n"}), "%s", "Out of memory?");
+		gpk_necall(output.append(::gpk::view_const_string{"\r\n"})								, "%s", "Out of memory?");	
 	}
 	gpk_necall(::blt::processQuery(app.Databases, app.Query, output, app.Folder), "%s", "Failed to load razor databases.");	
 	if(output.size()) {						

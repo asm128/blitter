@@ -14,7 +14,7 @@
 	::gpk::keyvalNumeric("offset"	, keyvals, query.Range.Offset	);
 	::gpk::keyvalNumeric("limit"	, keyvals, query.Range.Count	);
 	::gpk::error_t										indexExpand					= ::gpk::find("expand", keyvals);
-	if(-1 != indexExpand) 
+	if(0 <= indexExpand) 
 		query.Expand									= keyvals[indexExpand].Val;
 	return 0;
 }
