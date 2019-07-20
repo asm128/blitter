@@ -64,7 +64,7 @@
 	const uint64_t										found						= (bytes.size() >= 8) ? *(uint64_t*)&bytes[bytes.size() - 8] : (uint64_t)-1LL;
 	for(uint32_t iByte = 0; iByte < bytes.size(); ++iByte)
 		check											= ::gpk::noise1DBase(bytes[iByte], ::blt::CRC_SEED);
-	ree_if(check != found, "CRC Check failed: Stored: %llu. Calculated: :llu.", );
+	ree_if(check != found, "CRC Check failed: Stored: %llu. Calculated: %llu.", found, check);
 	bytes.resize(bytes.size() - 8);
 	return 0;
 }
