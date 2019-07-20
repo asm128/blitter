@@ -38,12 +38,12 @@
 		blockRange											= {};
 		if(query.Database == databases[iDB].Key) {
 			::blt::TKeyValBlitterDB								& database								= databases[iDB];
-			if(0 == database.Val.BlockSize) {
+			if(0 == database.Val.BlockSize && 0 == query.Expand.size()) {
 				gpk_necall(::blt::tableFileLoad(database, folder), "Failed to load table: %s.", databases[iDB].Key.begin());
 				return ::blt::generate_output_for_db(databases, query, output, 0);
 			}
 			else {
-				uint32_t iBlock = (uint32_t)(query.Range.Offset / database.Val.BlockSize);
+				uint32_t										iBlock									= (0 == database.Val.BlockSize) ? 0 : (uint32_t)(query.Range.Offset / database.Val.BlockSize);
 				gpk_necall(::blt::blockFileLoad(database, iBlock), "Failed to load block: %u.", iBlock);
 				gpk_necall(::blt::recordRange(database, query.Range, rangeViews, nodeIndices, blockRange), "Failed to load record range. Offset: %llu. Length: %llu.", query.Range.Offset, query.Range.Count);
 				gpk_necall(output.push_back('['), "%s", "Out of memory?");
