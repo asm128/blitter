@@ -23,6 +23,15 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "blit", "blit\blit.vcxproj",
 		{8FD826F8-3739-44E6-8CC8-997122E53B8D} = {8FD826F8-3739-44E6-8CC8-997122E53B8D}
 	EndProjectSection
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{508F4DA5-865A-46A5-B9DE-1CA3B7EB2CCD}"
+	ProjectSection(SolutionItems) = preProject
+		blitter.json = blitter.json
+		company.json = company.json
+		publisher.json = publisher.json
+		user.json = user.json
+		website.json = website.json
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64

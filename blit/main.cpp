@@ -19,7 +19,10 @@
 		gpk_necall(::blt::queryLoad(query, qsKeyVals), "%s", "Out of memory?");
 	}
 	// --- Generate response
-	query.Database												= (request.Path.size() > 1) ? ::gpk::view_const_string{&request.Path[1], request.Path.size() - 1} : ::gpk::view_const_string{};;
+	query.Database												= (request.Path.size() > 1) 
+		? (('/' == request.Path[0]) ? ::gpk::view_const_string{&request.Path[1], request.Path.size() - 1} : ::gpk::view_const_string{request.Path.begin(), request.Path.size()})
+		: ::gpk::view_const_string{}
+		;
 	uint64_t														detail						= (uint64_t)-1LL;
 	{	// --- Retrieve detail part 
 		::gpk::view_const_string										strDetail					= {};
@@ -51,7 +54,7 @@ GPK_CGI_JSON_APP_IMPL();
 		::gpk::find("QUERY_STRING"	, environViews, requestReceived.QueryString);
 		requestReceived.ContentBody							= runtimeValues.Content.Body;
 	}
-	if(0 == requestReceived.Path.size() && runtimeValues.EntryPointArgs.ArgsCommandLine.size() > 1)
+	if(0 == requestReceived.Path.size() && runtimeValues.EntryPointArgs.ArgsCommandLine.size() > 1) 
 		requestReceived.Path							= ::gpk::view_const_string{runtimeValues.EntryPointArgs.ArgsCommandLine[1], (uint32_t)-1};
 
 	gpk_necall(::requestProcess(app.Query, requestReceived), "%s", "Failed to process request.");
