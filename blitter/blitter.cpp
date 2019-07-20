@@ -144,21 +144,20 @@
 		if(gbit_false(jsonDB.Val.HostType, ::blt::DATABASE_HOST_DEFLATE)) {
 			gpk_necall(::gpk::fileToMemory({fileName.begin(), fileName.size()}, dbBlock.Bytes), "Failed to load file: '%s'", fileName.begin());
 			gpk_necall(::crcVerifyAndRemove(dbBlock.Bytes), "CRC check failed: %s.", "??");
-			gpk_necall(::gpk::aesDecode(encrypted, jsonDB.Val.EncryptionKey, ::gpk::AES_LEVEL_256, dbBlock.Bytes), "Failed to decompress file: '%s'", fileName.begin());
+			gpk_necall(::gpk::aesDecode(encrypted, jsonDB.Val.EncryptionKey, ::gpk::AES_LEVEL_256, dbBlock.Bytes), "Failed to decrypt file: '%s'", fileName.begin());
 			gpk_necall(::gpk::jsonParse(dbBlock.Reader, {dbBlock.Bytes.begin(), dbBlock.Bytes.size()}), "Failed to parse json for database block file: '%s'", fileName.begin());
 		}
 		else {
 			gpk_necall(::gpk::fileToMemory({fileName.begin(), fileName.size()}, dbBlock.Bytes), "Failed to load file: '%s'", fileName.begin());
 			gpk_necall(::crcVerifyAndRemove(dbBlock.Bytes), "CRC check failed: %s.", "??");
 			::gpk::array_pod<char_t>							deflated;
-			gpk_necall(::gpk::aesDecode(encrypted, jsonDB.Val.EncryptionKey, ::gpk::AES_LEVEL_256, deflated), "Failed to decompress file: '%s'", fileName.begin());
-			gpk_necall(::gpk::arrayDeflate(deflated, dbBlock.Bytes), "Failed to load file: '%s'", fileName.begin());
+			gpk_necall(::gpk::aesDecode(encrypted, jsonDB.Val.EncryptionKey, ::gpk::AES_LEVEL_256, deflated), "Failed to decrypt file: '%s'", fileName.begin());
+			gpk_necall(::gpk::arrayDeflate(deflated, dbBlock.Bytes), "Failed to decompress file: '%s'", fileName.begin());
 			gpk_necall(::gpk::jsonParse(dbBlock.Reader, {dbBlock.Bytes.begin(), dbBlock.Bytes.size()}), "Failed to parse json for database block file: '%s'", fileName.begin());
 		}
 	}
 	return idxBlock;
 }
-
 
 ::gpk::error_t									blt::configDatabases		(::gpk::array_obj<::blt::TKeyValBlitterDB> & databases, const ::gpk::SJSONReader & configReader, const int32_t indexConfigNode, const ::gpk::view_array<const ::gpk::view_const_string> & databasesToLoad, const ::gpk::view_const_string & folder)	{
 	::gpk::view_const_string							jsonResult					= {};
@@ -219,10 +218,8 @@
 		if(jsonDB.Val.BlockSize)
 			continue;	// block databases get loaded on-demand
 		// -- Load json database file.
-		if(0 == databasesToLoad.size()) {
+		if(0 == databasesToLoad.size())
 			gpk_necall(::blt::tableFileLoad(jsonDB, folder), "Failed to load database: %s.", dbfilename.begin());
-			//gpk_necall(::gpk::jsonFileRead(jsonDB.Val.Table, {dbfilename.begin(), dbfilename.size()}), "Failed to load database: %s.", dbfilename.begin());
-		}
 		else {
 			for(uint32_t iDB = 0; iDB = databasesToLoad.size(); ++iDB) 
 				if(databasesToLoad[iDB] == jsonDB.Key) {
