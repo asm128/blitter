@@ -1,0 +1,24 @@
+{	"application"		:
+	{	
+		"bigbro": 
+		{	"listen_port"	: "15567"
+		,	"adapter"		: "1"
+		,	"remote_domain"	: "http://201.235.131.233"
+		},
+		"blitter": 
+		{	"path"	: 
+			{	"jsondb"		: "../gpk_data/blitter_db"	
+			,	"jsondb_cache"	: "../gpk_data/blitter_cache"	
+			},
+			"databases"		  : 
+			[	{ "source" : "local"  , "name": "website"		, "bind" : ["website"		, ] }
+			,	{ "source" : "local"  , "name": "user"			, "bind" : ["referral"		, ] }
+			,	{ "source" : "local"  , "name": "publisher"		, "bind" : ["publisher"		, ] }
+			,	{ "source" : "local"  , "name": "company"		, "bind" : ["owner"			, ] }
+			,	{ "source" : "remote" , "name": "departments"	, "bind" : ["department"	, "superdepartment"] }
+			,	{ "source" : "remote" , "name": "offices"		, "bind" : ["office"		, ] }
+			,	{ "source" : "remote" , "name": "users"			, "bind" : ["manager"		, ], "source_domain" : "https://rfy56yfcwk.execute-api.us-west-1.amazonaws.com" }
+			]
+		}
+	}
+}
