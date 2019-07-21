@@ -78,7 +78,8 @@
 	const int32_t										idxBlock					= jsonDB.Val.Blocks.push_back({});
 	gpk_necall(idxBlock, "%s", "Out of memory?");
 	gpk_necall(jsonDB.Val.Offsets.push_back(0), "%s", "Out of memory?");
-	::gpk::SJSONFile									& dbBlock					= jsonDB.Val.Blocks[idxBlock];
+	jsonDB.Val.Blocks[idxBlock].create();
+	::gpk::SJSONFile									& dbBlock					= *jsonDB.Val.Blocks[idxBlock];
 	if(gbit_false(jsonDB.Val.HostType, ::blt::DATABASE_HOST_DEFLATE)) {
 		if(0 == jsonDB.Val.EncryptionKey.size()) {
 			gpk_necall(::gpk::fileToMemory({fileName.begin(), fileName.size()}, dbBlock.Bytes), "Failed to load file: '%s'", fileName.begin());
@@ -123,8 +124,9 @@
 	const int32_t										idxBlock					= jsonDB.Val.Blocks.push_back({});
 	gpk_necall(idxBlock, "%s", "Out of memory?");
 	gpk_necall(jsonDB.Val.BlockIndices.push_back(idxBlock), "%s", "Out of memory?");
-	gpk_necall(jsonDB.Val.Offsets.push_back(jsonDB.Val.BlockSize ? block / jsonDB.Val.BlockSize : 0), "");
-	::gpk::SJSONFile									& dbBlock					= jsonDB.Val.Blocks[idxBlock];
+	gpk_necall(jsonDB.Val.Offsets.push_back(block * jsonDB.Val.BlockSize), "");
+	jsonDB.Val.Blocks[idxBlock].create();
+	::gpk::SJSONFile									& dbBlock					= *jsonDB.Val.Blocks[idxBlock];
 	info_printf("Loading database file: %s.", fileName.begin());
 	if(0 == jsonDB.Val.EncryptionKey.size()) {
 		if(gbit_false(jsonDB.Val.HostType, ::blt::DATABASE_HOST_DEFLATE)) {
@@ -188,6 +190,7 @@
 		::gpk::array_pod<char_t>							dbfilename					= {};
 		gpk_necall(::blt::tableFileName(dbfilename, jsonDB.Val.HostType, jsonDB.Val.EncryptionKey.size() > 0, jsonDB.Key), "%s", "??");
 		{	// -- Load database modes (remote, deflate)
+			info_printf("Loading database info for '%s'.", dbfilename.begin());
 			sprintf_s(temp, "[%u].source", iDatabase);
 			jsonResult										= {};
 			int32_t												typeFound					= ::gpk::jsonExpressionResolve(temp, configReader, indexObjectDatabases, jsonResult);
@@ -200,7 +203,7 @@
 			if(::gpk::view_const_string{"true"} == jsonResult)
 				jsonDB.Val.HostType								|= ::blt::DATABASE_HOST_DEFLATE;
 		}
-		{	// -- Load field bindings
+		{	// -- Load field bindings 
 			sprintf_s(temp, "[%u].bind", iDatabase);
 			::gpk::error_t										indexBindArray				= ::gpk::jsonExpressionResolve(temp, configReader, indexObjectDatabases, jsonResult);
 			w_if(errored(indexBindArray), "No bindings found for database file: %s.", dbfilename.begin())

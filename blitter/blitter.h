@@ -15,13 +15,13 @@ namespace blt
 	static constexpr	const uint64_t											MAX_TABLE_RECORD_COUNT		= 0x7FFFFFFFFFFFFFFF;
 
 	struct SBlitterDB {
-		::gpk::array_obj<::gpk::view_const_string>		Bindings					= {};
-		uint32_t										BlockSize					= 0;
-		::gpk::array_obj<uint64_t>						Offsets						= {};
-		::gpk::array_obj<::gpk::SJSONFile>				Blocks						= {};
-		::gpk::array_obj<uint32_t>						BlockIndices				= {};
-		::gpk::view_const_string						EncryptionKey				= {};
-		::blt::DATABASE_HOST							HostType					= ::blt::DATABASE_HOST_LOCAL;
+		::gpk::array_obj<::gpk::view_const_string>			Bindings					= {};
+		uint32_t											BlockSize					= 0;
+		::gpk::array_obj<uint64_t>							Offsets						= {};
+		::gpk::array_obj<::gpk::ptr_obj<::gpk::SJSONFile>>	Blocks						= {};
+		::gpk::array_obj<uint32_t>							BlockIndices				= {};
+		::gpk::view_const_string							EncryptionKey				= {};
+		::blt::DATABASE_HOST								HostType					= ::blt::DATABASE_HOST_LOCAL;
 	};
 
 	struct SBlitterQuery {

@@ -48,7 +48,8 @@
 				gpk_necall(::blt::recordRange(database, query.Range, rangeViews, nodeIndices, blockRange), "Failed to load record range. Offset: %llu. Length: %llu.", query.Range.Offset, query.Range.Count);
 				gpk_necall(output.push_back('['), "%s", "Out of memory?");
 				for(uint32_t iView = 0; iView < rangeViews.size(); ++iView) {
-					gpk_necall(output.append(rangeViews[iView]), "%s", "Out of memory?");
+					const ::gpk::view_const_string					rangeView								= rangeViews[iView];
+					gpk_necall(output.append(rangeView), "%s", "Out of memory?");
 					if(rangeViews.size() -1 != iView)
 						gpk_necall(output.push_back(','), "%s", "Out of memory?");
 				}
@@ -89,7 +90,7 @@ static	::gpk::error_t							generate_record_with_expansion			(const ::gpk::view_
 					const ::blt::TKeyValBlitterDB						& childDatabase							= databases[iDatabase];
 					bool												bAliasMatch								= -1 != ::gpk::find(fieldToExpand, {childDatabase.Val.Bindings.begin(), childDatabase.Val.Bindings.size()});
 					int64_t												indexRecordToExpandRelative				= (int64_t)indexRecordToExpand - childDatabase.Val.Offsets[0];
-					const ::gpk::SJSONReader							& childReader							= childDatabase.Val.Blocks[0].Reader;
+					const ::gpk::SJSONReader							& childReader							= childDatabase.Val.Blocks[0]->Reader;
 					if(0 == childReader.Tree.size()) // This database isn't loaded.
 						continue;
 
@@ -143,7 +144,7 @@ static	::gpk::error_t							generate_record_with_expansion			(const ::gpk::view_
 	int32_t												indexDB									= ::gpk::find(query.Database, ::gpk::view_array<const ::gpk::SKeyVal<::gpk::view_const_string, ::blt::SBlitterDB>>{databases.begin(), databases.size()});
 	rew_if(-1 == indexDB, "Database not found : %s", query.Database.begin());
 	::blt::TKeyValBlitterDB								dbObject								= databases[indexDB];
-	const ::gpk::SJSONReader							& dbReader								= dbObject.Val.Blocks[iBlock].Reader;
+	const ::gpk::SJSONReader							& dbReader								= dbObject.Val.Blocks[iBlock]->Reader;
 	if(0 == dbReader.Tree.size()) {
  		return 1;
 	}
@@ -211,17 +212,24 @@ static	::gpk::error_t							generate_record_with_expansion			(const ::gpk::view_
 	blockRange										= {blockStart, blockStop - blockStart};
 	for(uint32_t iBlock = blockStart; iBlock < blockStop; ++iBlock) {
 		int32_t												iNewBlock			= ::blt::blockFileLoad(database, iBlock);
+		bi_if(-1 == iNewBlock, "Stop block found: %u.", iNewBlock)
+		//	continue;
 		gpk_necall(iNewBlock, "Failed to load database block: %s.", "??");
-		const ::gpk::SJSONReader							& readerBlock		= database.Val.Blocks[iNewBlock].Reader;
+		const ::gpk::SJSONReader							& readerBlock		= database.Val.Blocks[iNewBlock]->Reader;
 		ree_if(0 == readerBlock.Tree.size(), "%s", "Invalid block data.");
 		const ::gpk::SJSONNode								& jsonRoot			= *readerBlock.Tree[0];
 		ree_if(::gpk::JSON_TYPE_ARRAY != jsonRoot.Object->Type, "Invalid json type: %s", ::gpk::get_value_label(jsonRoot.Object->Type).begin()); 
 		const uint64_t										offsetRecord		= database.Val.Offsets[iNewBlock];
-		const uint32_t										startRecordRelative	= ::gpk::max(0U, (uint32_t)(range.Offset - offsetRecord));
-		const uint32_t										stopRecordRelative	= ::gpk::min(database.Val.BlockSize - 1, (uint32_t)((range.Offset + range.Count) - offsetRecord));
+		const uint32_t										startRecordRelative	= ::gpk::max(0, (int32_t)(range.Offset - offsetRecord));
+		const uint32_t										stopRecordRelative	= ::gpk::min(::gpk::jsonArraySize(*readerBlock[0]) - 1U, ::gpk::min(database.Val.BlockSize - 1, (uint32_t)((range.Offset + range.Count) - offsetRecord)));
+		//::gpk::error_t										nodeIndexMax			= ::gpk::jsonArrayValueGet(*readerBlock[0], stopRecordRelative);
 		::gpk::SMinMax<uint32_t>							blockNodeIndices		= {};
 		blockNodeIndices.Min							= ::gpk::jsonArrayValueGet(*readerBlock[0], startRecordRelative);
 		blockNodeIndices.Max							= ::gpk::jsonArrayValueGet(*readerBlock[0], stopRecordRelative);
+		//	(-1 == nodeIndexMax)
+		//	? ::gpk::jsonArrayValueGet(*readerBlock[0], ::gpk::jsonArraySize(*readerBlock[0]) - 1)
+		//	: ::gpk::jsonArrayValueGet(*readerBlock[0], stopRecordRelative)
+		//	;
 		gpk_necall(nodeIndices.push_back(blockNodeIndices), "%s", "Out of memory?");
 		::gpk::view_const_string							record				= 
 			{ readerBlock.View[blockNodeIndices.Min].begin()
@@ -244,7 +252,7 @@ static	::gpk::error_t							generate_record_with_expansion			(const ::gpk::view_
 	const int32_t										iBlockElem								= ::blt::blockFileLoad(database, indexBlock);
 	gpk_necall(iBlockElem, "Failed to load database block: %s.", "??");
 
-	const ::gpk::SJSONReader							& readerBlock		= database.Val.Blocks[iBlockElem].Reader;
+	const ::gpk::SJSONReader							& readerBlock		= database.Val.Blocks[iBlockElem]->Reader;
 	ree_if(0 == readerBlock.Tree.size(), "%s", "Invalid block data.");
 
 	const ::gpk::SJSONNode								& jsonRoot			= *readerBlock.Tree[0];
