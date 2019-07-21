@@ -1,10 +1,5 @@
 {	"application"		:
 	{	
-		"bigbro": 
-		{	"listen_port"	: "15567"
-		,	"adapter"		: "1"
-		,	"remote_domain"	: "http://201.235.131.233"
-		},
 		"blitter": 
 		{	"path"	: 
 			{	"database"	: "../gpk_data/blitter_db"	
