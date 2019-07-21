@@ -113,7 +113,7 @@
 		::gpk::error_t										blockIndex					= ::gpk::find(block, {jsonDB.Val.BlockIndices.begin(), jsonDB.Val.BlockIndices.size()});
 		rvi_if(blockIndex, 0 <= blockIndex, "Block already loaded: %u.", block);
 	}
-	ree_if(-1 == ::gpk::find(block, ::gpk::view_const_uint32{jsonDB.Val.BlocksOnDisk}), "Block %u doesn't exist", block);
+	ree_if(-1 == ::gpk::find(block, ::gpk::view_const_uint32{jsonDB.Val.BlocksOnDisk}), "Block %u doesn't exist.", block);
 
 	::gpk::array_pod<char_t>							fileName					= folder;
 	fileName.push_back('/');
