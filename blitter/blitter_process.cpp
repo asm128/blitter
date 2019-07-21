@@ -1,6 +1,7 @@
 #include "blitter_process.h"
 #include "gpk_stdstring.h"
 #include "gpk_find.h"
+#include "gpk_expression.h"
 
 ::gpk::error_t									processThisTable			(const ::gpk::view_const_string & missPath, const ::gpk::view_array<const ::blt::TKeyValBlitterDB>	& databases, ::gpk::view_const_string & tableName)	{
 	::gpk::array_obj<::gpk::view_const_string>			fieldsToExpand;
@@ -65,7 +66,6 @@ static	::gpk::error_t							processRange
 		gpk_necall(output.push_back(']'), "%s", "Out of memory?");
 	}
 	else {
-	
 	}
 	return 0;
 }
@@ -76,7 +76,6 @@ static	::gpk::error_t							processRange
 	, ::gpk::array_pod<char_t>						& output
 	, const ::gpk::view_const_string				& folder
 	) {
-
 	for(uint32_t iDB = 0; iDB < databases.size(); ++iDB) {
 		if(query.Database == databases[iDB].Key) {
 			::blt::TKeyValBlitterDB								& database								= databases[iDB];
