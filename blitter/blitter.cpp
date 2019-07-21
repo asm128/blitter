@@ -227,8 +227,29 @@
 		}
 		if(gbit_true(jsonDB.Val.HostType, ::blt::DATABASE_HOST_REMOTE)) 
 			continue;
-		if(jsonDB.Val.BlockSize)
-			continue;	// block databases get loaded on-demand
+
+		if(jsonDB.Val.BlockSize) {	// block databases get loaded on-demand. However, we need to know which blocks are available on disk in order to fill missing blocks with empty records.
+			::gpk::view_const_string								extension;
+			::dbFileExtension(jsonDB.Val.HostType, jsonDB.Val.EncryptionKey.size() > 0, extension);
+			::gpk::array_pod<char_t>								folderName			= folder; 
+			gpk_necall(folderName.push_back('/'), "Failed to load database: %s. Out of memory?", dbfilename.begin());
+			gpk_necall(::blt::tableFolderName(folderName, jsonDB.Key, jsonDB.Val.BlockSize), "Failed to load database: %s. Out of memory?", dbfilename.begin());
+			::gpk::array_obj<::gpk::array_pod<char_t>>				blockFiles;
+			gpk_necall(::gpk::pathList({folderName.begin(), folderName.size()}, blockFiles), "Failed to load database: %s. Out of memory?", dbfilename.begin());
+			for(uint32_t iFile = 0; iFile < blockFiles.size(); ++iFile) {
+				const ::gpk::view_const_char							pathBlock			= blockFiles[iFile];
+				if(pathBlock.size() >= extension.size()) {
+					if(extension != ::gpk::view_const_string{&pathBlock[pathBlock.size() - extension.size()], extension.size()}) 
+						continue;
+				}
+				const ::gpk::view_const_string							blockDigits			= {&pathBlock[folderName.size() + jsonDB.Key.size() + 2], pathBlock.size() - folderName.size() - extension.size() - jsonDB.Key.size() - 3};
+				uint64_t												blockIndex			= 0;
+				gpk_necall(::gpk::parseIntegerDecimal(blockDigits, &blockIndex), "Failed to load database: %s. Out of memory?", dbfilename.begin());
+				info_printf("Database block found for '%s': %llu.", dbfilename.begin(), blockIndex);
+				gpk_necall(jsonDB.Val.BlocksOnDisk.push_back((uint32_t)blockIndex), "Failed to load database: %s. Out of memory?", dbfilename.begin());
+			}
+			continue;	
+		}
 		// -- Load json database file.
 		if(0 == databasesToLoad.size())
 			gpk_necall(::blt::tableFileLoad(jsonDB, folder), "Failed to load database: %s.", dbfilename.begin());

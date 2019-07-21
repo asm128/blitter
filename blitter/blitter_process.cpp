@@ -210,7 +210,7 @@ static	::gpk::error_t							generate_record_with_expansion			(const ::gpk::view_
 	( ::blt::TKeyValBlitterDB						& database
 	, const ::gpk::SRange<uint64_t>					& range
 	, ::gpk::array_obj<::gpk::view_const_string>	& output_records
-	, ::gpk::array_pod<::gpk::SMinMax<uint32_t>>	& nodeIndices
+	, ::gpk::array_pod<::gpk::SMinMax<uint32_t>>	& relativeIndices
 	, ::gpk::SRange<uint32_t>						& blockRange
 	, const ::gpk::view_const_string				& folder
 	) {
@@ -220,25 +220,19 @@ static	::gpk::error_t							generate_record_with_expansion			(const ::gpk::view_
 	blockRange										= {blockStart, blockStop - blockStart};
 	for(uint32_t iBlock = blockStart; iBlock < blockStop; ++iBlock) {
 		int32_t												iNewBlock			= ::blt::blockFileLoad(database, folder, iBlock);
-		bi_if(-1 == iNewBlock, "Stop block found: %u.", iNewBlock)
-		//	continue;
+		bi_if(-1 == iNewBlock, "Stop block found: %u.", iNewBlock);	// We need to improve this in order to support missing blocks.
 		gpk_necall(iNewBlock, "Failed to load database block: %s.", "??");
 		const ::gpk::SJSONReader							& readerBlock		= database.Val.Blocks[iNewBlock]->Reader;
 		ree_if(0 == readerBlock.Tree.size(), "%s", "Invalid block data.");
 		const ::gpk::SJSONNode								& jsonRoot			= *readerBlock.Tree[0];
 		ree_if(::gpk::JSON_TYPE_ARRAY != jsonRoot.Object->Type, "Invalid json type: %s", ::gpk::get_value_label(jsonRoot.Object->Type).begin()); 
+
 		const uint64_t										offsetRecord		= database.Val.Offsets[iNewBlock];
 		const uint32_t										startRecordRelative	= ::gpk::max(0, (int32_t)(range.Offset - offsetRecord));
 		const uint32_t										stopRecordRelative	= ::gpk::min(::gpk::jsonArraySize(*readerBlock[0]) - 1U, ::gpk::min(database.Val.BlockSize - 1, (uint32_t)((range.Offset + range.Count) - offsetRecord)));
-		//::gpk::error_t										nodeIndexMax			= ::gpk::jsonArrayValueGet(*readerBlock[0], stopRecordRelative);
 		::gpk::SMinMax<uint32_t>							blockNodeIndices		= {};
-		blockNodeIndices.Min							= ::gpk::jsonArrayValueGet(*readerBlock[0], startRecordRelative);
-		blockNodeIndices.Max							= ::gpk::jsonArrayValueGet(*readerBlock[0], stopRecordRelative);
-		//	(-1 == nodeIndexMax)
-		//	? ::gpk::jsonArrayValueGet(*readerBlock[0], ::gpk::jsonArraySize(*readerBlock[0]) - 1)
-		//	: ::gpk::jsonArrayValueGet(*readerBlock[0], stopRecordRelative)
-		//	;
-		gpk_necall(nodeIndices.push_back(blockNodeIndices), "%s", "Out of memory?");
+		gpk_necall(relativeIndices.push_back({startRecordRelative, stopRecordRelative}), "%s", "Out of memory?");
+
 		::gpk::view_const_string							record				= 
 			{ readerBlock.View[blockNodeIndices.Min].begin()
 			, (uint32_t)(readerBlock.View[blockNodeIndices.Max].end() - readerBlock.View[blockNodeIndices.Min].begin())

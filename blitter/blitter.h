@@ -22,50 +22,51 @@ namespace blt
 		::gpk::array_obj<uint32_t>							BlockIndices				= {};
 		::gpk::view_const_string							EncryptionKey				= {};
 		::blt::DATABASE_HOST								HostType					= ::blt::DATABASE_HOST_LOCAL;
+		::gpk::array_obj<uint32_t>							BlocksOnDisk				= {};
 	};
 
 	struct SBlitterQuery {
-		::gpk::view_const_string						Database					= "";
-		::gpk::SRange<uint64_t>							Range						= {0, MAX_TABLE_RECORD_COUNT};
-		::gpk::view_const_string						Expand						= "";
-		int64_t											Detail						= -1;
+		::gpk::view_const_string							Database					= "";
+		::gpk::SRange<uint64_t>								Range						= {0, MAX_TABLE_RECORD_COUNT};
+		::gpk::view_const_string							Expand						= "";
+		int64_t												Detail						= -1;
 	};
 
 	typedef ::gpk::SKeyVal<::gpk::view_const_string, ::blt::SBlitterDB>			TKeyValBlitterDB;
 
-	::gpk::error_t									configDatabases						(::gpk::array_obj<::blt::TKeyValBlitterDB> & databases, const ::gpk::SJSONReader & configReader, const int32_t indexConfigNode, const ::gpk::view_array<const ::gpk::view_const_string> & databasesToLoad, const ::gpk::view_const_string & folder);
-	::gpk::error_t									tableFolderName						(::gpk::array_pod<char_t> & foldername, const ::gpk::view_const_string & dbName, const uint32_t block);
-	::gpk::error_t									blockFileLoad						(::blt::TKeyValBlitterDB & jsonDB, const ::gpk::view_const_string & folder, uint32_t block);
-	::gpk::error_t									blockFileName						(::gpk::array_pod<char_t> & filename, const ::gpk::view_const_string & dbName, bool bEncrypted, const ::blt::DATABASE_HOST hostType, const uint32_t block);
-	::gpk::error_t									tableFileLoad						(::blt::TKeyValBlitterDB & jsonDB, const ::gpk::view_const_string & folder);
-	::gpk::error_t									tableFileName						(::gpk::array_pod<char_t> & filename, const ::blt::DATABASE_HOST & hostType, bool bEncrypted, const ::gpk::view_const_string & jsonDBKey);
+	::gpk::error_t										configDatabases						(::gpk::array_obj<::blt::TKeyValBlitterDB> & databases, const ::gpk::SJSONReader & configReader, const int32_t indexConfigNode, const ::gpk::view_array<const ::gpk::view_const_string> & databasesToLoad, const ::gpk::view_const_string & folder);
+	::gpk::error_t										tableFolderName						(::gpk::array_pod<char_t> & foldername, const ::gpk::view_const_string & dbName, const uint32_t block);
+	::gpk::error_t										blockFileLoad						(::blt::TKeyValBlitterDB & jsonDB, const ::gpk::view_const_string & folder, uint32_t block);
+	::gpk::error_t										blockFileName						(::gpk::array_pod<char_t> & filename, const ::gpk::view_const_string & dbName, bool bEncrypted, const ::blt::DATABASE_HOST hostType, const uint32_t block);
+	::gpk::error_t										tableFileLoad						(::blt::TKeyValBlitterDB & jsonDB, const ::gpk::view_const_string & folder);
+	::gpk::error_t										tableFileName						(::gpk::array_pod<char_t> & filename, const ::blt::DATABASE_HOST & hostType, bool bEncrypted, const ::gpk::view_const_string & jsonDBKey);
 
 	struct SBlitter {
-		::gpk::array_obj<::blt::TKeyValBlitterDB>		Databases							= {};
-		::blt::SBlitterQuery							Query								= {};
-		::gpk::SJSONFile								Config								= {};
-		::gpk::view_const_string						Folder								= {};
+		::gpk::array_obj<::blt::TKeyValBlitterDB>			Databases							= {};
+		::blt::SBlitterQuery								Query								= {};
+		::gpk::SJSONFile									Config								= {};
+		::gpk::view_const_string							Folder								= {};
 	};
 
 	//
-	::gpk::error_t									loadConfig							(::blt::SBlitter & appState, const ::gpk::view_const_string & jsonFileName);
-	::gpk::error_t									queryLoad							(::blt::SBlitterQuery& query, const ::gpk::view_array<const ::gpk::TKeyValConstString> keyvals);
+	::gpk::error_t										loadConfig							(::blt::SBlitter & appState, const ::gpk::view_const_string & jsonFileName);
+	::gpk::error_t										queryLoad							(::blt::SBlitterQuery& query, const ::gpk::view_array<const ::gpk::TKeyValConstString> keyvals);
 
-	::gpk::error_t									processQuery						
-		( ::gpk::array_obj<::blt::TKeyValBlitterDB>		& databases
-		, const ::blt::SBlitterQuery					& query
-		, ::gpk::array_pod<char_t>						& output
-		, const ::gpk::view_const_string				& folder
+	::gpk::error_t										processQuery						
+		( ::gpk::array_obj<::blt::TKeyValBlitterDB>	& databases
+		, const ::blt::SBlitterQuery				& query
+		, ::gpk::array_pod<char_t>					& output
+		, const ::gpk::view_const_string			& folder
 		);
 
 	struct SBlitterRequest {
-		::gpk::HTTP_METHOD								Method		;
-		::gpk::view_const_char							Path		;
-		::gpk::view_const_char							QueryString	;
-		::gpk::view_const_char							ContentBody	;
+		::gpk::HTTP_METHOD									Method		;
+		::gpk::view_const_char								Path		;
+		::gpk::view_const_char								QueryString	;
+		::gpk::view_const_char								ContentBody	;
 	};
 
-	static constexpr const uint32_t					CRC_SEED							= 18973;
+	static constexpr const uint32_t						CRC_SEED							= 18973;
 
 } // namespace
 
