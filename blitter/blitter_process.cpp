@@ -66,9 +66,10 @@ static	::gpk::error_t							processRange
 		gpk_necall(output.push_back(']'), "%s", "Out of memory?");
 	}
 	else {
-		//gpk_necall(output.push_back('['), "%s", "Out of memory?");
-		//for(uint32_t iLocalRecord = 0; )
-		//gpk_necall(output.push_back(']'), "%s", "Out of memory?");
+		gpk_necall(output.push_back('['), "%s", "Out of memory?");
+		for(uint32_t iBlockInfo = 0; iBlockInfo < rangeInfo.size(); ++iBlockInfo) {
+		}
+		gpk_necall(output.push_back(']'), "%s", "Out of memory?");
 	}
 	return 0;
 }
@@ -126,10 +127,18 @@ static	::gpk::error_t							processRange
 	const uint32_t										blockStart			= (0 == database.Val.BlockSize) ? 0				: (uint32_t)range.Offset / database.Val.BlockSize;
 	const uint32_t										blockStop			= (0 == database.Val.BlockSize) ? (uint32_t)-1	: (uint32_t)(maxRecord / database.Val.BlockSize);
 	blockRange										= {blockStart, blockStop - blockStart};
-	for(uint32_t iBlock = blockStart; iBlock < blockStop; ++iBlock) {
-		int32_t												iNewBlock			= ::blt::blockFileLoad(database, folder, iBlock);
-		bi_if(-1 == iNewBlock, "Stop block found: %u.", iNewBlock);	// We need to improve this in order to support missing blocks.
-		gpk_necall(iNewBlock, "Failed to load database block: %s.", "??");
+
+	::gpk::array_pod<uint32_t>							blocksToProcess		= {};
+	for(uint32_t iBlockOnDisk = 0; iBlockOnDisk < database.Val.BlocksOnDisk.size(); ++iBlockOnDisk) {
+		const uint32_t blockOnDisk = database.Val.BlocksOnDisk[iBlockOnDisk];
+		if(::gpk::in_range(blockOnDisk, blockStart, blockStop))
+			gpk_necall(blocksToProcess.push_back(blockOnDisk), "%s.", "Out of memory?");
+	}
+
+	for(uint32_t iBlock = 0; iBlock < blocksToProcess.size(); ++iBlock) {
+		const uint32_t										blockToLoad			= blocksToProcess[iBlock];
+		int32_t												iNewBlock			= ::blt::blockFileLoad(database, folder, blockToLoad);
+		gpk_necall(iNewBlock, "Missing block found: %u.", blockToLoad);	// We need to improve this in order to support missing blocks.
 		const ::gpk::SJSONReader							& readerBlock		= database.Val.Blocks[iNewBlock]->Reader;
 		ree_if(0 == readerBlock.Tree.size(), "%s", "Invalid block data.");
 		const ::gpk::SJSONNode								& jsonRoot			= *readerBlock.Tree[0];

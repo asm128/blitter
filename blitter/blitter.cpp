@@ -103,10 +103,9 @@
 			gpk_necall(::gpk::aesDecode(encrypted, jsonDB.Val.EncryptionKey, ::gpk::AES_LEVEL_256, deflated), "Failed to decompress file: '%s'", fileName.begin());
 			gpk_necall(::gpk::arrayInflate({&deflated[sizeof(uint32_t)], deflated.size() - sizeof(uint32_t)}, dbBlock.Bytes), "Failed to decompress file: '%s'", fileName.begin());
 		}
-		gpk_necall(::crcVerifyAndRemove(dbBlock.Bytes), "CRC check failed: %s.", "??");
-		return ::gpk::jsonParse(dbBlock.Reader, {dbBlock.Bytes.begin(), dbBlock.Bytes.size()});
 	}
-	return 0;
+	gpk_necall(::crcVerifyAndRemove(dbBlock.Bytes), "CRC check failed: %s.", "??");
+	return ::gpk::jsonParse(dbBlock.Reader, {dbBlock.Bytes.begin(), dbBlock.Bytes.size()});
 }
 
 ::gpk::error_t									blt::blockFileLoad			(::blt::TKeyValBlitterDB & jsonDB, const ::gpk::view_const_string & folder, uint32_t block)	{
@@ -150,9 +149,9 @@
 			gpk_necall(::gpk::aesDecode(encrypted, jsonDB.Val.EncryptionKey, ::gpk::AES_LEVEL_256, deflated), "Failed to decrypt file: '%s'", fileName.begin());
 			gpk_necall(::gpk::arrayInflate({&deflated[sizeof(uint32_t)], deflated.size() - sizeof(uint32_t)}, dbBlock.Bytes), "Failed to decompress file: '%s'", fileName.begin());
 		}
-		gpk_necall(::crcVerifyAndRemove(dbBlock.Bytes), "CRC check failed: %s.", "??");
-		gpk_necall(::gpk::jsonParse(dbBlock.Reader, {dbBlock.Bytes.begin(), dbBlock.Bytes.size()}), "Failed to parse json for database block file: '%s'", fileName.begin());
 	}
+	gpk_necall(::crcVerifyAndRemove(dbBlock.Bytes), "CRC check failed: %s.", "??");
+	gpk_necall(::gpk::jsonParse(dbBlock.Reader, {dbBlock.Bytes.begin(), dbBlock.Bytes.size()}), "Failed to parse json for database block file: '%s'", fileName.begin());
 	return idxBlock;
 }
 
@@ -231,9 +230,18 @@
 				const ::gpk::view_const_string							blockDigits			= {&pathBlock[folderName.size() + jsonDB.Key.size() + 2], pathBlock.size() - folderName.size() - extension.size() - jsonDB.Key.size() - 3};
 				uint64_t												blockIndex			= 0;
 				gpk_necall(::gpk::parseIntegerDecimal(blockDigits, &blockIndex), "Failed to load database: %s. Out of memory?", dbfilename.begin());
-				info_printf("Database block found for '%s': %llu.", dbfilename.begin(), blockIndex);
-				gpk_necall(jsonDB.Val.BlocksOnDisk.push_back((uint32_t)blockIndex), "Failed to load database: %s. Out of memory?", dbfilename.begin());
+				bool												bAdd				= true;
+				for(uint32_t i = 0; i < jsonDB.Val.BlocksOnDisk.size(); ++i) 
+					if(((uint32_t)blockIndex) < jsonDB.Val.BlocksOnDisk[i]) {
+						gpk_necall(jsonDB.Val.BlocksOnDisk.insert(i, (uint32_t)blockIndex), "%s.", "Out of memory?");
+						bAdd											= false;
+						break;
+					}
+				if(bAdd) 
+					gpk_necall(jsonDB.Val.BlocksOnDisk.push_back((uint32_t)blockIndex), "Failed to load database: %s. Out of memory?", dbfilename.begin());
 			}
+			for(uint32_t i = 0; i < jsonDB.Val.BlocksOnDisk.size(); ++i) 
+				info_printf("Database block found for '%s': %u.", dbfilename.begin(), jsonDB.Val.BlocksOnDisk[i]);
 			continue;	
 		}
 		// -- Load json database file.
