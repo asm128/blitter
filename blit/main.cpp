@@ -62,7 +62,7 @@ GPK_CGI_JSON_APP_IMPL();
 
 			int32_t												queryStringStart					= ::gpk::find('?', requestReceived.Path);
 			if(0 <= queryStringStart) {
-				requestReceived.QueryString						= {&requestReceived.Path[queryStringStart + 1], requestReceived.Path.size() - (uint32_t)queryStringStart};
+				requestReceived.QueryString						= {&requestReceived.Path[queryStringStart + 1], requestReceived.Path.size() - (uint32_t)queryStringStart - 1};
 				requestReceived.Path							= {&requestReceived.Path[0], (uint32_t)queryStringStart};
 			}
 		}

@@ -32,7 +32,7 @@
 	for(uint32_t iDB = 0; iDB < databases.size(); ++iDB) {
 		if(query.Database == databases[iDB].Key) {
 			::blt::TKeyValBlitterDB								& database								= databases[iDB];
-			if(0 == database.Val.BlockSize && 0 == query.Expand.size()) {
+			if(0 == database.Val.BlockSize) {// && 0 == query.Expand.size()) {
 				gpk_necall(::blt::tableFileLoad(database, folder), "Failed to load table: %s.", databases[iDB].Key.begin());
 				return ::blt::generate_output_for_db(databases, query, output, 0);
 			}
@@ -93,6 +93,9 @@ static	::gpk::error_t							generate_record_with_expansion			(const ::gpk::view_
 				for(uint32_t iDatabase = 0; iDatabase < databases.size(); ++iDatabase) {
 					const ::blt::TKeyValBlitterDB						& childDatabase							= databases[iDatabase];
 					bool												bAliasMatch								= -1 != ::gpk::find(fieldToExpand, {childDatabase.Val.Bindings.begin(), childDatabase.Val.Bindings.size()});
+					if(childDatabase.Key != fieldToExpand && false == bAliasMatch)
+						continue;
+
 					int64_t												indexRecordToExpandRelative				= (int64_t)indexRecordToExpand - childDatabase.Val.Offsets[0];
 					const ::gpk::SJSONReader							& childReader							= childDatabase.Val.Blocks[0]->Reader;
 					if(0 == childReader.Tree.size()) // This database isn't loaded.

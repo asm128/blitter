@@ -77,7 +77,8 @@
 	info_printf("Loading database file: %s.", fileName.begin());
 	const int32_t										idxBlock					= jsonDB.Val.Blocks.push_back({});
 	gpk_necall(idxBlock, "%s", "Out of memory?");
-	gpk_necall(jsonDB.Val.Offsets.push_back(0), "%s", "Out of memory?");
+	gpk_necall(jsonDB.Val.BlockIndices.push_back(idxBlock), "%s", "Out of memory?");
+	gpk_necall(jsonDB.Val.Offsets.push_back(0), "");
 	jsonDB.Val.Blocks[idxBlock].create();
 	::gpk::SJSONFile									& dbBlock					= *jsonDB.Val.Blocks[idxBlock];
 	if(gbit_false(jsonDB.Val.HostType, ::blt::DATABASE_HOST_DEFLATE)) {
@@ -115,7 +116,13 @@
 }
 
 ::gpk::error_t									blt::blockFileLoad			(::blt::TKeyValBlitterDB & jsonDB, const ::gpk::view_const_string & folder, uint32_t block)	{
-	ginfo_if(0 <= ::gpk::find(block, {jsonDB.Val.BlockIndices.begin(), jsonDB.Val.BlockIndices.size()}), "Block already loaded: %u.", block);
+	{
+		::gpk::error_t										blockIndex					= ::gpk::find(block, {jsonDB.Val.BlockIndices.begin(), jsonDB.Val.BlockIndices.size()});
+		if(0 <= blockIndex) {
+			info_printf("Block already loaded: %u.", block);
+			return blockIndex;
+		}
+	}
 	::gpk::array_pod<char_t>							fileName					= folder;
 	fileName.push_back('/');
 	gpk_necall(::blt::tableFolderName(fileName, jsonDB.Key, jsonDB.Val.BlockSize), "%s", "Out of memory?");
@@ -218,7 +225,7 @@
 				}
 			}
 		}
-		if(::blt::DATABASE_HOST_LOCAL != jsonDB.Val.HostType) 
+		if(gbit_true(jsonDB.Val.HostType, ::blt::DATABASE_HOST_REMOTE)) 
 			continue;
 		if(jsonDB.Val.BlockSize)
 			continue;	// block databases get loaded on-demand
