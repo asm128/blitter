@@ -22,13 +22,13 @@ namespace blt
 		);
 
 	::gpk::error_t																recordGet	
-	( ::blt::TKeyValBlitterDB			& database
-	, const uint64_t					absoluteIndex
-	, ::gpk::view_const_string			& output_record
-	, uint32_t							& blockIndex
-	, uint32_t							& nodeIndex
-	, const ::gpk::view_const_string	& folder
-	);
+		( ::blt::TKeyValBlitterDB			& database
+		, const uint64_t					absoluteIndex
+		, ::gpk::view_const_string			& output_record
+		, uint32_t							& nodeIndex
+		, uint32_t							& blockIndex
+		, const ::gpk::view_const_string	& folder
+		);
 
 
 } // namespace

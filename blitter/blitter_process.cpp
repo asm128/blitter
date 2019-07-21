@@ -29,13 +29,7 @@
 	, const ::gpk::view_const_string				& folder
 	) {
 
-	::gpk::array_obj<::gpk::view_const_string>				rangeViews	= {};
-	::gpk::array_pod<::gpk::SMinMax<uint32_t>>				nodeIndices = {};
-	::gpk::SRange<uint32_t>									blockRange	= {};
 	for(uint32_t iDB = 0; iDB < databases.size(); ++iDB) {
-		rangeViews	.clear();
-		nodeIndices	.clear();
-		blockRange											= {};
 		if(query.Database == databases[iDB].Key) {
 			::blt::TKeyValBlitterDB								& database								= databases[iDB];
 			if(0 == database.Val.BlockSize && 0 == query.Expand.size()) {
@@ -43,15 +37,27 @@
 				return ::blt::generate_output_for_db(databases, query, output, 0);
 			}
 			else {
-				gpk_necall(::blt::recordRange(database, query.Range, rangeViews, nodeIndices, blockRange, folder), "Failed to load record range. Offset: %llu. Length: %llu.", query.Range.Offset, query.Range.Count);
-				gpk_necall(output.push_back('['), "%s", "Out of memory?");
-				for(uint32_t iView = 0; iView < rangeViews.size(); ++iView) {
-					const ::gpk::view_const_string					rangeView								= rangeViews[iView];
-					gpk_necall(output.append(rangeView), "%s", "Out of memory?");
-					if(rangeViews.size() -1 != iView)
-						gpk_necall(output.push_back(','), "%s", "Out of memory?");
+				if(0 <= query.Detail) {
+					::gpk::view_const_string								outputRecord						= {};
+					uint32_t												nodeIndex							= (uint32_t)-1;
+					uint32_t												blockIndex							= (uint32_t)-1;
+					gpk_necall(::blt::recordGet(database, query.Detail, outputRecord, nodeIndex, blockIndex, folder), "Failed to load record range. Offset: %llu. Length: %llu.", query.Range.Offset, query.Range.Count);
+					gpk_necall(output.append(outputRecord), "%s", "Out of memory?");
 				}
-				gpk_necall(output.push_back(']'), "%s", "Out of memory?");
+				else {
+					::gpk::array_obj<::gpk::view_const_string>				rangeViews							= {};
+					::gpk::array_pod<::gpk::SMinMax<uint32_t>>				nodeIndices							= {};
+					::gpk::SRange<uint32_t>									blockRange							= {};
+					gpk_necall(::blt::recordRange(database, query.Range, rangeViews, nodeIndices, blockRange, folder), "Failed to load record range. Offset: %llu. Length: %llu.", query.Range.Offset, query.Range.Count);
+					gpk_necall(output.push_back('['), "%s", "Out of memory?");
+					for(uint32_t iView = 0; iView < rangeViews.size(); ++iView) {
+						const ::gpk::view_const_string					rangeView								= rangeViews[iView];
+						gpk_necall(output.append(rangeView), "%s", "Out of memory?");
+						if(rangeViews.size() -1 != iView)
+							gpk_necall(output.push_back(','), "%s", "Out of memory?");
+					}
+					gpk_necall(output.push_back(']'), "%s", "Out of memory?");
+				}
 				return 0;
 			}
 		}
@@ -244,11 +250,11 @@ static	::gpk::error_t							generate_record_with_expansion			(const ::gpk::view_
 	( ::blt::TKeyValBlitterDB			& database
 	, const uint64_t					absoluteIndex
 	, ::gpk::view_const_string			& output_record
-	, uint32_t							& blockIndex
 	, uint32_t							& nodeIndex
+	, uint32_t							& blockIndex
 	, const ::gpk::view_const_string	& folder
 	) {
-	const uint32_t										indexBlock								= (0 == database.Val.BlockSize) ? (uint32_t)-1	: (uint32_t)(absoluteIndex / database.Val.BlockSize + one_if(absoluteIndex % database.Val.BlockSize) + 1);
+	const uint32_t										indexBlock								= (0 == database.Val.BlockSize) ? (uint32_t)-1	: (uint32_t)(absoluteIndex / database.Val.BlockSize);
 	const int32_t										iBlockElem								= ::blt::blockFileLoad(database, folder, indexBlock);
 	gpk_necall(iBlockElem, "Failed to load database block: %s.", "??");
 
