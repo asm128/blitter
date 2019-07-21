@@ -16,7 +16,7 @@ namespace blt
 		( ::blt::TKeyValBlitterDB						& database
 		, const ::gpk::SRange<uint64_t>					& range
 		, ::gpk::array_obj<::gpk::view_const_string>	& output_records
-		, ::gpk::array_pod<::gpk::SMinMax<uint32_t>>	& nodeIndices
+		, ::gpk::array_pod<::gpk::SMinMax<uint32_t>>	& relativeIndices
 		, ::gpk::SRange<uint32_t>						& blockRange
 		, const ::gpk::view_const_string				& folder
 		);
@@ -25,7 +25,7 @@ namespace blt
 		( ::blt::TKeyValBlitterDB			& database
 		, const uint64_t					absoluteIndex
 		, ::gpk::view_const_string			& output_record
-		, uint32_t							& nodeIndex
+		, uint32_t							& relativeIndex
 		, uint32_t							& blockIndex
 		, const ::gpk::view_const_string	& folder
 		);

@@ -2,24 +2,72 @@
 #include "gpk_stdstring.h"
 #include "gpk_find.h"
 
-::gpk::error_t							processThisTable			(const ::gpk::view_const_string & missPath, const ::gpk::view_array<const ::blt::TKeyValBlitterDB>	& databases, ::gpk::view_const_string & tableName)	{
-	::gpk::array_obj<::gpk::view_const_string>	fieldsToExpand;
+::gpk::error_t									processThisTable			(const ::gpk::view_const_string & missPath, const ::gpk::view_array<const ::blt::TKeyValBlitterDB>	& databases, ::gpk::view_const_string & tableName)	{
+	::gpk::array_obj<::gpk::view_const_string>			fieldsToExpand;
 	::gpk::split(missPath, '.', fieldsToExpand);
-	const ::gpk::view_const_string				fieldToExpand				= fieldsToExpand[fieldsToExpand.size() - 1];
+	const ::gpk::view_const_string						fieldToExpand				= fieldsToExpand[fieldsToExpand.size() - 1];
 	for(uint32_t iTable = 0; iTable < databases.size(); ++iTable) {
-		const ::blt::TKeyValBlitterDB					& dbKeyVal					= databases[iTable];
+		const ::blt::TKeyValBlitterDB						& dbKeyVal					= databases[iTable];
 		if(dbKeyVal.Key == fieldToExpand) {
-			tableName								= dbKeyVal.Key;
+			tableName										= dbKeyVal.Key;
 			return iTable;
 		}
 		for(uint32_t iAlias = 0; iAlias < dbKeyVal.Val.Bindings.size(); ++iAlias) {
 			if(dbKeyVal.Val.Bindings[iAlias] == fieldToExpand) {
-				tableName								= dbKeyVal.Key;
+				tableName										= dbKeyVal.Key;
 				return iTable;
 			}
 		}
 	}
 	return -1;
+}
+
+static	::gpk::error_t							processDetail						
+	( ::gpk::array_obj<::blt::TKeyValBlitterDB>		& databases
+	, const uint32_t								idxDatabase
+	, const ::blt::SBlitterQuery					& query
+	, ::gpk::array_pod<char_t>						& output
+	, const ::gpk::view_const_string				& folder
+	, const uint32_t								idxExpand
+	) {
+	::gpk::view_const_string								outputRecord						= {};
+	uint32_t												nodeIndex							= (uint32_t)-1;
+	uint32_t												blockIndex							= (uint32_t)-1;
+	gpk_necall(::blt::recordGet(databases[idxDatabase], query.Detail, outputRecord, nodeIndex, blockIndex, folder), "Failed to load record range. Offset: %llu. Length: %llu.", query.Range.Offset, query.Range.Count);
+	if(0 == query.Expand.size() || idxExpand >= query.Expand.size())
+		gpk_necall(output.append(outputRecord), "%s", "Out of memory?");
+	else {
+
+	}
+	return 0;
+}
+
+static	::gpk::error_t							processRange
+	( ::gpk::array_obj<::blt::TKeyValBlitterDB>		& databases
+	, const uint32_t								idxDatabase
+	, const ::blt::SBlitterQuery					& query
+	, ::gpk::array_pod<char_t>						& output
+	, const ::gpk::view_const_string				& folder
+	, const uint32_t								idxExpand
+	) {
+	::gpk::array_obj<::gpk::view_const_string>				rangeViews							= {};
+	::gpk::array_pod<::gpk::SMinMax<uint32_t>>				nodeIndices							= {};
+	::gpk::SRange<uint32_t>									blockRange							= {};
+	gpk_necall(::blt::recordRange(databases[idxDatabase], query.Range, rangeViews, nodeIndices, blockRange, folder), "Failed to load record range. Offset: %llu. Length: %llu.", query.Range.Offset, query.Range.Count);
+	if(0 == query.Expand.size() || idxExpand >= query.Expand.size()) {
+		gpk_necall(output.push_back('['), "%s", "Out of memory?");
+		for(uint32_t iView = 0; iView < rangeViews.size(); ++iView) {
+			const ::gpk::view_const_string					rangeView								= rangeViews[iView];
+			gpk_necall(output.append(rangeView), "%s", "Out of memory?");
+			if(rangeViews.size() -1 != iView)
+				gpk_necall(output.push_back(','), "%s", "Out of memory?");
+		}
+		gpk_necall(output.push_back(']'), "%s", "Out of memory?");
+	}
+	else {
+	
+	}
+	return 0;
 }
 
 ::gpk::error_t									blt::processQuery						
@@ -37,35 +85,16 @@
 				return ::blt::generate_output_for_db(databases, query, output, 0);
 			}
 			else {
-				if(0 <= query.Detail) {
-					::gpk::view_const_string								outputRecord						= {};
-					uint32_t												nodeIndex							= (uint32_t)-1;
-					uint32_t												blockIndex							= (uint32_t)-1;
-					gpk_necall(::blt::recordGet(database, query.Detail, outputRecord, nodeIndex, blockIndex, folder), "Failed to load record range. Offset: %llu. Length: %llu.", query.Range.Offset, query.Range.Count);
-					gpk_necall(output.append(outputRecord), "%s", "Out of memory?");
-				}
-				else {
-					::gpk::array_obj<::gpk::view_const_string>				rangeViews							= {};
-					::gpk::array_pod<::gpk::SMinMax<uint32_t>>				nodeIndices							= {};
-					::gpk::SRange<uint32_t>									blockRange							= {};
-					gpk_necall(::blt::recordRange(database, query.Range, rangeViews, nodeIndices, blockRange, folder), "Failed to load record range. Offset: %llu. Length: %llu.", query.Range.Offset, query.Range.Count);
-					gpk_necall(output.push_back('['), "%s", "Out of memory?");
-					for(uint32_t iView = 0; iView < rangeViews.size(); ++iView) {
-						const ::gpk::view_const_string					rangeView								= rangeViews[iView];
-						gpk_necall(output.append(rangeView), "%s", "Out of memory?");
-						if(rangeViews.size() -1 != iView)
-							gpk_necall(output.push_back(','), "%s", "Out of memory?");
-					}
-					gpk_necall(output.push_back(']'), "%s", "Out of memory?");
-				}
-				return 0;
+				if(0 <= query.Detail)
+					return ::processDetail(databases, iDB, query, output, folder, 0);
+				else 
+					return ::processRange(databases, iDB, query, output, folder, 0);
 			}
 		}
 	}
 	error_printf("Database not found: %s.", query.Database.begin());
 	return -1;
 }
-
 
 static	::gpk::error_t							generate_record_with_expansion			(const ::gpk::view_array<const ::blt::TKeyValBlitterDB> & databases, const ::gpk::SJSONReader & databaseReader, const ::gpk::SJSONNode	& databaseNode, ::gpk::array_pod<char_t> & output, const ::gpk::view_array<const ::gpk::view_const_string> & fieldsToExpand, uint32_t indexFieldToExpand)	{
 	//const ::gpk::SJSONNode								& node									= *databaseReader.Tree[iRecord];
@@ -242,12 +271,11 @@ static	::gpk::error_t							generate_record_with_expansion			(const ::gpk::view_
 	return 0;
 }
 
-
 ::gpk::error_t									blt::recordGet	
 	( ::blt::TKeyValBlitterDB			& database
 	, const uint64_t					absoluteIndex
 	, ::gpk::view_const_string			& output_record
-	, uint32_t							& nodeIndex
+	, uint32_t							& relativeIndex
 	, uint32_t							& blockIndex
 	, const ::gpk::view_const_string	& folder
 	) {
@@ -261,10 +289,8 @@ static	::gpk::error_t							generate_record_with_expansion			(const ::gpk::view_
 	const ::gpk::SJSONNode								& jsonRoot								= *readerBlock.Tree[0];
 	ree_if(::gpk::JSON_TYPE_ARRAY != jsonRoot.Object->Type, "Invalid json type: %s", ::gpk::get_value_label(jsonRoot.Object->Type).begin()); 
 	const uint64_t										offsetRecord							= database.Val.Offsets[iBlockElem];
-	const uint32_t										startRecordRelative						= ::gpk::max(0U, (uint32_t)(absoluteIndex - offsetRecord));
-
+	relativeIndex									= ::gpk::max(0U, (uint32_t)(absoluteIndex - offsetRecord));
 	blockIndex										= iBlockElem;
-	nodeIndex										= ::gpk::jsonArrayValueGet(*readerBlock[0], startRecordRelative);
-	output_record									= readerBlock.View[nodeIndex];
+	output_record									= readerBlock.View[::gpk::jsonArrayValueGet(*readerBlock[0], relativeIndex)];
 	return 0;
 }
