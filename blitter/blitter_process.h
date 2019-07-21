@@ -18,14 +18,16 @@ namespace blt
 		, ::gpk::array_obj<::gpk::view_const_string>	& output_records
 		, ::gpk::array_pod<::gpk::SMinMax<uint32_t>>	& nodeIndices
 		, ::gpk::SRange<uint32_t>						& blockRange
+		, const ::gpk::view_const_string				& folder
 		);
 
 	::gpk::error_t																recordGet	
-	( ::blt::TKeyValBlitterDB	& database
-	, const uint64_t			absoluteIndex
-	, ::gpk::view_const_string	& output_record
-	, uint32_t					& blockIndex
-	, uint32_t					& nodeIndex
+	( ::blt::TKeyValBlitterDB			& database
+	, const uint64_t					absoluteIndex
+	, ::gpk::view_const_string			& output_record
+	, uint32_t							& blockIndex
+	, uint32_t							& nodeIndex
+	, const ::gpk::view_const_string	& folder
 	);
 
 

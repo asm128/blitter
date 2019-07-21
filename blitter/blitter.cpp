@@ -114,9 +114,10 @@
 	return 0;
 }
 
-::gpk::error_t									blt::blockFileLoad			(::blt::TKeyValBlitterDB & jsonDB, uint32_t block)	{
+::gpk::error_t									blt::blockFileLoad			(::blt::TKeyValBlitterDB & jsonDB, const ::gpk::view_const_string & folder, uint32_t block)	{
 	ginfo_if(0 <= ::gpk::find(block, {jsonDB.Val.BlockIndices.begin(), jsonDB.Val.BlockIndices.size()}), "Block already loaded: %u.", block);
-	::gpk::array_pod<char_t>							fileName					= {};
+	::gpk::array_pod<char_t>							fileName					= folder;
+	fileName.push_back('/');
 	gpk_necall(::blt::tableFolderName(fileName, jsonDB.Key, jsonDB.Val.BlockSize), "%s", "Out of memory?");
 	fileName.push_back('/');
 	gpk_necall(::blt::blockFileName(fileName, jsonDB.Key, jsonDB.Val.EncryptionKey.size() > 0, jsonDB.Val.HostType, block), "%s", "Out of memory?");
