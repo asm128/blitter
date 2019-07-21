@@ -43,8 +43,6 @@
 				return ::blt::generate_output_for_db(databases, query, output, 0);
 			}
 			else {
-				uint32_t										iBlock									= (0 == database.Val.BlockSize) ? 0 : (uint32_t)(query.Range.Offset / database.Val.BlockSize);
-				gpk_necall(::blt::blockFileLoad(database, folder, iBlock), "Failed to load block: %u.", iBlock);
 				gpk_necall(::blt::recordRange(database, query.Range, rangeViews, nodeIndices, blockRange, folder), "Failed to load record range. Offset: %llu. Length: %llu.", query.Range.Offset, query.Range.Count);
 				gpk_necall(output.push_back('['), "%s", "Out of memory?");
 				for(uint32_t iView = 0; iView < rangeViews.size(); ++iView) {
