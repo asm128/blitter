@@ -8,5 +8,5 @@ copy *.json ..\..\Win32.Debug\*.*
 copy *.json ..\..\x64.Release\*.*
 copy *.json ..\..\x64.Debug\*.*
 
-cd ..\..\gpk_data\blitter_db
+cd ..\..\blitdb
 all.bat

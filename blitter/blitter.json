@@ -2,8 +2,8 @@
 	{	
 		"blitter": 
 		{	"path"	: 
-			{	"database"	: "../gpk_data/blitter_db"	
-			,	"cache"		: "../gpk_data/blitter_cache"	
+			{	"database"	: "../blitdb"	
+			,	"cache"		: "../blitdb/cache"	
 			},
 			"database"		  : 
 			[	{ "source" : "local"  , "name": "website"		, "bind" : ["website"		, ], "deflate" : true }
