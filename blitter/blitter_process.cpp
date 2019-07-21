@@ -244,7 +244,7 @@ static	::gpk::error_t							generate_record_with_expansion			(const ::gpk::view_
 	) {
 	const uint64_t										maxRecord			= ((range.Count == ::blt::MAX_TABLE_RECORD_COUNT) ? range.Count : range.Offset + range.Count);
 	const uint32_t										blockStart			= (0 == database.Val.BlockSize) ? 0				: (uint32_t)range.Offset / database.Val.BlockSize;
-	const uint32_t										blockStop			= (0 == database.Val.BlockSize) ? (uint32_t)-1	: (uint32_t)(maxRecord / database.Val.BlockSize);/
+	const uint32_t										blockStop			= (0 == database.Val.BlockSize) ? (uint32_t)-1	: (uint32_t)(maxRecord / database.Val.BlockSize);
 	blockRange										= {blockStart, blockStop - blockStart};
 	for(uint32_t iBlock = blockStart; iBlock < blockStop; ++iBlock) {
 		int32_t												iNewBlock			= ::blt::blockFileLoad(database, folder, iBlock);

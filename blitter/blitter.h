@@ -35,11 +35,11 @@ namespace blt
 	typedef ::gpk::SKeyVal<::gpk::view_const_string, ::blt::SBlitterDB>			TKeyValBlitterDB;
 
 	::gpk::error_t										configDatabases						(::gpk::array_obj<::blt::TKeyValBlitterDB> & databases, const ::gpk::SJSONReader & configReader, const int32_t indexConfigNode, const ::gpk::view_array<const ::gpk::view_const_string> & databasesToLoad, const ::gpk::view_const_string & folder);
-	::gpk::error_t										tableFolderName						(::gpk::array_pod<char_t> & foldername, const ::gpk::view_const_string & dbName, const uint32_t block);
-	::gpk::error_t										blockFileLoad						(::blt::TKeyValBlitterDB & jsonDB, const ::gpk::view_const_string & folder, uint32_t block);
-	::gpk::error_t										blockFileName						(::gpk::array_pod<char_t> & filename, const ::gpk::view_const_string & dbName, bool bEncrypted, const ::blt::DATABASE_HOST hostType, const uint32_t block);
-	::gpk::error_t										tableFileLoad						(::blt::TKeyValBlitterDB & jsonDB, const ::gpk::view_const_string & folder);
-	::gpk::error_t										tableFileName						(::gpk::array_pod<char_t> & filename, const ::blt::DATABASE_HOST & hostType, bool bEncrypted, const ::gpk::view_const_string & jsonDBKey);
+	::gpk::error_t										blockFileLoad						(::blt::TKeyValBlitterDB & jsonDB		, const ::gpk::view_const_string & folder, uint32_t block);
+	::gpk::error_t										tableFileLoad						(::blt::TKeyValBlitterDB & jsonDB		, const ::gpk::view_const_string & folder);
+	::gpk::error_t										tableFolderName						(::gpk::array_pod<char_t> & foldername	, const ::gpk::view_const_string & dbName, const uint32_t block);
+	::gpk::error_t										blockFileName						(::gpk::array_pod<char_t> & filename	, const ::gpk::view_const_string & dbName, bool bEncrypted, const ::blt::DATABASE_HOST hostType, const uint32_t block);
+	::gpk::error_t										tableFileName						(::gpk::array_pod<char_t> & filename	, const ::blt::DATABASE_HOST & hostType, bool bEncrypted, const ::gpk::view_const_string & jsonDBKey);
 
 	struct SBlitter {
 		::gpk::array_obj<::blt::TKeyValBlitterDB>			Databases							= {};
