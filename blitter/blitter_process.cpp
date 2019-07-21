@@ -258,13 +258,13 @@ static	::gpk::error_t							generate_record_with_expansion			(const ::gpk::view_
 	const int32_t										iBlockElem								= ::blt::blockFileLoad(database, folder, indexBlock);
 	gpk_necall(iBlockElem, "Failed to load database block: %s.", "??");
 
-	const ::gpk::SJSONReader							& readerBlock		= database.Val.Blocks[iBlockElem]->Reader;
+	const ::gpk::SJSONReader							& readerBlock							= database.Val.Blocks[iBlockElem]->Reader;
 	ree_if(0 == readerBlock.Tree.size(), "%s", "Invalid block data.");
 
-	const ::gpk::SJSONNode								& jsonRoot			= *readerBlock.Tree[0];
+	const ::gpk::SJSONNode								& jsonRoot								= *readerBlock.Tree[0];
 	ree_if(::gpk::JSON_TYPE_ARRAY != jsonRoot.Object->Type, "Invalid json type: %s", ::gpk::get_value_label(jsonRoot.Object->Type).begin()); 
-	const uint64_t										offsetRecord		= database.Val.Offsets[iBlockElem];
-	const uint32_t										startRecordRelative	= ::gpk::max(0U, (uint32_t)(absoluteIndex - offsetRecord));
+	const uint64_t										offsetRecord							= database.Val.Offsets[iBlockElem];
+	const uint32_t										startRecordRelative						= ::gpk::max(0U, (uint32_t)(absoluteIndex - offsetRecord));
 
 	blockIndex										= iBlockElem;
 	nodeIndex										= ::gpk::jsonArrayValueGet(*readerBlock[0], startRecordRelative);
