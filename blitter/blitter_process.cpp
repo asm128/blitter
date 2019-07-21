@@ -51,21 +51,24 @@ static	::gpk::error_t							processRange
 	, const ::gpk::view_const_string				& folder
 	, const uint32_t								idxExpand
 	) {
-	::gpk::array_obj<::gpk::view_const_string>				rangeViews							= {};
-	::gpk::array_pod<::gpk::SMinMax<uint32_t>>				nodeIndices							= {};
+	::gpk::array_pod<::gpk::SMinMax<uint32_t>>				relativeIndices						= {};
 	::gpk::SRange<uint32_t>									blockRange							= {};
-	gpk_necall(::blt::recordRange(databases[idxDatabase], query.Range, rangeViews, nodeIndices, blockRange, folder), "Failed to load record range. Offset: %llu. Length: %llu.", query.Range.Offset, query.Range.Count);
+	::gpk::array_obj<::blt::SRangeBlockInfo>				rangeInfo							= {};
+	gpk_necall(::blt::recordRange(databases[idxDatabase], query.Range, folder, rangeInfo, blockRange), "Failed to load record range. Offset: %llu. Length: %llu.", query.Range.Offset, query.Range.Count);
 	if(0 == query.Expand.size() || idxExpand >= query.Expand.size()) {
 		gpk_necall(output.push_back('['), "%s", "Out of memory?");
-		for(uint32_t iView = 0; iView < rangeViews.size(); ++iView) {
-			const ::gpk::view_const_string					rangeView								= rangeViews[iView];
+		for(uint32_t iView = 0; iView < rangeInfo.size(); ++iView) {
+			const ::gpk::view_const_string					rangeView								= rangeInfo[iView].OutputRecords;
 			gpk_necall(output.append(rangeView), "%s", "Out of memory?");
-			if(rangeViews.size() -1 != iView)
+			if(rangeInfo.size() -1 != iView)
 				gpk_necall(output.push_back(','), "%s", "Out of memory?");
 		}
 		gpk_necall(output.push_back(']'), "%s", "Out of memory?");
 	}
 	else {
+		//gpk_necall(output.push_back('['), "%s", "Out of memory?");
+		//for(uint32_t iLocalRecord = 0; )
+		//gpk_necall(output.push_back(']'), "%s", "Out of memory?");
 	}
 	return 0;
 }
@@ -115,10 +118,9 @@ static	::gpk::error_t							processRange
 ::gpk::error_t									blt::recordRange
 	( ::blt::TKeyValBlitterDB						& database
 	, const ::gpk::SRange<uint64_t>					& range
-	, ::gpk::array_obj<::gpk::view_const_string>	& output_records
-	, ::gpk::array_pod<::gpk::SMinMax<uint32_t>>	& relativeIndices
-	, ::gpk::SRange<uint32_t>						& blockRange
 	, const ::gpk::view_const_string				& folder
+	, ::gpk::array_obj<::blt::SRangeBlockInfo>		& output_records
+	, ::gpk::SRange<uint32_t>						& blockRange
 	) {
 	const uint64_t										maxRecord			= ((range.Count == ::blt::MAX_TABLE_RECORD_COUNT) ? range.Count : range.Offset + range.Count);
 	const uint32_t										blockStart			= (0 == database.Val.BlockSize) ? 0				: (uint32_t)range.Offset / database.Val.BlockSize;
@@ -134,19 +136,19 @@ static	::gpk::error_t							processRange
 		ree_if(::gpk::JSON_TYPE_ARRAY != jsonRoot.Object->Type, "Invalid json type: %s", ::gpk::get_value_label(jsonRoot.Object->Type).begin()); 
 
 		const uint64_t										offsetRecord		= database.Val.Offsets[iNewBlock];
-		const uint32_t										startRecordRelative	= ::gpk::max(0, (int32_t)(range.Offset - offsetRecord));
-		const uint32_t										stopRecordRelative	= ::gpk::min(::gpk::jsonArraySize(*readerBlock[0]) - 1U, ::gpk::min(database.Val.BlockSize - 1, (uint32_t)((range.Offset + range.Count) - offsetRecord)));
+		::blt::SRangeBlockInfo		rangeInfo = {};
+		rangeInfo.RelativeIndices.Min	= ::gpk::max(0, (int32_t)(range.Offset - offsetRecord));
+		rangeInfo.RelativeIndices.Max	= ::gpk::min(::gpk::jsonArraySize(*readerBlock[0]) - 1U, ::gpk::min(database.Val.BlockSize - 1, (uint32_t)((range.Offset + range.Count) - offsetRecord)));
+		
 		::gpk::SMinMax<int32_t>								blockNodeIndices	= 
-			{ ::gpk::jsonArrayValueGet(jsonRoot, startRecordRelative)
-			, ::gpk::jsonArrayValueGet(jsonRoot, stopRecordRelative)
+			{ ::gpk::jsonArrayValueGet(jsonRoot, rangeInfo.RelativeIndices.Min)
+			, ::gpk::jsonArrayValueGet(jsonRoot, rangeInfo.RelativeIndices.Max)
 			};
-		gpk_necall(relativeIndices.push_back({startRecordRelative, stopRecordRelative}), "%s", "Out of memory?");
-
-		::gpk::view_const_string							record				= 
+		rangeInfo.OutputRecords							= 
 			{ readerBlock.View[blockNodeIndices.Min].begin()
 			, (uint32_t)(readerBlock.View[blockNodeIndices.Max].end() - readerBlock.View[blockNodeIndices.Min].begin())
 			};
-		gpk_necall(output_records.push_back(record), "%s", "Out of memory?");
+		gpk_necall(output_records.push_back(rangeInfo), "%s", "Out of memory?");
 	}
 	return 0;
 }

@@ -12,13 +12,17 @@ namespace blt
 		, int32_t													iBlock
 		);
 
+	struct SRangeBlockInfo {
+		::gpk::view_const_string					OutputRecords		= {};
+		::gpk::SMinMax<uint32_t>					RelativeIndices		= {};
+	};
+
 	::gpk::error_t																recordRange	
 		( ::blt::TKeyValBlitterDB						& database
 		, const ::gpk::SRange<uint64_t>					& range
-		, ::gpk::array_obj<::gpk::view_const_string>	& output_records
-		, ::gpk::array_pod<::gpk::SMinMax<uint32_t>>	& relativeIndices
-		, ::gpk::SRange<uint32_t>						& blockRange
 		, const ::gpk::view_const_string				& folder
+		, ::gpk::array_obj<::blt::SRangeBlockInfo>		& output_records
+		, ::gpk::SRange<uint32_t>						& blockRange
 		);
 
 	::gpk::error_t																recordGet	
