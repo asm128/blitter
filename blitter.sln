@@ -26,6 +26,7 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{508F4DA5-865A-46A5-B9DE-1CA3B7EB2CCD}"
 	ProjectSection(SolutionItems) = preProject
 		blitter.json = blitter.json
+		copy_json.bat = copy_json.bat
 	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "reason", "reason\reason.vcxproj", "{5358C214-1784-4D7E-AC12-76CD0B9F548C}"
