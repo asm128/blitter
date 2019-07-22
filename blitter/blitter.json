@@ -6,7 +6,7 @@
 			,	"cache"		: "../blitdb/cache"	
 			},
 			"database"		  : 
-			[	{ "source" : "local"  , "name": "website"		, "bind" : ["website"		, ], "block": 5, }
+			[	{ "source" : "local"  , "name": "website"		, "bind" : ["website"		, ], }
 			,	{ "source" : "local"  , "name": "user"			, "bind" : ["referral"		, ], "block": 5, "deflate" : true }
 			,	{ "source" : "local"  , "name": "publisher"		, "bind" : ["publisher"		, ], "block": 5, "key": "MjAwOS0yMDE5IChjKSBUaGUgRHJhZ29u"}
 			,	{ "source" : "local"  , "name": "company"		, "bind" : ["owner"			, ], "block": 5, "deflate" : true, "key": "MjAwOS0yMDE5IChjKSBUaGUgRHJhZ29u"}
