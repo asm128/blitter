@@ -49,6 +49,7 @@ static	::gpk::error_t							processDetail
 					nextQuery.Database							= nextTable.Key;
 					nextQuery.Detail							= nextTableRecordIndex;
 					nextQuery.Expand							= query.Expand;
+					nextQuery.ExpansionKeys						= query.ExpansionKeys;
 					ce_if(::processDetail(loadCache, databases, iDB, nextQuery, output, folder, idxExpand + 1), "%s", "Failed to unroll detail.");
 					break;
 				}
@@ -56,6 +57,8 @@ static	::gpk::error_t							processDetail
 			appendStart									= digitsToDetailView.end();
 			appendStop									= currentRecordView.end();
 			gpk_necall(output.append(appendStart, (uint32_t)(appendStop - appendStart)), "%s", "Out of memory?");
+			OutputDebugStringA(output.begin());
+			OutputDebugStringA("\n");
 		}
 	}
 	return 0;
