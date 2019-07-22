@@ -15,6 +15,7 @@ namespace blt
 	struct SRangeBlockInfo {
 		::gpk::view_const_string					OutputRecords		= {};
 		::gpk::SMinMax<uint32_t>					RelativeIndices		= {};
+		uint32_t									BlockIndex			= 0;
 	};
 
 	::gpk::error_t																recordRange	

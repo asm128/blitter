@@ -38,7 +38,7 @@ static	::gpk::error_t							processDetail
 	if(0 == query.Expand.size() || idxExpand >= query.Expand.size())
 		gpk_necall(output.append(outputRecord), "%s", "Out of memory?");
 	else {
-
+		gpk_necall(output.append(outputRecord), "%s", "Out of memory?");
 	}
 	return 0;
 }
@@ -54,7 +54,8 @@ static	::gpk::error_t							processRange
 	::gpk::array_pod<::gpk::SMinMax<uint32_t>>				relativeIndices						= {};
 	::gpk::SRange<uint32_t>									blockRange							= {};
 	::gpk::array_obj<::blt::SRangeBlockInfo>				rangeInfo							= {};
-	gpk_necall(::blt::recordRange(databases[idxDatabase], query.Range, folder, rangeInfo, blockRange), "Failed to load record range. Offset: %llu. Length: %llu.", query.Range.Offset, query.Range.Count);
+	::blt::TKeyValBlitterDB									& databaseBlock						= databases[idxDatabase];
+	gpk_necall(::blt::recordRange(databaseBlock, query.Range, folder, rangeInfo, blockRange), "Failed to load record range. Offset: %llu. Length: %llu.", query.Range.Offset, query.Range.Count);
 	if(0 == query.Expand.size() || idxExpand >= query.Expand.size()) {
 		gpk_necall(output.push_back('['), "%s", "Out of memory?");
 		for(uint32_t iView = 0; iView < rangeInfo.size(); ++iView) {
@@ -67,7 +68,14 @@ static	::gpk::error_t							processRange
 	}
 	else {
 		gpk_necall(output.push_back('['), "%s", "Out of memory?");
-		for(uint32_t iBlockInfo = 0; iBlockInfo < rangeInfo.size(); ++iBlockInfo) {
+		for(uint32_t iView = 0; iView < rangeInfo.size(); ++iView) {
+			const ::blt::SRangeBlockInfo					& blockInfo								= rangeInfo[iView];
+			const ::gpk::view_const_string					rangeView								= blockInfo.OutputRecords;
+
+			
+			gpk_necall(output.append(rangeView), "%s", "Out of memory?");
+			if(rangeInfo.size() -1 != iView)
+				gpk_necall(output.push_back(','), "%s", "Out of memory?");
 		}
 		gpk_necall(output.push_back(']'), "%s", "Out of memory?");
 	}
@@ -145,15 +153,15 @@ static	::gpk::error_t							processRange
 		ree_if(::gpk::JSON_TYPE_ARRAY != jsonRoot.Object->Type, "Invalid json type: %s", ::gpk::get_value_label(jsonRoot.Object->Type).begin()); 
 
 		const uint64_t										offsetRecord		= database.Val.Offsets[iNewBlock];
-		::blt::SRangeBlockInfo		rangeInfo = {};
-		rangeInfo.RelativeIndices.Min	= ::gpk::max(0, (int32_t)(range.Offset - offsetRecord));
-		rangeInfo.RelativeIndices.Max	= ::gpk::min(::gpk::jsonArraySize(*readerBlock[0]) - 1U, ::gpk::min(database.Val.BlockSize - 1, (uint32_t)((range.Offset + range.Count) - offsetRecord)));
+		::blt::SRangeBlockInfo								rangeInfo			= {};
+		rangeInfo.RelativeIndices.Min					= ::gpk::max(0, (int32_t)(range.Offset - offsetRecord));
+		rangeInfo.RelativeIndices.Max					= ::gpk::min(::gpk::jsonArraySize(*readerBlock[0]) - 1U, ::gpk::min(database.Val.BlockSize - 1, (uint32_t)((range.Offset + range.Count) - offsetRecord)));
 		
 		::gpk::SMinMax<int32_t>								blockNodeIndices	= 
 			{ ::gpk::jsonArrayValueGet(jsonRoot, rangeInfo.RelativeIndices.Min)
 			, ::gpk::jsonArrayValueGet(jsonRoot, rangeInfo.RelativeIndices.Max)
 			};
-		rangeInfo.OutputRecords							= 
+		rangeInfo.OutputRecords							=
 			{ readerBlock.View[blockNodeIndices.Min].begin()
 			, (uint32_t)(readerBlock.View[blockNodeIndices.Max].end() - readerBlock.View[blockNodeIndices.Min].begin())
 			};
