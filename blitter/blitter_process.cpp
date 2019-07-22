@@ -99,7 +99,11 @@ static	::gpk::error_t							processRange
 				const int32_t									indexRecordNode							= ::gpk::jsonArrayValueGet(*currentDBBlock.Reader.Tree[0], iRecord);
 				const int32_t									indexValueNode							= ::gpk::jsonObjectValueGet(*currentDBBlock.Reader.Tree[indexRecordNode], currentDBBlock.Reader.View, fieldToExpand);
 				const ::gpk::view_const_string					currentRecordView						= currentDBBlock.Reader.View[indexRecordNode];
-				if(::gpk::JSON_TYPE_NUMBER != currentDBBlock.Reader.Object[indexValueNode].Type) {
+				if(0 > indexValueNode) {
+					info_printf("%s", "Field not found.");
+					gpk_necall(output.append(currentRecordView), "%s", "Out of memory?");
+				}
+				else if(::gpk::JSON_TYPE_NUMBER != currentDBBlock.Reader.Object[indexValueNode].Type) {
 					info_printf("Invalid value type: %s.", ::gpk::get_value_label(currentDBBlock.Reader.Object[indexValueNode].Type).begin());
 					gpk_necall(output.append(currentRecordView), "%s", "Out of memory?");
 				}
