@@ -38,7 +38,7 @@ struct SSplitParams {
 	::gpk::error_t								indexOfDot						= ::gpk::rfind('.', params.FileNameSrc);
 	::gpk::error_t								indexOfLastSlash				= ::gpk::findLastSlash(params.FileNameSrc);
 	params.PathWithoutExtension				= (indexOfDot > indexOfLastSlash) ? ::gpk::view_const_string{params.FileNameSrc.begin(), (uint32_t)indexOfDot} : params.FileNameSrc;
-	params.DBName							= (-1 == indexOfLastSlash) 
+	params.DBName							= (-1 == indexOfLastSlash)
 		? params.PathWithoutExtension
 		: ::gpk::view_const_string{&params.PathWithoutExtension[indexOfLastSlash], params.PathWithoutExtension.size() - indexOfLastSlash}
 		;	// First parameter is the only parameter, which is the name of the source file to be split.
@@ -73,7 +73,7 @@ struct SWriteCache {
 #endif
 	::gpk::clear(partFileName, pathToWriteTo, deflated, encrypted, verify);
 	uint64_t									crcToStore						= 0;
-	for(uint32_t i=0; i < partBytes.size(); ++i) 
+	for(uint32_t i=0; i < partBytes.size(); ++i)
 		crcToStore								+= ::gpk::noise1DBase(partBytes[i], ::blt::CRC_SEED);
 
 	gpk_necall(partBytes.append((char*)&crcToStore, sizeof(uint64_t)), "%s", "Out of memory?");;
@@ -124,17 +124,6 @@ struct SWriteCache {
 int										main							(int argc, char ** argv)		{
 	::SSplitParams								params							= {};
 	gpk_necall(::loadParams(params, argc, argv), "%s", "");
-
-	::gpk::array_pod<char_t>					dbFolderName					= {};
-	//gpk_necall(::blt::tableFolderName(dbFolderName, params.DBName, params.BlockSize), "%s", "??");
-	//gpk_necall(::gpk::pathCreate({dbFolderName.begin(), dbFolderName.size()}), "Failed to create database folder: %s.", dbFolderName.begin());
-	//info_printf("Output folder: %s.", dbFolderName.begin());
-	//if(dbFolderName.size() && dbFolderName[dbFolderName.size()-1] != '/' && dbFolderName[dbFolderName.size()-1] != '\\')
-	//	gpk_necall(dbFolderName.push_back('/'), "%s", "Out of memory?");
-	//else 
-	if(0 == dbFolderName.size())
-		gpk_necall(dbFolderName.append(::gpk::view_const_string{"./"}), "%s", "Out of memory?");
-
 	::gpk::SJSONFile							jsonFileToSplit					= {};
 	gpk_necall(::gpk::jsonFileRead(jsonFileToSplit, params.FileNameSrc), "Failed to load file: %s.", params.FileNameSrc.begin());
 	ree_if(0 == jsonFileToSplit.Reader.Tree.size(), "Invalid input format. %s", "File content is not a JSON array.");
@@ -143,5 +132,5 @@ int										main							(int argc, char ** argv)		{
 
 	::SWriteCache								blockCache						= {};
 	gpk_necall(::writePart(blockCache, params, jsonFileToSplit.Bytes), "%s", "Unknown error!");
-	return 0; 
+	return 0;
 }
