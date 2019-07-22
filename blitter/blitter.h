@@ -29,6 +29,7 @@ namespace blt
 		::gpk::view_const_string							Database					= "";
 		::gpk::SRange<uint64_t>								Range						= {0, MAX_TABLE_RECORD_COUNT};
 		::gpk::view_const_string							Expand						= "";
+		::gpk::array_obj<::gpk::view_const_string>			ExpansionKeys				= {};
 		int64_t												Detail						= -1;
 	};
 

@@ -2,26 +2,7 @@
 #include "gpk_stdstring.h"
 #include "gpk_find.h"
 #include "gpk_expression.h"
-
-::gpk::error_t									processThisTable			(const ::gpk::view_const_string & missPath, const ::gpk::view_array<const ::blt::TKeyValBlitterDB>	& databases, ::gpk::view_const_string & tableName)	{
-	::gpk::array_obj<::gpk::view_const_string>			fieldsToExpand;
-	::gpk::split(missPath, '.', fieldsToExpand);
-	const ::gpk::view_const_string						fieldToExpand				= fieldsToExpand[fieldsToExpand.size() - 1];
-	for(uint32_t iTable = 0; iTable < databases.size(); ++iTable) {
-		const ::blt::TKeyValBlitterDB						& dbKeyVal					= databases[iTable];
-		if(dbKeyVal.Key == fieldToExpand) {
-			tableName										= dbKeyVal.Key;
-			return iTable;
-		}
-		for(uint32_t iAlias = 0; iAlias < dbKeyVal.Val.Bindings.size(); ++iAlias) {
-			if(dbKeyVal.Val.Bindings[iAlias] == fieldToExpand) {
-				tableName										= dbKeyVal.Key;
-				return iTable;
-			}
-		}
-	}
-	return -1;
-}
+#include "gpk_parse.h"
 
 static	::gpk::error_t							processDetail
 	( ::blt::SLoadCache								& loadCache
@@ -56,8 +37,8 @@ static	::gpk::error_t							processRange
 	::gpk::array_pod<::gpk::SMinMax<uint32_t>>				relativeIndices						= {};
 	::gpk::SRange<uint32_t>									blockRange							= {};
 	::gpk::array_obj<::blt::SRangeBlockInfo>				rangeInfo							= {};
-	::blt::TKeyValBlitterDB									& databaseBlock						= databases[idxDatabase];
-	gpk_necall(::blt::recordRange(loadCache, databaseBlock, query.Range, folder, rangeInfo, blockRange), "Failed to load record range. Offset: %llu. Length: %llu.", query.Range.Offset, query.Range.Count);
+	::blt::TKeyValBlitterDB									& databaseToRead					= databases[idxDatabase];
+	gpk_necall(::blt::recordRange(loadCache, databaseToRead, query.Range, folder, rangeInfo, blockRange), "Failed to load record range. Offset: %llu. Length: %llu.", query.Range.Offset, query.Range.Count);
 	if(0 == query.Expand.size() || idxExpand >= query.Expand.size()) {
 		gpk_necall(output.push_back('['), "%s", "Out of memory?");
 		for(uint32_t iView = 0; iView < rangeInfo.size(); ++iView) {
@@ -70,15 +51,55 @@ static	::gpk::error_t							processRange
 	}
 	else {
 		gpk_necall(output.push_back('['), "%s", "Out of memory?");
+		const char*										appendStart								= 0;	// use this to keep track of the pointer of the source that we append to the output
+		const char*										appendStop								= 0;	// use this to keep track of the pointer of the source that we append to the output
 		for(uint32_t iView = 0; iView < rangeInfo.size(); ++iView) {
 			const ::blt::SRangeBlockInfo					& blockInfo								= rangeInfo[iView];
 			const ::gpk::view_const_string					rangeView								= blockInfo.OutputRecords;
-			const ::gpk::SJSONFile							& currentDBBlock						= *databaseBlock.Val.Blocks[blockInfo.BlockIndex];
-			(void)blockInfo		;
-			(void)rangeView		;
-			(void)currentDBBlock;
-			gpk_necall(output.append(rangeView), "%s", "Out of memory?");
-			if(rangeInfo.size() -1 != iView)
+			const ::gpk::SJSONFile							& currentDBBlock						= *databaseToRead.Val.Blocks[blockInfo.BlockIndex];
+			const ::gpk::SMinMax<uint32_t>					rangeToExpand							= blockInfo.RelativeIndices;
+			const ::gpk::view_const_string					fieldToExpand							= query.ExpansionKeys[idxExpand];
+			for(uint32_t iRecord = rangeToExpand.Min; iRecord < rangeToExpand.Max; ++iRecord) {
+				const int32_t									indexRecordNode							= ::gpk::jsonArrayValueGet(*currentDBBlock.Reader.Tree[0], iRecord);
+				const int32_t									indexValueNode							= ::gpk::jsonObjectValueGet(*currentDBBlock.Reader.Tree[indexRecordNode], currentDBBlock.Reader.View, fieldToExpand);
+				const ::gpk::view_const_string					currentRecordView						= currentDBBlock.Reader.View[indexRecordNode];
+				if(::gpk::JSON_TYPE_NUMBER != currentDBBlock.Reader.Object[indexValueNode].Type) {
+					info_printf("Invalid value type: %s.", ::gpk::get_value_label(currentDBBlock.Reader.Object[indexValueNode].Type).begin());
+					output.append(currentRecordView);
+				}
+				else {
+					uint64_t										nextTableRecordIndex					= (uint64_t)-1LL;
+					const ::gpk::view_const_string					digitsToDetailView						= currentDBBlock.Reader.View[indexValueNode];
+					gpk_necall(::gpk::parseIntegerDecimal(digitsToDetailView, &nextTableRecordIndex), "%s", "Out of memory?");
+
+					appendStart									= currentRecordView.begin();
+					appendStop									= digitsToDetailView.begin();
+					output.append(appendStart, (uint32_t)(appendStop - appendStart));
+					//OutputDebugStringA(output.begin());
+					//OutputDebugStringA("\n");
+					for(uint32_t iDB = 0; iDB < databases.size(); ++iDB) {
+						::blt::TKeyValBlitterDB							& nextTable								= databases[iDB];
+						if(nextTable.Key == fieldToExpand || 0 <= ::gpk::find(fieldToExpand, ::gpk::view_array<const ::gpk::view_const_string>{nextTable.Val.Bindings})) {
+							::blt::SBlitterQuery nextQuery;
+							nextQuery.Database							= nextTable.Key;
+							nextQuery.Detail							= nextTableRecordIndex;
+							nextQuery.Expand							= query.Expand;
+							ce_if(::processDetail(loadCache, databases, iDB, nextQuery, output, folder, idxExpand + 1), "%s", "Failed to unroll detail.");
+							//OutputDebugStringA(output.begin());
+							//OutputDebugStringA("\n");
+							break;
+						}
+					}
+					appendStart									= digitsToDetailView.end();
+					appendStop									= currentRecordView.end();
+					output.append(appendStart, (uint32_t)(appendStop - appendStart));
+					//OutputDebugStringA(output.begin());
+					//OutputDebugStringA("\n");
+				}
+				if(rangeToExpand.Max - 1 != iRecord)
+					gpk_necall(output.push_back(','), "%s", "Out of memory?");
+			}
+			if(rangeInfo.size() - 1 != iView)
 				gpk_necall(output.push_back(','), "%s", "Out of memory?");
 		}
 		gpk_necall(output.push_back(']'), "%s", "Out of memory?");
@@ -146,7 +167,7 @@ static	::gpk::error_t							processRange
 	::gpk::array_pod<uint32_t>							blocksToProcess		= {};
 	for(uint32_t iBlockOnDisk = 0; iBlockOnDisk < database.Val.BlocksOnDisk.size(); ++iBlockOnDisk) {
 		const uint32_t blockOnDisk = database.Val.BlocksOnDisk[iBlockOnDisk];
-		if(::gpk::in_range(blockOnDisk, blockStart, blockStop))
+		if(::gpk::in_range(blockOnDisk, blockStart, blockStop + 1))
 			gpk_necall(blocksToProcess.push_back(blockOnDisk), "%s.", "Out of memory?");
 	}
 
