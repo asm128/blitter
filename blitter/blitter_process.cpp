@@ -57,8 +57,6 @@ static	::gpk::error_t							processDetail
 			appendStart									= digitsToDetailView.end();
 			appendStop									= currentRecordView.end();
 			gpk_necall(output.append(appendStart, (uint32_t)(appendStop - appendStart)), "%s", "Out of memory?");
-			OutputDebugStringA(output.begin());
-			OutputDebugStringA("\n");
 		}
 	}
 	return 0;

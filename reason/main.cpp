@@ -124,13 +124,17 @@ struct SWriteCache {
 int										main							(int argc, char ** argv)		{
 	::SSplitParams								params							= {};
 	gpk_necall(::loadParams(params, argc, argv), "%s", "");
-	::gpk::SJSONFile							jsonFileToSplit					= {};
-	gpk_necall(::gpk::jsonFileRead(jsonFileToSplit, params.FileNameSrc), "Failed to load file: %s.", params.FileNameSrc.begin());
-	ree_if(0 == jsonFileToSplit.Reader.Tree.size(), "Invalid input format. %s", "File content is not a JSON array.");
-	ree_if(jsonFileToSplit.Reader.Object[0].Type != ::gpk::JSON_TYPE_ARRAY, "Invalid input format. %s", ::gpk::get_value_label(jsonFileToSplit.Reader.Object[0].Type).begin());
-	info_printf("Loaded file: %s. Size: %u bytes.", params.FileNameSrc.begin(), jsonFileToSplit.Bytes.size());
+	::gpk::array_pod<char_t>					bytesToSave						= {};
+	{
+		::gpk::SJSONFile							jsonFileToSplit					= {};
+		gpk_necall(::gpk::jsonFileRead(jsonFileToSplit, params.FileNameSrc), "Failed to load file: %s.", params.FileNameSrc.begin());
+		ree_if(0 == jsonFileToSplit.Reader.Tree.size(), "Invalid input format. %s", "File content is not a JSON array.");
+		ree_if(jsonFileToSplit.Reader.Object[0].Type != ::gpk::JSON_TYPE_ARRAY, "Invalid input format. %s", ::gpk::get_value_label(jsonFileToSplit.Reader.Object[0].Type).begin());
+		info_printf("Loaded file: %s. Size: %u bytes.", params.FileNameSrc.begin(), jsonFileToSplit.Bytes.size());
+		gpk_necall(::gpk::jsonWrite(jsonFileToSplit.Reader.Tree[0], jsonFileToSplit.Reader.View, bytesToSave), "Out of memory or corrupt json file: %s.", params.FileNameSrc.begin());
+	}
 
 	::SWriteCache								blockCache						= {};
-	gpk_necall(::writePart(blockCache, params, jsonFileToSplit.Bytes), "%s", "Unknown error!");
+	gpk_necall(::writePart(blockCache, params, bytesToSave), "%s", "Unknown error!");
 	return 0;
 }
