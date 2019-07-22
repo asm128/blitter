@@ -23,8 +23,9 @@
 	return -1;
 }
 
-static	::gpk::error_t							processDetail						
-	( ::gpk::array_obj<::blt::TKeyValBlitterDB>		& databases
+static	::gpk::error_t							processDetail
+	( ::blt::SLoadCache								& loadCache
+	, ::gpk::array_obj<::blt::TKeyValBlitterDB>		& databases
 	, const uint32_t								idxDatabase
 	, const ::blt::SBlitterQuery					& query
 	, ::gpk::array_pod<char_t>						& output
@@ -34,7 +35,7 @@ static	::gpk::error_t							processDetail
 	::gpk::view_const_string								outputRecord						= {};
 	uint32_t												nodeIndex							= (uint32_t)-1;
 	uint32_t												blockIndex							= (uint32_t)-1;
-	gpk_necall(::blt::recordGet(databases[idxDatabase], query.Detail, outputRecord, nodeIndex, blockIndex, folder), "Failed to load record range. Offset: %llu. Length: %llu.", query.Range.Offset, query.Range.Count);
+	gpk_necall(::blt::recordGet(loadCache, databases[idxDatabase], query.Detail, outputRecord, nodeIndex, blockIndex, folder), "Failed to load record range. Offset: %llu. Length: %llu.", query.Range.Offset, query.Range.Count);
 	if(0 == query.Expand.size() || idxExpand >= query.Expand.size())
 		gpk_necall(output.append(outputRecord), "%s", "Out of memory?");
 	else {
@@ -44,7 +45,8 @@ static	::gpk::error_t							processDetail
 }
 
 static	::gpk::error_t							processRange
-	( ::gpk::array_obj<::blt::TKeyValBlitterDB>		& databases
+	( ::blt::SLoadCache								& loadCache
+	, ::gpk::array_obj<::blt::TKeyValBlitterDB>		& databases
 	, const uint32_t								idxDatabase
 	, const ::blt::SBlitterQuery					& query
 	, ::gpk::array_pod<char_t>						& output
@@ -55,7 +57,7 @@ static	::gpk::error_t							processRange
 	::gpk::SRange<uint32_t>									blockRange							= {};
 	::gpk::array_obj<::blt::SRangeBlockInfo>				rangeInfo							= {};
 	::blt::TKeyValBlitterDB									& databaseBlock						= databases[idxDatabase];
-	gpk_necall(::blt::recordRange(databaseBlock, query.Range, folder, rangeInfo, blockRange), "Failed to load record range. Offset: %llu. Length: %llu.", query.Range.Offset, query.Range.Count);
+	gpk_necall(::blt::recordRange(loadCache, databaseBlock, query.Range, folder, rangeInfo, blockRange), "Failed to load record range. Offset: %llu. Length: %llu.", query.Range.Offset, query.Range.Count);
 	if(0 == query.Expand.size() || idxExpand >= query.Expand.size()) {
 		gpk_necall(output.push_back('['), "%s", "Out of memory?");
 		for(uint32_t iView = 0; iView < rangeInfo.size(); ++iView) {
@@ -71,8 +73,10 @@ static	::gpk::error_t							processRange
 		for(uint32_t iView = 0; iView < rangeInfo.size(); ++iView) {
 			const ::blt::SRangeBlockInfo					& blockInfo								= rangeInfo[iView];
 			const ::gpk::view_const_string					rangeView								= blockInfo.OutputRecords;
-
-			
+			const ::gpk::SJSONFile							& currentDBBlock						= *databaseBlock.Val.Blocks[blockInfo.BlockIndex];
+			(void)blockInfo		;
+			(void)rangeView		;
+			(void)currentDBBlock;
 			gpk_necall(output.append(rangeView), "%s", "Out of memory?");
 			if(rangeInfo.size() -1 != iView)
 				gpk_necall(output.push_back(','), "%s", "Out of memory?");
@@ -82,26 +86,28 @@ static	::gpk::error_t							processRange
 	return 0;
 }
 
-::gpk::error_t									blt::processQuery						
+::gpk::error_t									blt::processQuery
 	( ::gpk::array_obj<::blt::TKeyValBlitterDB>		& databases
 	, const ::blt::SBlitterQuery					& query
 	, ::gpk::array_pod<char_t>						& output
 	, const ::gpk::view_const_string				& folder
 	) {
+	::blt::SLoadCache									loadCache			= {};
 	for(uint32_t iDB = 0; iDB < databases.size(); ++iDB) {
 		if(query.Database == databases[iDB].Key) {
 			if(0 <= query.Detail)
-				return ::processDetail(databases, iDB, query, output, folder, 0);
-			else 
-				return ::processRange(databases, iDB, query, output, folder, 0);
+				return ::processDetail(loadCache, databases, iDB, query, output, folder, 0);
+			else
+				return ::processRange(loadCache, databases, iDB, query, output, folder, 0);
 		}
 	}
 	error_printf("Database not found: %s.", query.Database.begin());
 	return -1;
 }
 
-::gpk::error_t									blt::recordGet	
-	( ::blt::TKeyValBlitterDB			& database
+::gpk::error_t									blt::recordGet
+	( ::blt::SLoadCache					& loadCache
+	, ::blt::TKeyValBlitterDB			& database
 	, const uint64_t					absoluteIndex
 	, ::gpk::view_const_string			& output_record
 	, uint32_t							& relativeIndex
@@ -109,14 +115,14 @@ static	::gpk::error_t							processRange
 	, const ::gpk::view_const_string	& folder
 	) {
 	const uint32_t										indexBlock								= (0 == database.Val.BlockSize) ? (uint32_t)-1	: (uint32_t)(absoluteIndex / database.Val.BlockSize);
-	const int32_t										iBlockElem								= ::blt::blockFileLoad(database, folder, indexBlock);
+	const int32_t										iBlockElem								= ::blt::blockFileLoad(loadCache, database, folder, indexBlock);
 	gpk_necall(iBlockElem, "Failed to load database block: %s.", "??");
 
 	const ::gpk::SJSONReader							& readerBlock							= database.Val.Blocks[iBlockElem]->Reader;
 	ree_if(0 == readerBlock.Tree.size(), "%s", "Invalid block data.");
 
 	const ::gpk::SJSONNode								& jsonRoot								= *readerBlock.Tree[0];
-	ree_if(::gpk::JSON_TYPE_ARRAY != jsonRoot.Object->Type, "Invalid json type: %s", ::gpk::get_value_label(jsonRoot.Object->Type).begin()); 
+	ree_if(::gpk::JSON_TYPE_ARRAY != jsonRoot.Object->Type, "Invalid json type: %s", ::gpk::get_value_label(jsonRoot.Object->Type).begin());
 	const uint64_t										offsetRecord							= database.Val.Offsets[iBlockElem];
 	relativeIndex									= ::gpk::max(0U, (uint32_t)(absoluteIndex - offsetRecord));
 	blockIndex										= iBlockElem;
@@ -125,7 +131,8 @@ static	::gpk::error_t							processRange
 }
 
 ::gpk::error_t									blt::recordRange
-	( ::blt::TKeyValBlitterDB						& database
+	( ::blt::SLoadCache								& loadCache
+	, ::blt::TKeyValBlitterDB						& database
 	, const ::gpk::SRange<uint64_t>					& range
 	, const ::gpk::view_const_string				& folder
 	, ::gpk::array_obj<::blt::SRangeBlockInfo>		& output_records
@@ -145,19 +152,19 @@ static	::gpk::error_t							processRange
 
 	for(uint32_t iBlock = 0; iBlock < blocksToProcess.size(); ++iBlock) {
 		const uint32_t										blockToLoad			= blocksToProcess[iBlock];
-		int32_t												iNewBlock			= ::blt::blockFileLoad(database, folder, blockToLoad);
+		int32_t												iNewBlock			= ::blt::blockFileLoad(loadCache, database, folder, blockToLoad);
 		gpk_necall(iNewBlock, "Missing block found: %u.", blockToLoad);	// We need to improve this in order to support missing blocks.
 		const ::gpk::SJSONReader							& readerBlock		= database.Val.Blocks[iNewBlock]->Reader;
 		ree_if(0 == readerBlock.Tree.size(), "%s", "Invalid block data.");
 		const ::gpk::SJSONNode								& jsonRoot			= *readerBlock.Tree[0];
-		ree_if(::gpk::JSON_TYPE_ARRAY != jsonRoot.Object->Type, "Invalid json type: %s", ::gpk::get_value_label(jsonRoot.Object->Type).begin()); 
+		ree_if(::gpk::JSON_TYPE_ARRAY != jsonRoot.Object->Type, "Invalid json type: %s", ::gpk::get_value_label(jsonRoot.Object->Type).begin());
 
 		const uint64_t										offsetRecord		= database.Val.Offsets[iNewBlock];
 		::blt::SRangeBlockInfo								rangeInfo			= {};
 		rangeInfo.RelativeIndices.Min					= ::gpk::max(0, (int32_t)(range.Offset - offsetRecord));
 		rangeInfo.RelativeIndices.Max					= ::gpk::min(::gpk::jsonArraySize(*readerBlock[0]) - 1U, ::gpk::min(database.Val.BlockSize - 1, (uint32_t)((range.Offset + range.Count) - offsetRecord)));
-		
-		::gpk::SMinMax<int32_t>								blockNodeIndices	= 
+		rangeInfo.BlockIndex							= iNewBlock;
+		::gpk::SMinMax<int32_t>								blockNodeIndices	=
 			{ ::gpk::jsonArrayValueGet(jsonRoot, rangeInfo.RelativeIndices.Min)
 			, ::gpk::jsonArrayValueGet(jsonRoot, rangeInfo.RelativeIndices.Max)
 			};

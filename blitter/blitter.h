@@ -34,9 +34,14 @@ namespace blt
 
 	typedef ::gpk::SKeyVal<::gpk::view_const_string, ::blt::SBlitterDB>			TKeyValBlitterDB;
 
+	struct SLoadCache {
+		::gpk::array_pod<byte_t>							Deflated;
+		::gpk::array_pod<byte_t>							Encrypted;
+	};
+
 	::gpk::error_t										configDatabases						(::gpk::array_obj<::blt::TKeyValBlitterDB> & databases, const ::gpk::SJSONReader & configReader, const int32_t indexConfigNode, const ::gpk::view_array<const ::gpk::view_const_string> & databasesToLoad, const ::gpk::view_const_string & folder);
-	::gpk::error_t										blockFileLoad						(::blt::TKeyValBlitterDB & jsonDB		, const ::gpk::view_const_string & folder, uint32_t block);
-	::gpk::error_t										tableFileLoad						(::blt::TKeyValBlitterDB & jsonDB		, const ::gpk::view_const_string & folder);
+	::gpk::error_t										blockFileLoad						(::blt::SLoadCache & loadCache, ::blt::TKeyValBlitterDB & jsonDB		, const ::gpk::view_const_string & folder, uint32_t block);
+	::gpk::error_t										tableFileLoad						(::blt::SLoadCache & loadCache, ::blt::TKeyValBlitterDB & jsonDB		, const ::gpk::view_const_string & folder);
 	::gpk::error_t										tableFolderName						(::gpk::array_pod<char_t> & foldername	, const ::gpk::view_const_string & dbName, const uint32_t block);
 	::gpk::error_t										blockFileName						(::gpk::array_pod<char_t> & filename	, const ::gpk::view_const_string & dbName, bool bEncrypted, const ::blt::DATABASE_HOST hostType, const uint32_t block);
 	::gpk::error_t										tableFileName						(::gpk::array_pod<char_t> & filename	, const ::blt::DATABASE_HOST & hostType, bool bEncrypted, const ::gpk::view_const_string & jsonDBKey);
@@ -52,7 +57,7 @@ namespace blt
 	::gpk::error_t										loadConfig							(::blt::SBlitter & appState, const ::gpk::view_const_string & jsonFileName);
 	::gpk::error_t										queryLoad							(::blt::SBlitterQuery& query, const ::gpk::view_array<const ::gpk::TKeyValConstString> keyvals);
 
-	::gpk::error_t										processQuery						
+	::gpk::error_t										processQuery
 		( ::gpk::array_obj<::blt::TKeyValBlitterDB>	& databases
 		, const ::blt::SBlitterQuery				& query
 		, ::gpk::array_pod<char_t>					& output
