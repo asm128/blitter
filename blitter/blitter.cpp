@@ -24,7 +24,7 @@
 	if(0 > ::gpk::keyvalNumeric("limit", keyvals, query.Range.Count))
 		::gpk::keyvalNumeric("count", keyvals, query.Range.Count);
 
-	::gpk::error_t										indexExpand					= ::gpk::find("expand", keyvals);
+	const ::gpk::error_t								indexExpand					= ::gpk::find("expand", keyvals);
 	if(0 <= indexExpand) {
 		query.Expand									= keyvals[indexExpand].Val;
 		::gpk::split(query.Expand, '.', query.ExpansionKeys);

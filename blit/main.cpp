@@ -19,12 +19,12 @@
 		gpk_necall(::blt::queryLoad(query, qsKeyVals), "%s", "Out of memory?");
 	}
 	// --- Generate response
-	query.Database									= (request.Path.size() > 1) 
+	query.Database									= (request.Path.size() > 1)
 		? (('/' == request.Path[0]) ? ::gpk::view_const_string{&request.Path[1], request.Path.size() - 1} : ::gpk::view_const_string{request.Path.begin(), request.Path.size()})
 		: ::gpk::view_const_string{}
 		;
 	uint64_t											detail							= (uint64_t)-1LL;
-	{	// --- Retrieve detail part 
+	{	// --- Retrieve detail part
 		::gpk::view_const_string							strDetail						= {};
 		const ::gpk::error_t								indexOfLastBar					= ::gpk::rfind('/', query.Database);
 		const uint32_t										startOfDetail					= (uint32_t)(indexOfLastBar + 1);
@@ -37,15 +37,22 @@
 			}
 		}
 	}
+	const ::gpk::error_t								indexPath					= ::gpk::find('.', query.Database);
+	if(((uint32_t)indexPath + 1) < query.Database.size())
+		query.Path										= {&query.Database[indexPath + 1]	, query.Database.size() - (indexPath + 1)};
+
+	if(0 <= indexPath)
+		query.Database									= {query.Database.begin()			, (uint32_t)indexPath};
+
 	return 0;
 }
 
 GPK_CGI_JSON_APP_IMPL();
 
-::gpk::error_t									gpk_cgi_generate_output			(::gpk::SCGIRuntimeValues & runtimeValues, ::gpk::array_pod<char_t> & output)	{	
+::gpk::error_t									gpk_cgi_generate_output			(::gpk::SCGIRuntimeValues & runtimeValues, ::gpk::array_pod<char_t> & output)	{
 	::blt::SBlitter										app;
 	::gpk::array_obj<::gpk::TKeyValConstString>			environViews;
-	::gpk::environmentBlockViews(runtimeValues.EntryPointArgs.EnvironmentBlock, environViews);	
+	::gpk::environmentBlockViews(runtimeValues.EntryPointArgs.EnvironmentBlock, environViews);
 	::gpk::writeCGIEnvironToFile(environViews);
 	::blt::SBlitterRequest								requestReceived;
 	{
@@ -69,21 +76,21 @@ GPK_CGI_JSON_APP_IMPL();
 	}
 
 	gpk_necall(::requestProcess(app.Query, requestReceived), "%s", "Failed to process request.");
-	/*if(0 == ::gpk::keyValVerify(environViews, "REQUEST_METHOD", "GET")) {										*/
-	/*	output.append(::gpk::view_const_string{"{ \"status\" : 403, \"description\" :\"forbidden\" }\r\n"});	*/
-	/*	return 1;																								*/
-	/*}																											*/
-	gpk_necall(::blt::loadConfig(app, "blitter.json"), "%s", "Failed to load detail.");						
+	//if(0 == ::gpk::keyValVerify(environViews, "REQUEST_METHOD", "GET")) {
+	//	output.append(::gpk::view_const_string{"{ \"status\" : 403, \"description\" :\"forbidden\" }\r\n"});
+	//	return 1;
+	//}
+	gpk_necall(::blt::loadConfig(app, "blitter.json"), "%s", "Failed to load detail.");
 	::gpk::view_const_string							remoteAddr;
 	if(-1 != ::gpk::find("REMOTE_ADDR", environViews, remoteAddr)) {
 		gpk_necall(output.append(::gpk::view_const_string{"Content-type: application/json\r\n"}), "%s", "Out of memory?");
-		gpk_necall(output.append(::gpk::view_const_string{"\r\n"})								, "%s", "Out of memory?");	
+		gpk_necall(output.append(::gpk::view_const_string{"\r\n"})								, "%s", "Out of memory?");
 	}
-	gpk_necall(::blt::processQuery(app.Databases, app.Query, output, app.Folder), "%s", "Failed to load blitter databases.");	
-	if(output.size()) {						
-		OutputDebugStringA(output.begin());	
-		OutputDebugStringA("\n");			
-	}										
-	return 0;								
+	gpk_necall(::blt::processQuery(app.Databases, app.Query, output, app.Folder), "%s", "Failed to load blitter databases.");
+	//if(output.size()) {
+	//	OutputDebugStringA(output.begin());
+	//	OutputDebugStringA("\n");
+	//}
+	return 0;
 }
 
