@@ -122,6 +122,10 @@ static	::gpk::error_t							processRange
 	, const ::gpk::view_const_string				& folder
 	, const uint32_t								idxExpand
 	) {
+	if(0 == query.Range.Count) {
+		gpk_necall(output.append(::gpk::view_const_string{"[]"}), "%s", "Out of memory?");
+		return 0;
+	}
 	::gpk::array_pod<::gpk::SMinMax<uint32_t>>				relativeIndices						= {};
 	::gpk::SRange<uint32_t>									blockRange							= {};
 	::gpk::array_obj<::blt::SRangeBlockInfo>				rangeInfo							= {};
