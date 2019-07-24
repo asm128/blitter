@@ -205,6 +205,7 @@
 			w_if(errored(indexBindArray), "No bindings found for database file: %s.", dbfilename.begin())
 			else {
 				::gpk::error_t										sizeBindArray				= ::gpk::jsonArraySize(*configReader[indexBindArray]);
+				gpk_necall(sizeBindArray, "Cannot get size of array: %s.", "??");
 				gpk_necall(jsonDB.Val.Bindings.resize(sizeBindArray), "%s", "Out of memory?");;
 				for(uint32_t iBind = 0; iBind < jsonDB.Val.Bindings.size(); ++iBind) {
 					sprintf_s(temp, "[%u]", iBind);

@@ -48,9 +48,11 @@ static	::gpk::error_t							processDetail
 				const char										* appendStart						= currentRecordView.begin();
 				const char										* appendStop						= digitsToDetailView.begin();
 				gpk_necall(output.append(appendStart, (uint32_t)(appendStop - appendStart)), "%s", "Out of memory?");
+				bool bFound		= false;
 				for(uint32_t iDB = 0; iDB < databases.size(); ++iDB) {
 					::blt::TKeyValBlitterDB							& nextTable							= databases[iDB];
 					if(nextTable.Key == fieldToExpand || 0 <= ::gpk::find(fieldToExpand, ::gpk::view_array<const ::gpk::view_const_string>{nextTable.Val.Bindings})) {
+						bFound										= true;
 						::blt::SBlitterQuery nextQuery;
 						nextQuery.Database							= nextTable.Key;
 						nextQuery.Detail							= nextTableRecordIndex;
@@ -60,6 +62,8 @@ static	::gpk::error_t							processDetail
 						break;
 					}
 				}
+				if(false == bFound)
+					gpk_necall(output.append(::gpk::view_const_string{"{}"}), "%s", "?¿??");
 				appendStart									= digitsToDetailView.end();
 				appendStop									= currentRecordView.end();
 				gpk_necall(output.append(appendStart, (uint32_t)(appendStop - appendStart)), "%s", "Out of memory?");
