@@ -196,7 +196,7 @@ static	::gpk::error_t							processRange
 	if((0 < databaseToRead.Val.BlockSize && databaseToRead.Val.BlocksOnDisk.size())) {	// Fill leading records if the blocks don't exist.
 		const uint32_t											recordsToAvoid						= (uint32_t)((query.Range.Offset + query.Range.Count) % databaseToRead.Val.BlockSize);
 		const uint32_t											lastBlockId							= rangeInfo.size() ? rangeInfo[rangeInfo.size() - 1].BlockId : 0;
-		const uint32_t											emptyBlocks							= databaseToRead.Val.BlocksOnDisk[databaseToRead.Val.BlocksOnDisk.size() - 1] - lastBlockId;//(blockRange.Offset + blockRange.Count - 1) - lastBlockId;
+		const uint32_t											emptyBlocks							= (blockRange.Offset + blockRange.Count - 1) - lastBlockId;
 		if(emptyBlocks > 0) {
 			if(0 == recordsToAvoid)
 				gpk_necall(::fillEmptyBlocks(emptyBlockData, emptyBlocks - 1, false, output), "%s", "Out of memory?");
