@@ -130,33 +130,21 @@ static	::gpk::error_t							processRange
 	const ::gpk::view_const_string							empty_record		= "{},";
 	for(uint32_t iRecord = 0; iRecord < databaseToRead.Val.BlockSize; ++iRecord)
 		gpk_necall(emptyBlockData.append(empty_record), "%s", "Out of memory?");
-
 	if(emptyBlockData.size() > 0) // Remove last comma.
 		emptyBlockData.resize(emptyBlockData.size() - 1);
 
 	gpk_necall(::blt::recordRange(loadCache, databaseToRead, query.Range, folder, rangeInfo, blockRange), "Failed to load record range. Offset: %llu. Length: %llu.", query.Range.Offset, query.Range.Count);
-
-	::gpk::SMinMax<uint32_t>								minMaxBlocksOnDisk					= {};
-	for(uint32_t iBlockOnDisk = 0; iBlockOnDisk < databaseToRead.Val.BlocksOnDisk.size(); ++iBlockOnDisk) {
-		const uint32_t											blockOnDisk							= databaseToRead.Val.BlocksOnDisk[iBlockOnDisk];
-		if(::gpk::in_range(blockOnDisk, blockRange.Offset, blockRange.Offset + blockRange.Count)) {
-				 if(blockOnDisk > minMaxBlocksOnDisk.Max) minMaxBlocksOnDisk.Max = blockOnDisk;
-			else if(blockOnDisk < minMaxBlocksOnDisk.Min) minMaxBlocksOnDisk.Min = blockOnDisk;
-		}
-	}
-
 	const uint32_t											lastRangeInfo						= rangeInfo.size() - 1;
 	gpk_necall(output.push_back('['), "%s", "Out of memory?");
-	if((0 < databaseToRead.Val.BlockSize) && rangeInfo.size()) {
+	if((0 < databaseToRead.Val.BlockSize) && rangeInfo.size()) {	// Fill leading records if the blocks don't exist.
 		const uint32_t											recordsToAvoid						= (query.Range.Offset % databaseToRead.Val.BlockSize);
 		const uint32_t											emptyBlocks							= rangeInfo[0].BlockId - blockRange.Offset;
 		if(0 == recordsToAvoid)
 			gpk_necall(::fillEmptyBlocks(emptyBlockData, emptyBlocks, lastRangeInfo != 0, output), "%s", "Out of memory?");
 		else {
 			if(emptyBlocks > 0) {
-				for(uint32_t iElem = recordsToAvoid; iElem < databaseToRead.Val.BlockSize; ++iElem) {
+				for(uint32_t iElem = recordsToAvoid; iElem < databaseToRead.Val.BlockSize; ++iElem)
 					output.append(::gpk::view_const_string{"{},"});
-				}
 				gpk_necall(::fillEmptyBlocks(emptyBlockData, emptyBlocks - 1, lastRangeInfo != 0, output), "%s", "Out of memory?");
 			}
 		}
@@ -169,7 +157,7 @@ static	::gpk::error_t							processRange
 			if(rangeInfo.size() -1 != iView)
 				gpk_necall(output.push_back(','), "%s", "Out of memory?");
 
-			if(iView < lastRangeInfo) {
+			if(iView < lastRangeInfo) {	// Fill inner empty blocks
 				const uint32_t										emptyBlocks							= rangeInfo[iView + 1].BlockId - rangeInfo[iView].BlockId;
 				if(emptyBlocks > 1) {
 					info_printf("Empty blocks bettween: %u and %u.", rangeInfo[iView].BlockId, rangeInfo[iView + 1].BlockId);
@@ -183,7 +171,7 @@ static	::gpk::error_t							processRange
 		for(uint32_t iView = 0; iView < rangeInfo.size(); ++iView) {
 			const ::blt::SRangeBlockInfo						& blockInfo							= rangeInfo[iView];
 			const ::gpk::SMinMax<uint32_t>						rangeToExpand						= blockInfo.RelativeIndices;
-			for(uint32_t iRecord = rangeToExpand.Min; iRecord < rangeToExpand.Max + 1; ++iRecord) {
+			for(uint32_t iRecord = rangeToExpand.Min; iRecord < rangeToExpand.Max; ++iRecord) {
 				elemQuery.Detail								= iRecord + blockInfo.BlockId * databaseToRead.Val.BlockSize;
 				gpk_necall(::processDetail(loadCache, databases, idxDatabase, elemQuery, output, folder, idxExpand), "%s", "??");
 				if(rangeToExpand.Max != iRecord)
@@ -191,7 +179,7 @@ static	::gpk::error_t							processRange
 			}
 			if(rangeInfo.size() - 1 != iView)
 				gpk_necall(output.push_back(','), "%s", "Out of memory?");
-			if(iView < lastRangeInfo) {
+			if(iView < lastRangeInfo) {	// Fill inner empty blocks
 				const uint32_t										emptyBlocks							= rangeInfo[iView + 1].BlockId - blockInfo.BlockId;
 				if(emptyBlocks > 1) {
 					info_printf("Empty blocks bettween: %u and %u.", blockInfo.BlockId, rangeInfo[iView + 1].BlockId);
@@ -200,6 +188,21 @@ static	::gpk::error_t							processRange
 			}
 		}
 	}
+
+	//if((0 < databaseToRead.Val.BlockSize) && rangeInfo.size()) {	// Fill leading records if the blocks don't exist.
+	//	const uint32_t											recordsToAvoid						= (uint32_t)(((query.Range.Count + query.Range.Offset) / databaseToRead.Val.BlockSize));
+	//	const uint32_t											emptyBlocks							= (blockRange.Offset + blockRange.Count) - rangeInfo[rangeInfo.size() - 1].BlockId;
+	//	if(0 == recordsToAvoid)
+	//		gpk_necall(::fillEmptyBlocks(emptyBlockData, emptyBlocks, lastRangeInfo != 0, output), "%s", "Out of memory?");
+	//	else {
+	//		if(emptyBlocks > 0) {
+	//			for(uint32_t iElem = recordsToAvoid; iElem < databaseToRead.Val.BlockSize; ++iElem)
+	//				output.append(::gpk::view_const_string{"{},"});
+	//			gpk_necall(::fillEmptyBlocks(emptyBlockData, emptyBlocks - 1, lastRangeInfo != 0, output), "%s", "Out of memory?");
+	//		}
+	//	}
+	//}
+
 	gpk_necall(output.push_back(']'), "%s", "Out of memory?");
 	return 0;
 }
@@ -274,7 +277,7 @@ static	::gpk::error_t							processRange
 		const uint64_t										offsetRecord		= database.Val.Offsets[iNewBlock];
 		::blt::SRangeBlockInfo								rangeInfo			= {};
 		rangeInfo.RelativeIndices.Min					= ::gpk::max(0, (int32_t)(range.Offset - offsetRecord));
-		rangeInfo.RelativeIndices.Max					= ::gpk::min(::gpk::jsonArraySize(*readerBlock[0]) - 1U, ::gpk::min(database.Val.BlockSize - 1, (uint32_t)((range.Offset + range.Count) - offsetRecord)));
+		rangeInfo.RelativeIndices.Max					= ::gpk::min(::gpk::jsonArraySize(*readerBlock[0]) - 1U, ::gpk::min(database.Val.BlockSize - 1, (uint32_t)((range.Offset + range.Count) - offsetRecord - 1)));
 		rangeInfo.BlockIndex							= iNewBlock;
 		rangeInfo.BlockId								= 0;
 		::gpk::SMinMax<int32_t>								blockNodeIndices	=
@@ -306,7 +309,7 @@ static	::gpk::error_t							processRange
 			const uint64_t										offsetRecord		= database.Val.Offsets[iNewBlock];
 			::blt::SRangeBlockInfo								rangeInfo			= {};
 			rangeInfo.RelativeIndices.Min					= ::gpk::max(0, (int32_t)(range.Offset - offsetRecord));
-			rangeInfo.RelativeIndices.Max					= ::gpk::min(::gpk::jsonArraySize(*readerBlock[0]) - 1U, ::gpk::min(database.Val.BlockSize - 1, (uint32_t)((range.Offset + range.Count) - offsetRecord)));
+			rangeInfo.RelativeIndices.Max					= ::gpk::min(::gpk::jsonArraySize(*readerBlock[0]) - 1U, ::gpk::min(database.Val.BlockSize - 1, (uint32_t)((range.Offset + range.Count) - offsetRecord - 1)));
 			rangeInfo.BlockIndex							= iNewBlock;
 			rangeInfo.BlockId								= blockToLoad;
 			::gpk::SMinMax<int32_t>								blockNodeIndices	=
