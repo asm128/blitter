@@ -30,7 +30,7 @@ namespace blt
 		::gpk::view_const_string							Path								= "";
 		::gpk::SRange<uint64_t>								Range								= {0, MAX_TABLE_RECORD_COUNT};
 		::gpk::view_const_string							Expand								= "";
-		::gpk::array_obj<::gpk::view_const_string>			ExpansionKeys						= {};
+		::gpk::view_array<::gpk::view_const_string>			ExpansionKeys						= {};
 		int64_t												Detail								= -1;
 	};
 
@@ -54,11 +54,12 @@ namespace blt
 		::blt::SBlitterQuery								Query								= {};
 		::gpk::SJSONFile									Config								= {};
 		::gpk::view_const_string							Folder								= {};
+		::gpk::array_obj<::gpk::view_const_string>			ExpansionKeyStorage					= {};
 	};
 
 	//
 	::gpk::error_t										loadConfig							(::blt::SBlitter & appState, const ::gpk::view_const_string & jsonFileName);
-	::gpk::error_t										queryLoad							(::blt::SBlitterQuery& query, const ::gpk::view_array<const ::gpk::TKeyValConstString> keyvals);
+	::gpk::error_t										queryLoad							(::blt::SBlitterQuery& query, const ::gpk::view_array<const ::gpk::TKeyValConstString> keyvals, ::gpk::array_obj<::gpk::view_const_string> & expansionKeyStorage);
 	::gpk::error_t										queryProcess
 		( ::gpk::array_obj<::blt::TKeyValBlitterDB>	& databases
 		, const ::blt::SBlitterQuery				& query

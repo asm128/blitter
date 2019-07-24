@@ -19,7 +19,7 @@
 	return 0;
 }
 
-::gpk::error_t									blt::queryLoad				(::blt::SBlitterQuery& query, const ::gpk::view_array<const ::gpk::TKeyValConstString> keyvals)	{
+::gpk::error_t									blt::queryLoad				(::blt::SBlitterQuery& query, const ::gpk::view_array<const ::gpk::TKeyValConstString> keyvals, ::gpk::array_obj<::gpk::view_const_string> & expansionKeyStorage) {
 	::gpk::keyvalNumeric("offset", keyvals, query.Range.Offset);
 	if(0 > ::gpk::keyvalNumeric("limit", keyvals, query.Range.Count))
 		::gpk::keyvalNumeric("count", keyvals, query.Range.Count);
@@ -27,7 +27,8 @@
 	const ::gpk::error_t								indexExpand					= ::gpk::find("expand", keyvals);
 	if(0 <= indexExpand) {
 		query.Expand									= keyvals[indexExpand].Val;
-		gpk_necall(::gpk::split(query.Expand, '.', query.ExpansionKeys), "%s", "Out of memory?");
+		gpk_necall(::gpk::split(query.Expand, '.', expansionKeyStorage), "%s", "Out of memory?");
+		query.ExpansionKeys								= expansionKeyStorage;
 	}
 	return 0;
 }
