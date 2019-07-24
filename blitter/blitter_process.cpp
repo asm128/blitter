@@ -278,7 +278,7 @@ static	::gpk::error_t							processRange
 			blockStop									= 0;
 		}
 		else {
-			if(maxRecord > database.Val.BlocksOnDisk[database.Val.BlocksOnDisk.size() - 1])
+			if(blockStop > database.Val.BlocksOnDisk[database.Val.BlocksOnDisk.size() - 1])
 				blockStop									= database.Val.BlocksOnDisk[database.Val.BlocksOnDisk.size() - 1];
 			if(blockStart > database.Val.BlocksOnDisk[database.Val.BlocksOnDisk.size() - 1])
 				blockStart									= database.Val.BlocksOnDisk[database.Val.BlocksOnDisk.size() - 1];
