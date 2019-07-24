@@ -168,18 +168,18 @@ static	::gpk::error_t							processRange
 		for(uint32_t iView = 0; iView < rangeInfo.size(); ++iView) {
 			const ::blt::SRangeBlockInfo						& blockInfo								= rangeInfo[iView];
 			const ::gpk::SMinMax<uint32_t>						rangeToExpand							= blockInfo.RelativeIndices;
-			for(uint32_t iRecord = rangeToExpand.Min; iRecord < rangeToExpand.Max; ++iRecord) {
-				elemQuery.Detail								= iRecord;
+			for(uint32_t iRecord = rangeToExpand.Min; iRecord < rangeToExpand.Max + 1; ++iRecord) {
+				elemQuery.Detail								= iRecord + blockInfo.BlockId * databaseToRead.Val.BlockSize;
 				gpk_necall(::processDetail(loadCache, databases, idxDatabase, elemQuery, output, folder, idxExpand), "%s", "??");
-				if(rangeToExpand.Max - 1 != iRecord)
+				if(rangeToExpand.Max != iRecord)
 					gpk_necall(output.push_back(','), "%s", "Out of memory?");
 			}
 			if(rangeInfo.size() - 1 != iView)
 				gpk_necall(output.push_back(','), "%s", "Out of memory?");
 			if(iView < lastBlockRecord) {
-				const uint32_t										emptyBlocks								= rangeInfo[iView + 1].BlockId - rangeInfo[iView].BlockId;
+				const uint32_t										emptyBlocks								= rangeInfo[iView + 1].BlockId - blockInfo.BlockId;
 				if(emptyBlocks > 1) {
-					info_printf("Empty blocks bettween: %u and %u.", rangeInfo[iView].BlockId, rangeInfo[iView + 1].BlockId);
+					info_printf("Empty blocks bettween: %u and %u.", blockInfo.BlockId, rangeInfo[iView + 1].BlockId);
 					gpk_necall(::fillEmptyBlocks(emptyBlockData, emptyBlocks - 1, lastBlockRecord != iView, output), "%s", "Out of memory?");
 				}
 			}
@@ -261,6 +261,7 @@ static	::gpk::error_t							processRange
 		rangeInfo.RelativeIndices.Min					= ::gpk::max(0, (int32_t)(range.Offset - offsetRecord));
 		rangeInfo.RelativeIndices.Max					= ::gpk::min(::gpk::jsonArraySize(*readerBlock[0]) - 1U, ::gpk::min(database.Val.BlockSize - 1, (uint32_t)((range.Offset + range.Count) - offsetRecord)));
 		rangeInfo.BlockIndex							= iNewBlock;
+		rangeInfo.BlockId								= 0;
 		::gpk::SMinMax<int32_t>								blockNodeIndices	=
 			{ ::gpk::jsonArrayValueGet(jsonRoot, rangeInfo.RelativeIndices.Min)
 			, ::gpk::jsonArrayValueGet(jsonRoot, rangeInfo.RelativeIndices.Max)
