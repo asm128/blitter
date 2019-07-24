@@ -118,9 +118,9 @@
 	gpk_necall(::gpk::find(block, ::gpk::view_const_uint32{jsonDB.Val.BlocksOnDisk}), "Block %u doesn't exist.", block);
 
 	::gpk::array_pod<char_t>							fileName					= folder;
-	fileName.push_back('/');
+	gpk_necall(fileName.push_back('/'), "%s", "Out of memory?");
 	gpk_necall(::blt::tableFolderName(fileName, jsonDB.Key, jsonDB.Val.BlockSize), "%s", "Out of memory?");
-	fileName.push_back('/');
+	gpk_necall(fileName.push_back('/'), "%s", "Out of memory?");
 	gpk_necall(::blt::blockFileName(fileName, jsonDB.Key, jsonDB.Val.EncryptionKey.size() > 0, jsonDB.Val.HostType, block), "%s", "Out of memory?");
 
 	const int32_t										idxBlock					= jsonDB.Val.Blocks.push_back({});
@@ -180,9 +180,8 @@
 			sprintf_s(temp, "[%u].block", iDatabase);
 			int32_t												indexBlockNode				= ::gpk::jsonExpressionResolve(temp, configReader, indexObjectDatabases, jsonResult);
 			gwarn_if(errored(indexBlockNode), "Failed to load config from json! Last contents found: %s.", jsonResult.begin())
-			else {
+			else
 				::gpk::parseIntegerDecimal(jsonResult, &(jsonDB.Val.BlockSize = 0));
-			}
 		}
 		::gpk::array_pod<char_t>							dbfilename					= {};
 		gpk_necall(::blt::tableFileName(dbfilename, jsonDB.Val.HostType, jsonDB.Val.EncryptionKey.size() > 0, jsonDB.Key), "%s", "??");
