@@ -123,86 +123,13 @@ static	::gpk::error_t							processRange
 	}
 	else {
 		gpk_necall(output.push_back('['), "%s", "Out of memory?");
+		::blt::SBlitterQuery							elemQuery								= query;
 		for(uint32_t iView = 0; iView < rangeInfo.size(); ++iView) {
 			const ::blt::SRangeBlockInfo					& blockInfo								= rangeInfo[iView];
-			const ::gpk::view_const_string					rangeView								= blockInfo.OutputRecords;
-			const ::gpk::SJSONFile							& currentDBBlock						= *databaseToRead.Val.Blocks[blockInfo.BlockIndex];
 			const ::gpk::SMinMax<uint32_t>					rangeToExpand							= blockInfo.RelativeIndices;
-			const ::gpk::view_const_string					fieldToExpand							= query.ExpansionKeys[idxExpand];
 			for(uint32_t iRecord = rangeToExpand.Min; iRecord < rangeToExpand.Max; ++iRecord) {
-				const int32_t									indexRecordNode							= ::gpk::jsonArrayValueGet(*currentDBBlock.Reader.Tree[0], iRecord);
-				const int32_t									indexValueNode							= ::gpk::jsonObjectValueGet(*currentDBBlock.Reader.Tree[indexRecordNode], currentDBBlock.Reader.View, fieldToExpand);
-				const ::gpk::view_const_string					currentRecordView						= currentDBBlock.Reader.View[indexRecordNode];
-				if(0 > indexValueNode) {
-					info_printf("%s", "Field not found.");
-					gpk_necall(output.append(currentRecordView), "%s", "Out of memory?");
-				}
-				else {
-					const ::gpk::JSON_TYPE							refNodeTYpe								= currentDBBlock.Reader.Object[indexValueNode].Type;
-					if(::gpk::JSON_TYPE_NUMBER != refNodeTYpe && ::gpk::JSON_TYPE_ARRAY != refNodeTYpe) {
-						info_printf("Invalid value type: %s.", ::gpk::get_value_label(refNodeTYpe).begin());
-						gpk_necall(output.append(currentRecordView), "%s", "Out of memory?");
-					}
-					else if(::gpk::JSON_TYPE_NUMBER == refNodeTYpe) {
-						uint64_t										nextTableRecordIndex					= (uint64_t)-1LL;
-						const ::gpk::view_const_string					digitsToDetailView						= currentDBBlock.Reader.View[indexValueNode];
-						gpk_necall(::gpk::parseIntegerDecimal(digitsToDetailView, &nextTableRecordIndex), "%s", "Out of memory?");
-
-						const char										* appendStart							= currentRecordView.begin();
-						const char										* appendStop							= digitsToDetailView.begin();
-						gpk_necall(output.append(appendStart, (uint32_t)(appendStop - appendStart)), "%s", "Out of memory?");
-						for(uint32_t iDB = 0; iDB < databases.size(); ++iDB) {
-							::blt::TKeyValBlitterDB							& nextTable								= databases[iDB];
-							if(nextTable.Key == fieldToExpand || 0 <= ::gpk::find(fieldToExpand, ::gpk::view_array<const ::gpk::view_const_string>{nextTable.Val.Bindings})) {
-								::blt::SBlitterQuery nextQuery;
-								nextQuery.Database							= nextTable.Key;
-								nextQuery.Detail							= nextTableRecordIndex;
-								nextQuery.Expand							= query.Expand;
-								nextQuery.ExpansionKeys						= query.ExpansionKeys;
-								ce_if(::processDetail(loadCache, databases, iDB, nextQuery, output, folder, idxExpand + 1), "%s", "Failed to unroll detail.");
-								break;
-							}
-						}
-						appendStart									= digitsToDetailView.end();
-						appendStop									= currentRecordView.end();
-						gpk_necall(output.append(appendStart, (uint32_t)(appendStop - appendStart)), "%s", "Out of memory?");
-					}
-					else {
-						const char										* appendStart							= currentRecordView.begin();
-						const ::gpk::view_const_string					arrayToDetailView						= currentDBBlock.Reader.View[indexValueNode];
-						const char										* appendStop							= arrayToDetailView.begin();
-						gpk_necall(output.append(appendStart, (uint32_t)(appendStop - appendStart)), "%s", "Out of memory?");
-						gpk_necall(output.push_back('['), "%s", "Out of memory?");
-
-						const ::gpk::SJSONNode							& arrayNode								= *currentDBBlock.Reader.Tree[indexValueNode];
-						for(uint32_t iRef = 0, refCount = ::gpk::jsonArraySize(*currentDBBlock.Reader.Tree[indexValueNode]); iRef < refCount; ++iRef) {
-							uint64_t										nextTableRecordIndex					= (uint64_t)-1LL;
-							const ::gpk::error_t							indexArrayElement						= ::gpk::jsonArrayValueGet(arrayNode, iRef);
-							const ::gpk::view_const_string					digitsToDetailView						= currentDBBlock.Reader.View[indexArrayElement];
-							gpk_necall(::gpk::parseIntegerDecimal(digitsToDetailView, &nextTableRecordIndex), "%s", "Out of memory?");
-
-							for(uint32_t iDB = 0; iDB < databases.size(); ++iDB) {
-								::blt::TKeyValBlitterDB							& nextTable								= databases[iDB];
-								if(nextTable.Key == fieldToExpand || 0 <= ::gpk::find(fieldToExpand, ::gpk::view_array<const ::gpk::view_const_string>{nextTable.Val.Bindings})) {
-									::blt::SBlitterQuery nextQuery;
-									nextQuery.Database							= nextTable.Key;
-									nextQuery.Detail							= nextTableRecordIndex;
-									nextQuery.Expand							= query.Expand;
-									nextQuery.ExpansionKeys						= query.ExpansionKeys;
-									ce_if(::processDetail(loadCache, databases, iDB, nextQuery, output, folder, idxExpand + 1), "%s", "Failed to unroll detail.");
-									break;
-								}
-							}
-							if(refCount - 1 != iRef)
-								gpk_necall(output.push_back(','), "%s", "Out of memory?");
-						}
-
-						gpk_necall(output.push_back(']'), "%s", "Out of memory?");
-						appendStart									= arrayToDetailView.end();
-						appendStop									= currentRecordView.end();
-						gpk_necall(output.append(appendStart, (uint32_t)(appendStop - appendStart)), "%s", "Out of memory?");
-					}
-				}
+				elemQuery.Detail							= iRecord;
+				gpk_necall(::processDetail(loadCache, databases, idxDatabase, elemQuery, output, folder, idxExpand), "%s", "??");
 				if(rangeToExpand.Max - 1 != iRecord)
 					gpk_necall(output.push_back(','), "%s", "Out of memory?");
 			}

@@ -27,7 +27,7 @@
 	const ::gpk::error_t								indexExpand					= ::gpk::find("expand", keyvals);
 	if(0 <= indexExpand) {
 		query.Expand									= keyvals[indexExpand].Val;
-		::gpk::split(query.Expand, '.', query.ExpansionKeys);
+		gpk_necall(::gpk::split(query.Expand, '.', query.ExpansionKeys), "%s", "Out of memory?");
 	}
 	return 0;
 }
