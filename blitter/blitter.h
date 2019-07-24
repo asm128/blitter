@@ -12,29 +12,30 @@ namespace blt
 	GDEFINE_ENUM_VALUE(DATABASE_HOST, DEFLATE			, 2);
 	GDEFINE_ENUM_VALUE(DATABASE_HOST, REMOTE_DEFLATE	, 3);
 
-	static constexpr	const uint64_t											MAX_TABLE_RECORD_COUNT		= 0x7FFFFFFFFFFFFFFF;
+	static constexpr	const uint64_t					MAX_TABLE_RECORD_COUNT		= 0x7FFFFFFFFFFFFFFF;
 
 	struct SBlitterDB {
-		::gpk::array_obj<::gpk::view_const_string>			Bindings					= {};
-		uint32_t											BlockSize					= 0;
-		::gpk::array_obj<uint64_t>							Offsets						= {};
-		::gpk::array_obj<::gpk::ptr_obj<::gpk::SJSONFile>>	Blocks						= {};
-		::gpk::array_obj<uint32_t>							BlockIndices				= {};
-		::gpk::view_const_string							EncryptionKey				= {};
-		::blt::DATABASE_HOST								HostType					= ::blt::DATABASE_HOST_LOCAL;
-		::gpk::array_obj<uint32_t>							BlocksOnDisk				= {};
+		::gpk::array_obj<::gpk::view_const_string>			Bindings							= {};
+		uint32_t											BlockSize							= 0;
+		::gpk::array_obj<uint64_t>							Offsets								= {};
+		::gpk::array_obj<::gpk::ptr_obj<::gpk::SJSONFile>>	Blocks								= {};
+		::gpk::array_obj<uint32_t>							BlockIndices						= {};
+		::gpk::view_const_string							EncryptionKey						= {};
+		::blt::DATABASE_HOST								HostType							= ::blt::DATABASE_HOST_LOCAL;
+		::gpk::array_obj<uint32_t>							BlocksOnDisk						= {};
 	};
 
 	struct SBlitterQuery {
-		::gpk::view_const_string							Database					= "";
-		::gpk::view_const_string							Path						= "";
-		::gpk::SRange<uint64_t>								Range						= {0, MAX_TABLE_RECORD_COUNT};
-		::gpk::view_const_string							Expand						= "";
-		::gpk::array_obj<::gpk::view_const_string>			ExpansionKeys				= {};
-		int64_t												Detail						= -1;
+		::gpk::view_const_string							Database							= "";
+		::gpk::view_const_string							Path								= "";
+		::gpk::SRange<uint64_t>								Range								= {0, MAX_TABLE_RECORD_COUNT};
+		::gpk::view_const_string							Expand								= "";
+		::gpk::array_obj<::gpk::view_const_string>			ExpansionKeys						= {};
+		int64_t												Detail								= -1;
 	};
 
-	typedef ::gpk::SKeyVal<::gpk::view_const_string, ::blt::SBlitterDB>			TKeyValBlitterDB;
+	typedef ::gpk::SKeyVal<::gpk::view_const_string, ::blt::SBlitterDB>
+															TKeyValBlitterDB;
 
 	struct SLoadCache {
 		::gpk::array_pod<byte_t>							Deflated;
@@ -58,8 +59,7 @@ namespace blt
 	//
 	::gpk::error_t										loadConfig							(::blt::SBlitter & appState, const ::gpk::view_const_string & jsonFileName);
 	::gpk::error_t										queryLoad							(::blt::SBlitterQuery& query, const ::gpk::view_array<const ::gpk::TKeyValConstString> keyvals);
-
-	::gpk::error_t										processQuery
+	::gpk::error_t										queryProcess
 		( ::gpk::array_obj<::blt::TKeyValBlitterDB>	& databases
 		, const ::blt::SBlitterQuery				& query
 		, ::gpk::array_pod<char_t>					& output

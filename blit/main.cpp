@@ -86,7 +86,7 @@ GPK_CGI_JSON_APP_IMPL();
 		gpk_necall(output.append(::gpk::view_const_string{"Content-type: application/json\r\n"}), "%s", "Out of memory?");
 		gpk_necall(output.append(::gpk::view_const_string{"\r\n"})								, "%s", "Out of memory?");
 	}
-	gpk_necall(::blt::processQuery(app.Databases, app.Query, output, app.Folder), "%s", "Failed to load blitter databases.");
+	gpk_necall(::blt::queryProcess(app.Databases, app.Query, output, app.Folder), "%s", "Failed to load blitter databases.");
 	//if(output.size()) {
 	//	OutputDebugStringA(output.begin());
 	//	OutputDebugStringA("\n");

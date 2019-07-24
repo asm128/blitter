@@ -141,7 +141,7 @@ static	::gpk::error_t							processRange
 	return 0;
 }
 
-::gpk::error_t									blt::processQuery
+::gpk::error_t									blt::queryProcess
 	( ::gpk::array_obj<::blt::TKeyValBlitterDB>		& databases
 	, const ::blt::SBlitterQuery					& query
 	, ::gpk::array_pod<char_t>						& output
