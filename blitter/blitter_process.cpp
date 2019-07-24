@@ -270,8 +270,20 @@ static	::gpk::error_t							processRange
 	, ::gpk::SRange<uint32_t>						& blockRange
 	) {
 	const uint64_t										maxRecord			= ((range.Count == ::blt::MAX_TABLE_RECORD_COUNT) ? range.Count : range.Offset + range.Count);
-	const uint32_t										blockStart			= (0 == database.Val.BlockSize) ? 0				: (uint32_t)range.Offset / database.Val.BlockSize;
-	const uint32_t										blockStop			= (0 == database.Val.BlockSize) ? (uint32_t)-1	: (range.Count == ::blt::MAX_TABLE_RECORD_COUNT) ? (database.Val.BlocksOnDisk.size() ? database.Val.BlocksOnDisk[database.Val.BlocksOnDisk.size() - 1] : 0): (uint32_t)(maxRecord / database.Val.BlockSize);
+	uint32_t											blockStart			= (0 == database.Val.BlockSize) ? 0				: (uint32_t)range.Offset / database.Val.BlockSize;
+	uint32_t											blockStop			= (0 == database.Val.BlockSize) ? (uint32_t)-1	: (uint32_t)(maxRecord / database.Val.BlockSize);
+	if(0 < database.Val.BlockSize) {
+		if(0 == database.Val.BlocksOnDisk.size()) {
+			blockStart									= 0;
+			blockStop									= 0;
+		}
+		else {
+			if(maxRecord > database.Val.BlocksOnDisk[database.Val.BlocksOnDisk.size() - 1])
+				blockStop									= database.Val.BlocksOnDisk[database.Val.BlocksOnDisk.size() - 1];
+			if(blockStart > database.Val.BlocksOnDisk[database.Val.BlocksOnDisk.size() - 1])
+				blockStart									= database.Val.BlocksOnDisk[database.Val.BlocksOnDisk.size() - 1];
+		}
+	}
 	blockRange										= {blockStart, blockStop - blockStart + 1};
 
 	if(0 == database.Val.BlockSize) {
@@ -325,8 +337,8 @@ static	::gpk::error_t							processRange
 				, ::gpk::jsonArrayValueGet(jsonRoot, rangeInfo.RelativeIndices.Max)
 				};
 			rangeInfo.OutputRecords							=
-				{ readerBlock.View[blockNodeIndices.Min].begin()
-				, (uint32_t)(readerBlock.View[blockNodeIndices.Max].end() - readerBlock.View[blockNodeIndices.Min].begin())
+				{ readerBlock.View[(((uint32_t)blockNodeIndices.Min) < readerBlock.View.size()) ? blockNodeIndices.Min : 0].begin()
+				, (uint32_t)(readerBlock.View[blockNodeIndices.Max].end() - readerBlock.View[(((uint32_t)blockNodeIndices.Min) < readerBlock.View.size()) ? blockNodeIndices.Min : 0].begin())
 				};
 			gpk_necall(output_records.push_back(rangeInfo), "%s", "Out of memory?");
 		}
