@@ -17,7 +17,11 @@ static	::gpk::error_t							processDetail
 	uint32_t											nodeIndex							= (uint32_t)-1;
 	uint32_t											blockIndex							= (uint32_t)-1;
 	::blt::TKeyValBlitterDB								& databaseToRead					= databases[idxDatabase];
-	gpk_necall(::blt::recordGet(loadCache, databaseToRead, query.Detail, outputRecord, nodeIndex, blockIndex, folder), "Failed to load record range. Offset: %llu. Length: %llu.", query.Range.Offset, query.Range.Count);
+	if errored(::blt::recordGet(loadCache, databaseToRead, query.Detail, outputRecord, nodeIndex, blockIndex, folder)) {
+		error_printf("Failed to load record detail. Offset: %llu. Length: %llu.", query.Range.Offset, query.Range.Count);
+		output.append(::gpk::view_const_string{"{}"});
+		return 1;
+	}
 	if(0 == query.Expand.size() || idxExpand >= query.ExpansionKeys.size())
 		gpk_necall(output.append(outputRecord), "%s", "Out of memory?");
 	else {
