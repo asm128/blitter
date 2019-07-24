@@ -3,21 +3,21 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LocalDebuggerWorkingDirectory>$(OutDir)</LocalDebuggerWorkingDirectory>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
-    <LocalDebuggerCommandArguments>"user.referral?offset=1&amp;limit=50&amp;expand=website.publisher.company.owner"</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>"user.referral?offset=0&amp;limit=100"</LocalDebuggerCommandArguments>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LocalDebuggerWorkingDirectory>$(OutDir)</LocalDebuggerWorkingDirectory>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
-    <LocalDebuggerCommandArguments>"user.referral?offset=1&amp;limit=50&amp;expand=website.publisher.company.owner"</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>"user.referral?offset=0&amp;limit=100"</LocalDebuggerCommandArguments>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LocalDebuggerWorkingDirectory>$(OutDir)</LocalDebuggerWorkingDirectory>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
-    <LocalDebuggerCommandArguments>"user.referral?offset=1&amp;limit=50&amp;expand=website.publisher.company.owner"</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>"user.referral?offset=0&amp;limit=100"</LocalDebuggerCommandArguments>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LocalDebuggerWorkingDirectory>$(OutDir)</LocalDebuggerWorkingDirectory>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
-    <LocalDebuggerCommandArguments>"user.referral?offset=1&amp;limit=50&amp;expand=website.publisher.company.owner"</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>"user.referral?offset=0&amp;limit=100"</LocalDebuggerCommandArguments>
   </PropertyGroup>
 </Project>

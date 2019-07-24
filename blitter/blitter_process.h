@@ -9,6 +9,7 @@ namespace blt
 		::gpk::view_const_string						OutputRecords			= {};
 		::gpk::SMinMax<uint32_t>						RelativeIndices			= {};
 		uint32_t										BlockIndex				= 0;
+		uint32_t										BlockId					= 0;
 	};
 
 	::gpk::error_t									recordRange
