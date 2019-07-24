@@ -108,7 +108,7 @@ static ::gpk::error_t							fillEmptyBlocks
 		if(emptyBlocks - 1 != iEmpty)
 			gpk_necall(output.push_back(','), "%s", "Out of memory?");
 	}
-	if(appendComma)
+	if(appendComma && emptyBlocks)
 		gpk_necall(output.push_back(','), "%s", "Out of memory?");
 	return 0;
 }
@@ -136,38 +136,53 @@ static	::gpk::error_t							processRange
 
 	gpk_necall(::blt::recordRange(loadCache, databaseToRead, query.Range, folder, rangeInfo, blockRange), "Failed to load record range. Offset: %llu. Length: %llu.", query.Range.Offset, query.Range.Count);
 
-	::gpk::SMinMax<uint32_t>							minMaxBlocksOnDisk	= {};
+	::gpk::SMinMax<uint32_t>								minMaxBlocksOnDisk					= {};
 	for(uint32_t iBlockOnDisk = 0; iBlockOnDisk < databaseToRead.Val.BlocksOnDisk.size(); ++iBlockOnDisk) {
-		const uint32_t										blockOnDisk			= databaseToRead.Val.BlocksOnDisk[iBlockOnDisk];
+		const uint32_t											blockOnDisk							= databaseToRead.Val.BlocksOnDisk[iBlockOnDisk];
 		if(::gpk::in_range(blockOnDisk, blockRange.Offset, blockRange.Offset + blockRange.Count)) {
 				 if(blockOnDisk > minMaxBlocksOnDisk.Max) minMaxBlocksOnDisk.Max = blockOnDisk;
 			else if(blockOnDisk < minMaxBlocksOnDisk.Min) minMaxBlocksOnDisk.Min = blockOnDisk;
 		}
 	}
 
-	const uint32_t										lastBlockRecord		= rangeInfo.size() - 1;
+	const uint32_t											lastRangeInfo						= rangeInfo.size() - 1;
 	gpk_necall(output.push_back('['), "%s", "Out of memory?");
+	if((0 < databaseToRead.Val.BlockSize) && rangeInfo.size()) {
+		const uint32_t											recordsToAvoid						= (query.Range.Offset % databaseToRead.Val.BlockSize);
+		const uint32_t											emptyBlocks							= rangeInfo[0].BlockId - blockRange.Offset;
+		if(0 == recordsToAvoid)
+			gpk_necall(::fillEmptyBlocks(emptyBlockData, emptyBlocks, lastRangeInfo != 0, output), "%s", "Out of memory?");
+		else {
+			if(emptyBlocks > 0) {
+				for(uint32_t iElem = recordsToAvoid; iElem < databaseToRead.Val.BlockSize; ++iElem) {
+					output.append(::gpk::view_const_string{"{},"});
+				}
+				gpk_necall(::fillEmptyBlocks(emptyBlockData, emptyBlocks - 1, lastRangeInfo != 0, output), "%s", "Out of memory?");
+			}
+		}
+	}
+
 	if(0 == query.Expand.size() || idxExpand >= query.ExpansionKeys.size()) {
 		for(uint32_t iView = 0; iView < rangeInfo.size(); ++iView) {
-			const ::gpk::view_const_string						rangeView								= rangeInfo[iView].OutputRecords;
+			const ::gpk::view_const_string						rangeView							= rangeInfo[iView].OutputRecords;
 			gpk_necall(output.append(rangeView), "%s", "Out of memory?");
 			if(rangeInfo.size() -1 != iView)
 				gpk_necall(output.push_back(','), "%s", "Out of memory?");
 
-			if(iView < lastBlockRecord) {
-				const uint32_t										emptyBlocks			= rangeInfo[iView + 1].BlockId - rangeInfo[iView].BlockId;
+			if(iView < lastRangeInfo) {
+				const uint32_t										emptyBlocks							= rangeInfo[iView + 1].BlockId - rangeInfo[iView].BlockId;
 				if(emptyBlocks > 1) {
 					info_printf("Empty blocks bettween: %u and %u.", rangeInfo[iView].BlockId, rangeInfo[iView + 1].BlockId);
-					gpk_necall(::fillEmptyBlocks(emptyBlockData, emptyBlocks - 1, lastBlockRecord != iView, output), "%s", "Out of memory?");
+					gpk_necall(::fillEmptyBlocks(emptyBlockData, emptyBlocks - 1, lastRangeInfo != iView, output), "%s", "Out of memory?");
 				}
 			}
 		}
 	}
 	else {
-		::blt::SBlitterQuery								elemQuery								= query;
+		::blt::SBlitterQuery								elemQuery							= query;
 		for(uint32_t iView = 0; iView < rangeInfo.size(); ++iView) {
-			const ::blt::SRangeBlockInfo						& blockInfo								= rangeInfo[iView];
-			const ::gpk::SMinMax<uint32_t>						rangeToExpand							= blockInfo.RelativeIndices;
+			const ::blt::SRangeBlockInfo						& blockInfo							= rangeInfo[iView];
+			const ::gpk::SMinMax<uint32_t>						rangeToExpand						= blockInfo.RelativeIndices;
 			for(uint32_t iRecord = rangeToExpand.Min; iRecord < rangeToExpand.Max + 1; ++iRecord) {
 				elemQuery.Detail								= iRecord + blockInfo.BlockId * databaseToRead.Val.BlockSize;
 				gpk_necall(::processDetail(loadCache, databases, idxDatabase, elemQuery, output, folder, idxExpand), "%s", "??");
@@ -176,11 +191,11 @@ static	::gpk::error_t							processRange
 			}
 			if(rangeInfo.size() - 1 != iView)
 				gpk_necall(output.push_back(','), "%s", "Out of memory?");
-			if(iView < lastBlockRecord) {
-				const uint32_t										emptyBlocks								= rangeInfo[iView + 1].BlockId - blockInfo.BlockId;
+			if(iView < lastRangeInfo) {
+				const uint32_t										emptyBlocks							= rangeInfo[iView + 1].BlockId - blockInfo.BlockId;
 				if(emptyBlocks > 1) {
 					info_printf("Empty blocks bettween: %u and %u.", blockInfo.BlockId, rangeInfo[iView + 1].BlockId);
-					gpk_necall(::fillEmptyBlocks(emptyBlockData, emptyBlocks - 1, lastBlockRecord != iView, output), "%s", "Out of memory?");
+					gpk_necall(::fillEmptyBlocks(emptyBlockData, emptyBlocks - 1, lastRangeInfo != iView, output), "%s", "Out of memory?");
 				}
 			}
 		}
