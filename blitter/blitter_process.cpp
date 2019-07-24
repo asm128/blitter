@@ -175,7 +175,7 @@ static	::gpk::error_t							processRange
 		for(uint32_t iView = 0; iView < rangeInfo.size(); ++iView) {
 			const ::blt::SRangeBlockInfo						& blockInfo							= rangeInfo[iView];
 			const ::gpk::SMinMax<uint32_t>						rangeToExpand						= blockInfo.RelativeIndices;
-			for(uint32_t iRecord = rangeToExpand.Min; iRecord < rangeToExpand.Max; ++iRecord) {
+			for(uint32_t iRecord = rangeToExpand.Min; iRecord < rangeToExpand.Max + 1; ++iRecord) {
 				elemQuery.Detail								= iRecord + blockInfo.BlockId * databaseToRead.Val.BlockSize;
 				gpk_necall(::processDetail(loadCache, databases, idxDatabase, elemQuery, output, folder, idxExpand), "%s", "??");
 				if(rangeToExpand.Max != iRecord)
