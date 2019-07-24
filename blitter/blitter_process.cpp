@@ -271,7 +271,7 @@ static	::gpk::error_t							processRange
 	) {
 	const uint64_t										maxRecord			= ((range.Count == ::blt::MAX_TABLE_RECORD_COUNT) ? range.Count : range.Offset + range.Count);
 	const uint32_t										blockStart			= (0 == database.Val.BlockSize) ? 0				: (uint32_t)range.Offset / database.Val.BlockSize;
-	const uint32_t										blockStop			= (0 == database.Val.BlockSize) ? (uint32_t)-1	: (uint32_t)(maxRecord / database.Val.BlockSize);
+	const uint32_t										blockStop			= (0 == database.Val.BlockSize) ? (uint32_t)-1	: (range.Count == ::blt::MAX_TABLE_RECORD_COUNT) ? (database.Val.BlocksOnDisk.size() ? database.Val.BlocksOnDisk[database.Val.BlocksOnDisk.size() - 1] : 0): (uint32_t)(maxRecord / database.Val.BlockSize);
 	blockRange										= {blockStart, blockStop - blockStart + 1};
 
 	if(0 == database.Val.BlockSize) {
