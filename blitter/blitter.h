@@ -52,6 +52,7 @@ namespace blt
 
 	::gpk::error_t												queryProcess
 		( ::gpk::array_obj<::blt::TNamedBlitterDB>	& databases
+		, const ::gpk::SExpressionReader			& expressionReader
 		, const ::blt::SBlitterQuery				& query
 		, const ::gpk::view_const_string			& folder
 		, ::gpk::array_pod<char_t>					& output
@@ -75,7 +76,7 @@ namespace blt
 		::gpk::view_const_char										ContentBody	;
 	};
 
-	::gpk::error_t												requestProcess						(::blt::SBlitterQuery & query, const ::blt::SBlitterRequest & request, ::gpk::array_obj<::gpk::view_const_string> & expansionKeyStorage);
+	::gpk::error_t												requestProcess						(::gpk::SExpressionReader & expressionReader, ::blt::SBlitterQuery & query, const ::blt::SBlitterRequest & request, ::gpk::array_obj<::gpk::view_const_string> & expansionKeyStorage);
 
 	static constexpr const uint32_t								CRC_SEED							= 18973;
 

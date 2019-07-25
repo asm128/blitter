@@ -6,6 +6,7 @@
 
 static	::gpk::error_t							processDetail
 	( ::blt::SLoadCache								& loadCache
+	, const ::gpk::SExpressionReader				& expressionReader
 	, ::gpk::array_obj<::blt::TNamedBlitterDB>		& databases
 	, const uint32_t								idxDatabase
 	, const ::blt::SBlitterQuery					& query
@@ -56,7 +57,7 @@ static	::gpk::error_t							processDetail
 						::blt::SBlitterQuery							nextQuery							= query;
 						nextQuery.Database							= nextTable.Key;
 						nextQuery.Detail							= nextTableRecordIndex;
-						ce_if(::processDetail(loadCache, databases, iDB, nextQuery, output, folder, idxExpand + 1), "%s", "Failed to unroll detail.");
+						ce_if(::processDetail(loadCache, expressionReader, databases, iDB, nextQuery, output, folder, idxExpand + 1), "%s", "Failed to unroll detail.");
 						break;
 					}
 				}
@@ -86,7 +87,7 @@ static	::gpk::error_t							processDetail
 							::blt::SBlitterQuery							nextQuery							= query;
 							nextQuery.Database							= nextTable.Key;
 							nextQuery.Detail							= nextTableRecordIndex;
-							ce_if(::processDetail(loadCache, databases, iDB, nextQuery, output, folder, idxExpand + 1), "%s", "Failed to unroll detail.");
+							ce_if(::processDetail(loadCache, expressionReader, databases, iDB, nextQuery, output, folder, idxExpand + 1), "%s", "Failed to unroll detail.");
 							break;
 						}
 					}
@@ -132,6 +133,7 @@ static	::gpk::error_t							nextBlock					(const uint32_t iRangeInfo, const uint
 
 static	::gpk::error_t							processRange
 	( ::blt::SLoadCache								& loadCache
+	, const ::gpk::SExpressionReader				& expressionReader
 	, ::gpk::array_obj<::blt::TNamedBlitterDB>		& databases
 	, const uint32_t								idxDatabase
 	, const ::blt::SBlitterQuery					& query
@@ -185,7 +187,7 @@ static	::gpk::error_t							processRange
 			const ::gpk::SMinMax<uint32_t>						rangeToExpand						= blockInfo.RelativeIndices;
 			for(uint32_t iRecord = rangeToExpand.Min; iRecord < rangeToExpand.Max + 1; ++iRecord) {
 				elemQuery.Detail								= iRecord + blockInfo.BlockId * (int64_t)databaseToRead.Val.BlockSize;
-				gpk_necall(::processDetail(loadCache, databases, idxDatabase, elemQuery, output, folder, idxExpand), "%s", "??");
+				gpk_necall(::processDetail(loadCache, expressionReader, databases, idxDatabase, elemQuery, output, folder, idxExpand), "%s", "??");
 				if(rangeToExpand.Max != iRecord)
 					gpk_necall(output.push_back(','), "%s", "Out of memory?");
 			}
@@ -217,6 +219,7 @@ static	::gpk::error_t							processRange
 
 ::gpk::error_t									blt::queryProcess
 	( ::gpk::array_obj<::blt::TNamedBlitterDB>		& databases
+	, const ::gpk::SExpressionReader				& expressionReader
 	, const ::blt::SBlitterQuery					& query
 	, const ::gpk::view_const_string				& folder
 	, ::gpk::array_pod<char_t>						& output
@@ -225,9 +228,9 @@ static	::gpk::error_t							processRange
 	for(uint32_t iDB = 0; iDB < databases.size(); ++iDB) {
 		if(query.Database == databases[iDB].Key) {
 			if(0 <= query.Detail)
-				return ::processDetail(loadCache, databases, iDB, query, output, folder, 0);
+				return ::processDetail(loadCache, expressionReader, databases, iDB, query, output, folder, 0);
 			else
-				return ::processRange(loadCache, databases, iDB, query, output, folder, 0);
+				return ::processRange(loadCache, expressionReader, databases, iDB, query, output, folder, 0);
 		}
 	}
 	error_printf("Database not found: %s.", query.Database.begin());

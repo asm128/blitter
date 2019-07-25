@@ -22,6 +22,7 @@ static ::gpk::error_t							evaluateExpression
 	const ::gpk::error_t								iDB										= ::gpk::find(readerExpression.View[dbNode.ObjectIndex], ::gpk::view_array<const ::blt::TNamedBlitterDB>{databases.begin(), databases.size()});
 	for(uint32_t iFirstLevelExpression = 1; iFirstLevelExpression < nodeExpression->Children.size(); ++iFirstLevelExpression) {
 		const ::gpk::SExpressionNode						& childToSolve								= *nodeExpression->Children[iFirstLevelExpression];
+		ree_if(iFirstLevelExpression == 1 && ::gpk::EXPRESSION_READER_TYPE_INDEX != childToSolve.Object->Type, "%s", "Invalid expression");
 		const ::gpk::SJSONNode								& currentJSON								= *inputJSON.Tree[indexNodeJSON];
 		if(::gpk::EXPRESSION_READER_TYPE_KEY == childToSolve.Object->Type) {
 			const ::gpk::view_const_string						& strKey									= readerExpression.View[childToSolve.ObjectIndex];
@@ -37,14 +38,19 @@ static ::gpk::error_t							evaluateExpression
 			output											= inputJSON.View[indexJSONResult];
 		}
 		else if(::gpk::EXPRESSION_READER_TYPE_INDEX == childToSolve.Object->Type) {
-			ree_if(currentJSON.Object->Type != ::gpk::JSON_TYPE_ARRAY, "Only arrays can be accessed by key. JSON type: %s.", ::gpk::get_value_label(currentJSON.Object->Type).begin());
 			uint64_t											numberRead								= 0;
 			const ::gpk::view_const_string						& viewOfIndex							= readerExpression.View[childToSolve.ObjectIndex];
 			uint32_t											countDigits								= (uint32_t)::gpk::parseIntegerDecimal(viewOfIndex, &numberRead);
 			gwarn_if(countDigits != viewOfIndex.size(), "countDigits: %u, viewOfIndex: %u.", countDigits, viewOfIndex.size())
-			indexJSONResult									= ::gpk::jsonArrayValueGet(currentJSON, (uint32_t)numberRead);
-			ree_if(errored(indexJSONResult), "Value not found for index: %lli.", numberRead);
-			output											= inputJSON.View[indexJSONResult];
+			if(iFirstLevelExpression == 1) {
+				// Here we need to call recordGet()
+			}
+			else {
+				ree_if(currentJSON.Object->Type != ::gpk::JSON_TYPE_ARRAY, "Only arrays can be accessed by key. JSON type: %s.", ::gpk::get_value_label(currentJSON.Object->Type).begin());
+				indexJSONResult									= ::gpk::jsonArrayValueGet(currentJSON, (uint32_t)numberRead);
+				ree_if(errored(indexJSONResult), "Value not found for index: %lli.", numberRead);
+				output											= inputJSON.View[indexJSONResult];
+			}
 		}
 		else if(::gpk::EXPRESSION_READER_TYPE_EXPRESSION_INDEX == childToSolve.Object->Type) {
 			ree_if(currentJSON.Object->Type != ::gpk::JSON_TYPE_ARRAY, "Only arrays can be accessed by key. JSON type: %s.", ::gpk::get_value_label(currentJSON.Object->Type).begin());

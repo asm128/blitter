@@ -249,7 +249,7 @@ static	::gpk::error_t							queryLoad						(::blt::SBlitterQuery& query, const :
 	return 0;
 }
 
-::gpk::error_t									blt::requestProcess				(::blt::SBlitterQuery & query, const ::blt::SBlitterRequest & request, ::gpk::array_obj<::gpk::view_const_string> & expansionKeyStorage)						{
+::gpk::error_t									blt::requestProcess				(::gpk::SExpressionReader & expressionReader, ::blt::SBlitterQuery & query, const ::blt::SBlitterRequest & request, ::gpk::array_obj<::gpk::view_const_string> & expansionKeyStorage)						{
 	// --- Generate response
 	query.Database									= (request.Path.size() > 1)
 		? (('/' == request.Path[0]) ? ::gpk::view_const_string{&request.Path[1], request.Path.size() - 1} : ::gpk::view_const_string{request.Path.begin(), request.Path.size()})
@@ -269,14 +269,18 @@ static	::gpk::error_t							queryLoad						(::blt::SBlitterQuery& query, const :
 			}
 		}
 	}
-	{ // retrieve path and database
+	{ // retrieve path and database and read expression if any
 		const ::gpk::error_t								indexPath						= ::gpk::find('.', query.Database);
 		if(((uint32_t)indexPath + 1) < query.Database.size())
 			query.Path										= {&query.Database[indexPath + 1]	, query.Database.size() - (indexPath + 1)};
 
 		if(0 <= indexPath)
 			query.Database									= {query.Database.begin()			, (uint32_t)indexPath};
+
+		if(query.Path.size())
+			gpk_necall(::gpk::expressionReaderParse(expressionReader, query.Path), "Error: %s", "Invalid path syntax?");
 	}
+
 
 	{	// --- Retrieve query data from querystring.
 		::gpk::array_obj<::gpk::TKeyValConstString>			qsKeyVals;
@@ -290,5 +294,6 @@ static	::gpk::error_t							queryLoad						(::blt::SBlitterQuery& query, const :
 		}
 		gpk_necall(::queryLoad(query, qsKeyVals, expansionKeyStorage), "%s", "Out of memory?");
 	}
+
 	return 0;
 }
