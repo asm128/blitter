@@ -104,12 +104,7 @@ static	::gpk::error_t							processDetail
 	return 0;
 }
 
-static ::gpk::error_t							fillEmptyBlocks
-	( const ::gpk::view_const_char							& emptyBlockData
-	, uint32_t												emptyBlocks
-	, bool													appendComma
-	, ::gpk::array_pod<char_t>								& output
-	) {
+static	::gpk::error_t							fillEmptyBlocks				(const ::gpk::view_const_char & emptyBlockData, const uint32_t emptyBlocks, bool appendComma, ::gpk::array_pod<char_t> & output)	{
 	for(uint32_t iEmpty = 0; iEmpty < emptyBlocks; ++iEmpty) {
 		gpk_necall(output.append(emptyBlockData), "%s", "Out of memory?");
 		if(emptyBlocks - 1 != iEmpty)
@@ -222,8 +217,8 @@ static	::gpk::error_t							processRange
 ::gpk::error_t									blt::queryProcess
 	( ::gpk::array_obj<::blt::TNamedBlitterDB>		& databases
 	, const ::blt::SBlitterQuery					& query
-	, ::gpk::array_pod<char_t>						& output
 	, const ::gpk::view_const_string				& folder
+	, ::gpk::array_pod<char_t>						& output
 	) {
 	::blt::SLoadCache									loadCache			= {};
 	for(uint32_t iDB = 0; iDB < databases.size(); ++iDB) {

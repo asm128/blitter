@@ -53,8 +53,8 @@ namespace blt
 	::gpk::error_t												queryProcess
 		( ::gpk::array_obj<::blt::TNamedBlitterDB>	& databases
 		, const ::blt::SBlitterQuery				& query
-		, ::gpk::array_pod<char_t>					& output
 		, const ::gpk::view_const_string			& folder
+		, ::gpk::array_pod<char_t>					& output
 		);
 
 	struct SBlitter {

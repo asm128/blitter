@@ -48,7 +48,7 @@ GPK_CGI_JSON_APP_IMPL();
 
 	gpk_necall(::blt::requestProcess(app.Query, requestReceived, app.ExpansionKeyStorage), "%s", "Failed to process request.");
 	gpk_necall(::blt::loadConfig(app, "./blitter.json"), "%s", "Failed to load blitter configuration.");
-	gpk_necall(::blt::queryProcess(app.Databases, app.Query, output, app.Folder), "%s", "Failed to load blitter databases.");
+	gpk_necall(::blt::queryProcess(app.Databases, app.Query, app.Folder, output), "%s", "Failed to load blitter databases.");
 	if(output.size()) {
 		OutputDebugStringA(output.begin());
 		OutputDebugStringA("\n");
