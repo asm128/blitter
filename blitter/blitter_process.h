@@ -14,7 +14,7 @@ namespace blt
 
 	::gpk::error_t									recordRange
 		( ::blt::SLoadCache								& loadCache
-		, ::blt::TKeyValBlitterDB						& database
+		, ::blt::TNamedBlitterDB						& database
 		, const ::gpk::SRange<uint64_t>					& range
 		, const ::gpk::view_const_string				& folder
 		, ::gpk::array_obj<::blt::SRangeBlockInfo>		& output_records
@@ -23,7 +23,7 @@ namespace blt
 
 	::gpk::error_t									recordGet
 		( ::blt::SLoadCache								& loadCache
-		, ::blt::TKeyValBlitterDB						& database
+		, ::blt::TNamedBlitterDB						& database
 		, const uint64_t								absoluteIndex
 		, ::gpk::view_const_string						& output_record
 		, uint32_t										& relativeIndex

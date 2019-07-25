@@ -1,12 +1,11 @@
 #include "blitter_process.h"
-#include "gpk_stdstring.h"
 #include "gpk_find.h"
 #include "gpk_expression.h"
 #include "gpk_parse.h"
 
 static	::gpk::error_t							processDetail
 	( ::blt::SLoadCache								& loadCache
-	, ::gpk::array_obj<::blt::TKeyValBlitterDB>		& databases
+	, ::gpk::array_obj<::blt::TNamedBlitterDB>		& databases
 	, const uint32_t								idxDatabase
 	, const ::blt::SBlitterQuery					& query
 	, ::gpk::array_pod<char_t>						& output
@@ -16,7 +15,7 @@ static	::gpk::error_t							processDetail
 	::gpk::view_const_string							outputRecord						= {};
 	uint32_t											nodeIndex							= (uint32_t)-1;
 	uint32_t											blockIndex							= (uint32_t)-1;
-	::blt::TKeyValBlitterDB								& databaseToRead					= databases[idxDatabase];
+	::blt::TNamedBlitterDB								& databaseToRead					= databases[idxDatabase];
 	if errored(::blt::recordGet(loadCache, databaseToRead, query.Detail, outputRecord, nodeIndex, blockIndex, folder)) {
 		error_printf("Failed to load record detail. Offset: %llu. Length: %llu.", query.Range.Offset, query.Range.Count);
 		gpk_necall(output.append(::gpk::view_const_string{"{}"}), "%s", "Out of memory?");
@@ -50,7 +49,7 @@ static	::gpk::error_t							processDetail
 				gpk_necall(output.append(appendStart, (uint32_t)(appendStop - appendStart)), "%s", "Out of memory?");
 				bool											bFound								= false;
 				for(uint32_t iDB = 0; iDB < databases.size(); ++iDB) {
-					::blt::TKeyValBlitterDB							& nextTable							= databases[iDB];
+					::blt::TNamedBlitterDB							& nextTable							= databases[iDB];
 					if(nextTable.Key == fieldToExpand || 0 <= ::gpk::find(fieldToExpand, ::gpk::view_array<const ::gpk::view_const_string>{nextTable.Val.Bindings})) {
 						bFound										= true;
 						::blt::SBlitterQuery							nextQuery							= query;
@@ -80,7 +79,7 @@ static	::gpk::error_t							processDetail
 					const ::gpk::view_const_string					digitsToDetailView						= currentDBBlock.Reader.View[indexArrayElement];
 					gpk_necall(::gpk::parseIntegerDecimal(digitsToDetailView, &nextTableRecordIndex), "%s", "Out of memory?");
 					for(uint32_t iDB = 0; iDB < databases.size(); ++iDB) {
-						::blt::TKeyValBlitterDB							& nextTable							= databases[iDB];
+						::blt::TNamedBlitterDB							& nextTable							= databases[iDB];
 						if(nextTable.Key == fieldToExpand || 0 <= ::gpk::find(fieldToExpand, ::gpk::view_array<const ::gpk::view_const_string>{nextTable.Val.Bindings})) {
 							bFound										= true;
 							::blt::SBlitterQuery							nextQuery							= query;
@@ -123,7 +122,7 @@ static ::gpk::error_t							fillEmptyBlocks
 
 static	::gpk::error_t							processRange
 	( ::blt::SLoadCache								& loadCache
-	, ::gpk::array_obj<::blt::TKeyValBlitterDB>		& databases
+	, ::gpk::array_obj<::blt::TNamedBlitterDB>		& databases
 	, const uint32_t								idxDatabase
 	, const ::blt::SBlitterQuery					& query
 	, ::gpk::array_pod<char_t>						& output
@@ -137,7 +136,7 @@ static	::gpk::error_t							processRange
 	::gpk::array_pod<::gpk::SMinMax<uint32_t>>				relativeIndices						= {};
 	::gpk::SRange<uint32_t>									blockRange							= {};
 	::gpk::array_obj<::blt::SRangeBlockInfo>				rangeInfo							= {};
-	::blt::TKeyValBlitterDB									& databaseToRead					= databases[idxDatabase];
+	::blt::TNamedBlitterDB									& databaseToRead					= databases[idxDatabase];
 	::gpk::array_pod<char_t>								emptyBlockData		= {};
 	const ::gpk::view_const_string							empty_record		= "{},";
 	for(uint32_t iRecord = 0; iRecord < databaseToRead.Val.BlockSize; ++iRecord)
@@ -224,7 +223,7 @@ static	::gpk::error_t							processRange
 }
 
 ::gpk::error_t									blt::queryProcess
-	( ::gpk::array_obj<::blt::TKeyValBlitterDB>		& databases
+	( ::gpk::array_obj<::blt::TNamedBlitterDB>		& databases
 	, const ::blt::SBlitterQuery					& query
 	, ::gpk::array_pod<char_t>						& output
 	, const ::gpk::view_const_string				& folder
@@ -244,7 +243,7 @@ static	::gpk::error_t							processRange
 
 ::gpk::error_t									blt::recordGet
 	( ::blt::SLoadCache					& loadCache
-	, ::blt::TKeyValBlitterDB			& database
+	, ::blt::TNamedBlitterDB			& database
 	, const uint64_t					absoluteIndex
 	, ::gpk::view_const_string			& output_record
 	, uint32_t							& relativeIndex
@@ -270,7 +269,7 @@ static	::gpk::error_t							processRange
 }
 
 ::gpk::error_t									recordRangeBlock
-	( const ::blt::TKeyValBlitterDB					& database
+	( const ::blt::TNamedBlitterDB					& database
 	, const ::gpk::SRange<uint64_t>					& range
 	, const uint32_t								idBlock
 	, const uint32_t								iNewBlock
@@ -302,7 +301,7 @@ static	::gpk::error_t							processRange
 
 ::gpk::error_t									blt::recordRange
 	( ::blt::SLoadCache								& loadCache
-	, ::blt::TKeyValBlitterDB						& database
+	, ::blt::TNamedBlitterDB						& database
 	, const ::gpk::SRange<uint64_t>					& range
 	, const ::gpk::view_const_string				& folder
 	, ::gpk::array_obj<::blt::SRangeBlockInfo>		& output_records

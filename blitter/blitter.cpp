@@ -1,7 +1,6 @@
 #include "blitter.h"
 
 #include "gpk_stdstring.h"
-#include "gpk_process.h"
 #include "gpk_storage.h"
 
 #include "gpk_json_expression.h"
@@ -10,26 +9,27 @@
 #include "gpk_find.h"
 #include "gpk_deflate.h"
 #include "gpk_aes.h"
+#include "gpk_cgi.h"
+
+::gpk::error_t									blt::loadConfig			(::blt::SBlitter & appState, const ::gpk::view_const_string & jsonFileName)	{
+	gpk_necall(::gpk::jsonFileRead(appState.Config, jsonFileName), "Failed to load configuration file: %s.", jsonFileName.begin());
+	const ::gpk::error_t								indexApp				= ::gpk::jsonExpressionResolve("application.blitter", appState.Config.Reader, (uint32_t)0, appState.Folder);
+	const ::gpk::error_t								indexDB					= ::gpk::jsonExpressionResolve("database", appState.Config.Reader, (uint32_t)indexApp, appState.Folder);
+	gpk_necall(indexDB, "'database' not found in '%s'.", "application.blitter");
+	const ::gpk::error_t								indexPath				= ::gpk::jsonExpressionResolve("path.database", appState.Config.Reader, (uint32_t)indexApp, appState.Folder);
+	if(errored(indexPath)) {
+		warning_printf("'path.database' not found in '%s'. Using current path as database root.", "application.blitter");
+		appState.Folder									= "./";
+	}
+	gpk_necall(::blt::configDatabases(appState.Databases, appState.Config.Reader, indexDB, {}, appState.Folder), "%s", "Failed to load query.");
+	return 0;
+}
 
 ::gpk::error_t									dbFileExtension				(const ::blt::DATABASE_HOST & hostType, bool bEncrypted, ::gpk::view_const_string & extension) {
 	extension										= bEncrypted
 		? ((::blt::DATABASE_HOST_DEFLATE & hostType) ? "czon" : "cson")
 		: ((::blt::DATABASE_HOST_DEFLATE & hostType) ? "zson" : "sson")
 		;
-	return 0;
-}
-
-::gpk::error_t									blt::queryLoad				(::blt::SBlitterQuery& query, const ::gpk::view_array<const ::gpk::TKeyValConstString> keyvals, ::gpk::array_obj<::gpk::view_const_string> & expansionKeyStorage) {
-	::gpk::keyvalNumeric("offset", keyvals, query.Range.Offset);
-	if(0 > ::gpk::keyvalNumeric("limit", keyvals, query.Range.Count))
-		::gpk::keyvalNumeric("count", keyvals, query.Range.Count);
-
-	const ::gpk::error_t								indexExpand					= ::gpk::find("expand", keyvals);
-	if(0 <= indexExpand) {
-		query.Expand									= keyvals[indexExpand].Val;
-		gpk_necall(::gpk::split(query.Expand, '.', expansionKeyStorage), "%s", "Out of memory?");
-		query.ExpansionKeys								= expansionKeyStorage;
-	}
 	return 0;
 }
 
@@ -73,7 +73,7 @@
 	return 0;
 }
 
-static	::gpk::error_t							dbFileLoad					(::blt::SLoadCache & loadCache, ::blt::TKeyValBlitterDB & jsonDB, const ::gpk::view_const_string & fileName, uint32_t idBlock)	{
+static	::gpk::error_t							dbFileLoad					(::blt::SLoadCache & loadCache, ::blt::TNamedBlitterDB & jsonDB, const ::gpk::view_const_string & fileName, uint32_t idBlock)	{
 	const int32_t										idxBlock					= jsonDB.Val.Blocks.push_back({});
 	gpk_necall(idxBlock, "%s", "Out of memory?");
 	gpk_necall(jsonDB.Val.BlockIndices.push_back(idBlock), "%s", "Out of memory?");
@@ -104,11 +104,11 @@ static	::gpk::error_t							dbFileLoad					(::blt::SLoadCache & loadCache, ::blt
 		}
 	}
 	gpk_necall(::crcVerifyAndRemove(dbBlock.Bytes), "CRC check failed: %s.", "??");
-	::gpk::jsonParse(dbBlock.Reader, {dbBlock.Bytes.begin(), dbBlock.Bytes.size()});
+	gpk_necall(::gpk::jsonParse(dbBlock.Reader, {dbBlock.Bytes.begin(), dbBlock.Bytes.size()}), "Failed to read configuration: %s.", "??");
 	return idxBlock;
 }
 
-::gpk::error_t									blt::tableFileLoad			(::blt::SLoadCache & loadCache, ::blt::TKeyValBlitterDB & jsonDB, const ::gpk::view_const_string & folder)	{
+::gpk::error_t									blt::tableFileLoad			(::blt::SLoadCache & loadCache, ::blt::TNamedBlitterDB & jsonDB, const ::gpk::view_const_string & folder)	{
 	::gpk::array_pod<char_t>							fileName					= folder;
 	gpk_necall(fileName.push_back('/')		, "%s", "Out of memory?");
 	gpk_necall(::blt::tableFileName(fileName, jsonDB.Val.HostType, jsonDB.Val.EncryptionKey.size() > 0,jsonDB.Key), "%s", "Out of memory?");
@@ -116,7 +116,7 @@ static	::gpk::error_t							dbFileLoad					(::blt::SLoadCache & loadCache, ::blt
 	return ::dbFileLoad(loadCache, jsonDB, {fileName.begin(), fileName.size()}, 0);
 }
 
-::gpk::error_t									blt::blockFileLoad			(::blt::SLoadCache & loadCache, ::blt::TKeyValBlitterDB & jsonDB, const ::gpk::view_const_string & folder, uint32_t block)	{
+::gpk::error_t									blt::blockFileLoad			(::blt::SLoadCache & loadCache, ::blt::TNamedBlitterDB & jsonDB, const ::gpk::view_const_string & folder, uint32_t block)	{
 	{
 		::gpk::error_t										blockIndex					= ::gpk::find(block, {jsonDB.Val.BlockIndices.begin(), jsonDB.Val.BlockIndices.size()});
 		rvi_if(blockIndex, 0 <= blockIndex, "Block already loaded: %u.", block);
@@ -131,7 +131,7 @@ static	::gpk::error_t							dbFileLoad					(::blt::SLoadCache & loadCache, ::blt
 	return ::dbFileLoad(loadCache, jsonDB, {fileName.begin(), fileName.size()}, block);
 }
 
-::gpk::error_t									blt::configDatabases		(::gpk::array_obj<::blt::TKeyValBlitterDB> & databases, const ::gpk::SJSONReader & configReader, const int32_t indexConfigNode, const ::gpk::view_array<const ::gpk::view_const_string> & databasesToLoad, const ::gpk::view_const_string & folder)	{
+::gpk::error_t									blt::configDatabases		(::gpk::array_obj<::blt::TNamedBlitterDB> & databases, const ::gpk::SJSONReader & configReader, const int32_t indexConfigNode, const ::gpk::view_array<const ::gpk::view_const_string> & databasesToLoad, const ::gpk::view_const_string & folder)	{
 	::gpk::view_const_string							jsonResult					= {};
 	const int32_t										indexObjectDatabases		= (-1 == indexConfigNode)
 		? ::gpk::jsonExpressionResolve("application.blitter.database", configReader, 0, jsonResult)
@@ -147,7 +147,7 @@ static	::gpk::error_t							dbFileLoad					(::blt::SLoadCache & loadCache, ::blt
 	for(uint32_t iDatabase = 0, countDatabases = (uint32_t)databaseArraySize; iDatabase < countDatabases; ++iDatabase) {
 		sprintf_s(temp, "[%u].name", iDatabase);
 		gpk_necall(::gpk::jsonExpressionResolve(temp, configReader, indexObjectDatabases, jsonResult), "Failed to load config from json! Last contents found: %s.", jsonResult.begin());
-		::blt::TKeyValBlitterDB								& jsonDB					= databases[iDatabase];
+		::blt::TNamedBlitterDB								& jsonDB					= databases[iDatabase];
 		jsonDB.Key										= jsonResult;
 		{	// -- Load database block size
 			sprintf_s(temp, "[%u].block", iDatabase);
@@ -235,16 +235,60 @@ static	::gpk::error_t							dbFileLoad					(::blt::SLoadCache & loadCache, ::blt
 	return 0;
 }
 
-::gpk::error_t									blt::loadConfig			(::blt::SBlitter & appState, const ::gpk::view_const_string & jsonFileName)	{
-	gpk_necall(::gpk::jsonFileRead(appState.Config, jsonFileName), "Failed to load configuration file: %s.", jsonFileName.begin());
-	const ::gpk::error_t								indexApp				= ::gpk::jsonExpressionResolve("application.blitter", appState.Config.Reader, (uint32_t)0, appState.Folder);
-	const ::gpk::error_t								indexDB					= ::gpk::jsonExpressionResolve("database", appState.Config.Reader, (uint32_t)indexApp, appState.Folder);
-	gpk_necall(indexDB, "'database' not found in '%s'.", "application.blitter");
-	const ::gpk::error_t								indexPath				= ::gpk::jsonExpressionResolve("path.database", appState.Config.Reader, (uint32_t)indexApp, appState.Folder);
-	if(errored(indexPath)) {
-		warning_printf("'path.database' not found in '%s'. Using current path as database root.", "application.blitter");
-		appState.Folder									= "./";
+static	::gpk::error_t							queryLoad						(::blt::SBlitterQuery& query, const ::gpk::view_array<const ::gpk::TKeyValConstString> keyvals, ::gpk::array_obj<::gpk::view_const_string> & expansionKeyStorage) {
+	::gpk::keyvalNumeric("offset", keyvals, query.Range.Offset);
+	if(0 > ::gpk::keyvalNumeric("limit", keyvals, query.Range.Count))
+		::gpk::keyvalNumeric("count", keyvals, query.Range.Count);
+
+	const ::gpk::error_t								indexExpand						= ::gpk::find("expand", keyvals);
+	if(0 <= indexExpand) {
+		query.Expand									= keyvals[indexExpand].Val;
+		gpk_necall(::gpk::split(query.Expand, '.', expansionKeyStorage), "%s", "Out of memory?");
+		query.ExpansionKeys								= expansionKeyStorage;
 	}
-	gpk_necall(::blt::configDatabases(appState.Databases, appState.Config.Reader, indexDB, {}, appState.Folder), "%s", "Failed to load query.");
+	return 0;
+}
+
+::gpk::error_t									blt::requestProcess				(::blt::SBlitterQuery & query, const ::blt::SBlitterRequest & request, ::gpk::array_obj<::gpk::view_const_string> & expansionKeyStorage)						{
+	// --- Generate response
+	query.Database									= (request.Path.size() > 1)
+		? (('/' == request.Path[0]) ? ::gpk::view_const_string{&request.Path[1], request.Path.size() - 1} : ::gpk::view_const_string{request.Path.begin(), request.Path.size()})
+		: ::gpk::view_const_string{}
+		;
+	{	// --- Retrieve detail part
+		uint64_t											detail							= (uint64_t)-1LL;
+		::gpk::view_const_string							strDetail						= {};
+		const ::gpk::error_t								indexOfLastBar					= ::gpk::rfind('/', query.Database);
+		const uint32_t										startOfDetail					= (uint32_t)(indexOfLastBar + 1);
+		if(indexOfLastBar > 0 && startOfDetail < query.Database.size()) {
+			strDetail										= {&query.Database[startOfDetail], query.Database.size() - startOfDetail};
+			query.Database									= {query.Database.begin(), (uint32_t)indexOfLastBar};
+			if(strDetail.size()) {
+				::gpk::stoull(strDetail, &detail);
+				query.Detail									= (int64_t)detail;
+			}
+		}
+	}
+	{ // retrieve path and database
+		const ::gpk::error_t								indexPath						= ::gpk::find('.', query.Database);
+		if(((uint32_t)indexPath + 1) < query.Database.size())
+			query.Path										= {&query.Database[indexPath + 1]	, query.Database.size() - (indexPath + 1)};
+
+		if(0 <= indexPath)
+			query.Database									= {query.Database.begin()			, (uint32_t)indexPath};
+	}
+
+	{	// --- Retrieve query data from querystring.
+		::gpk::array_obj<::gpk::TKeyValConstString>			qsKeyVals;
+		::gpk::array_obj<::gpk::view_const_string>			queryStringElements				= {};
+
+		gpk_necall(::gpk::split({request.QueryString.begin(), request.QueryString.size()}, '&', queryStringElements), "%s", "Out of memory?");
+		gpk_necall(qsKeyVals.resize(queryStringElements.size()), "%s", "Out of memory?");
+		for(uint32_t iKeyVal = 0; iKeyVal < qsKeyVals.size(); ++iKeyVal) {
+			::gpk::TKeyValConstString							& keyValDst						= qsKeyVals[iKeyVal];
+			::gpk::keyval_split(queryStringElements[iKeyVal], keyValDst);
+		}
+		gpk_necall(::queryLoad(query, qsKeyVals, expansionKeyStorage), "%s", "Out of memory?");
+	}
 	return 0;
 }
