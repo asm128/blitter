@@ -269,6 +269,37 @@ static	::gpk::error_t							processRange
 	return 0;
 }
 
+::gpk::error_t									recordRangeBlock
+	( const ::blt::TKeyValBlitterDB					& database
+	, const ::gpk::SRange<uint64_t>					& range
+	, const uint32_t								idBlock
+	, const uint32_t								iNewBlock
+	, ::gpk::array_obj<::blt::SRangeBlockInfo>		& output_records
+	) {
+	const ::gpk::SJSONReader							& readerBlock		= database.Val.Blocks[iNewBlock]->Reader;
+	ree_if(0 == readerBlock.Tree.size(), "%s", "Invalid block data.");
+	const ::gpk::SJSONNode								& jsonRoot			= *readerBlock.Tree[0];
+	ree_if(::gpk::JSON_TYPE_ARRAY != jsonRoot.Object->Type, "Invalid json type: %s", ::gpk::get_value_label(jsonRoot.Object->Type).begin());
+
+	const uint64_t										offsetRecord		= database.Val.Offsets[iNewBlock];
+	::blt::SRangeBlockInfo								rangeInfo			= {};
+	// Actuallly I believe we should handle this differently than for single-file database access, but it is possible that I already thought about this before.
+	rangeInfo.RelativeIndices.Min					= ::gpk::max(0, (int32_t)(range.Offset - offsetRecord));
+	rangeInfo.RelativeIndices.Max					= ::gpk::min(::gpk::jsonArraySize(jsonRoot) - 1U, ::gpk::min(database.Val.BlockSize - 1, (uint32_t)((range.Offset + range.Count) - offsetRecord - 1)));
+	rangeInfo.BlockIndex							= iNewBlock;
+	rangeInfo.BlockId								= idBlock;
+	::gpk::SMinMax<int32_t>								blockNodeIndices	=
+		{ ::gpk::jsonArrayValueGet(jsonRoot, rangeInfo.RelativeIndices.Min)
+		, ::gpk::jsonArrayValueGet(jsonRoot, rangeInfo.RelativeIndices.Max)
+		};
+	rangeInfo.OutputRecords							=
+		{ readerBlock.View[(((uint32_t)blockNodeIndices.Min) < readerBlock.View.size()) ? blockNodeIndices.Min : 0].begin()
+		, (uint32_t)(readerBlock.View[blockNodeIndices.Max].end() - readerBlock.View[(((uint32_t)blockNodeIndices.Min) < readerBlock.View.size()) ? blockNodeIndices.Min : 0].begin())
+		};
+	gpk_necall(output_records.push_back(rangeInfo), "%s", "Out of memory?");
+	return 0;
+}
+
 ::gpk::error_t									blt::recordRange
 	( ::blt::SLoadCache								& loadCache
 	, ::blt::TKeyValBlitterDB						& database
@@ -297,26 +328,7 @@ static	::gpk::error_t							processRange
 	if(0 == database.Val.BlockSize) {
 		int32_t												iNewBlock			= ::blt::tableFileLoad(loadCache, database, folder);
 		gpk_necall(iNewBlock, "%s", "Missing table found.");	// We need to improve this in order to support missing blocks.
-		const ::gpk::SJSONReader							& readerBlock		= database.Val.Blocks[iNewBlock]->Reader;
-		ree_if(0 == readerBlock.Tree.size(), "%s", "Invalid block data.");
-		const ::gpk::SJSONNode								& jsonRoot			= *readerBlock.Tree[0];
-		ree_if(::gpk::JSON_TYPE_ARRAY != jsonRoot.Object->Type, "Invalid json type: %s", ::gpk::get_value_label(jsonRoot.Object->Type).begin());
-
-		const uint64_t										offsetRecord		= database.Val.Offsets[iNewBlock];
-		::blt::SRangeBlockInfo								rangeInfo			= {};
-		rangeInfo.RelativeIndices.Min					= ::gpk::max(0, (int32_t)(range.Offset - offsetRecord));
-		rangeInfo.RelativeIndices.Max					= ::gpk::min(::gpk::jsonArraySize(*readerBlock[0]) - 1U, ::gpk::min(database.Val.BlockSize - 1, (uint32_t)((range.Offset + range.Count) - offsetRecord - 1)));
-		rangeInfo.BlockIndex							= iNewBlock;
-		rangeInfo.BlockId								= 0;
-		::gpk::SMinMax<int32_t>								blockNodeIndices	=
-			{ ::gpk::jsonArrayValueGet(jsonRoot, rangeInfo.RelativeIndices.Min)
-			, ::gpk::jsonArrayValueGet(jsonRoot, rangeInfo.RelativeIndices.Max)
-			};
-		rangeInfo.OutputRecords							=
-			{ readerBlock.View[blockNodeIndices.Min].begin()
-			, (uint32_t)(readerBlock.View[blockNodeIndices.Max].end() - readerBlock.View[blockNodeIndices.Min].begin())
-			};
-		gpk_necall(output_records.push_back(rangeInfo), "%s", "Out of memory?");
+		gpk_necall(::recordRangeBlock(database, range, 0, iNewBlock, output_records), "Error accessing range for block: %u.", 0);
 	}
 	else {
 		::gpk::array_pod<uint32_t>							blocksToProcess		= {};
@@ -326,29 +338,10 @@ static	::gpk::error_t							processRange
 				gpk_necall(blocksToProcess.push_back(blockOnDisk), "%s.", "Out of memory?");
 		}
 		for(uint32_t iBlock = 0; iBlock < blocksToProcess.size(); ++iBlock) {
-			const uint32_t										blockToLoad			= blocksToProcess[iBlock];
-			int32_t												iNewBlock			= ::blt::blockFileLoad(loadCache, database, folder, blockToLoad);
-			gpk_necall(iNewBlock, "Missing block found: %u.", blockToLoad);	// We need to improve this in order to support missing blocks.
-			const ::gpk::SJSONReader							& readerBlock		= database.Val.Blocks[iNewBlock]->Reader;
-			ree_if(0 == readerBlock.Tree.size(), "%s", "Invalid block data.");
-			const ::gpk::SJSONNode								& jsonRoot			= *readerBlock.Tree[0];
-			ree_if(::gpk::JSON_TYPE_ARRAY != jsonRoot.Object->Type, "Invalid json type: %s", ::gpk::get_value_label(jsonRoot.Object->Type).begin());
-
-			const uint64_t										offsetRecord		= database.Val.Offsets[iNewBlock];
-			::blt::SRangeBlockInfo								rangeInfo			= {};
-			rangeInfo.RelativeIndices.Min					= ::gpk::max(0, (int32_t)(range.Offset - offsetRecord));
-			rangeInfo.RelativeIndices.Max					= ::gpk::min(::gpk::jsonArraySize(*readerBlock[0]) - 1U, ::gpk::min(database.Val.BlockSize - 1, (uint32_t)((range.Offset + range.Count) - offsetRecord - 1)));
-			rangeInfo.BlockIndex							= iNewBlock;
-			rangeInfo.BlockId								= blockToLoad;
-			::gpk::SMinMax<int32_t>								blockNodeIndices	=
-				{ ::gpk::jsonArrayValueGet(jsonRoot, rangeInfo.RelativeIndices.Min)
-				, ::gpk::jsonArrayValueGet(jsonRoot, rangeInfo.RelativeIndices.Max)
-				};
-			rangeInfo.OutputRecords							=
-				{ readerBlock.View[(((uint32_t)blockNodeIndices.Min) < readerBlock.View.size()) ? blockNodeIndices.Min : 0].begin()
-				, (uint32_t)(readerBlock.View[blockNodeIndices.Max].end() - readerBlock.View[(((uint32_t)blockNodeIndices.Min) < readerBlock.View.size()) ? blockNodeIndices.Min : 0].begin())
-				};
-			gpk_necall(output_records.push_back(rangeInfo), "%s", "Out of memory?");
+			const uint32_t										idBlockToLoad		= blocksToProcess[iBlock];
+			int32_t												iNewBlock			= ::blt::blockFileLoad(loadCache, database, folder, idBlockToLoad);
+			gpk_necall(iNewBlock, "Missing block found: %u. This shouldn't happen because we already filtered which blocks are on disk, so either the block is corrupted and it has to be restored before the query executes.", idBlockToLoad);	// We need to improve this in order to support missing blocks.
+			gpk_necall(::recordRangeBlock(database, range, idBlockToLoad, iNewBlock, output_records), "Error accessing range for block: %u.", idBlockToLoad);
 		}
 	}
 	return 0;
