@@ -7,17 +7,6 @@
 #include "gpk_process.h"
 
 ::gpk::error_t									requestProcess				(::blt::SBlitterQuery & query, const ::blt::SBlitterRequest & request, ::gpk::array_obj<::gpk::view_const_string> & expansionKeyStorage)						{
-	{	// --- Retrieve query from request.
-		::gpk::array_obj<::gpk::TKeyValConstString>			qsKeyVals;
-		::gpk::array_obj<::gpk::view_const_string>			queryStringElements			= {};
-		gpk_necall(::gpk::querystring_split({request.QueryString.begin(), request.QueryString.size()}, queryStringElements), "%s", "Out of memory?");
-		gpk_necall(qsKeyVals.resize(queryStringElements.size()), "%s", "Out of memory?");
-		for(uint32_t iKeyVal = 0; iKeyVal < qsKeyVals.size(); ++iKeyVal) {
-			::gpk::TKeyValConstString							& keyValDst					= qsKeyVals[iKeyVal];
-			::gpk::keyval_split(queryStringElements[iKeyVal], keyValDst);
-		}
-		gpk_necall(::blt::queryLoad(query, qsKeyVals, expansionKeyStorage), "%s", "Out of memory?");
-	}
 	// --- Generate response
 	query.Database									= (request.Path.size() > 1)
 		? (('/' == request.Path[0]) ? ::gpk::view_const_string{&request.Path[1], request.Path.size() - 1} : ::gpk::view_const_string{request.Path.begin(), request.Path.size()})
@@ -44,6 +33,17 @@
 	if(0 <= indexPath)
 		query.Database									= {query.Database.begin()			, (uint32_t)indexPath};
 
+	{	// --- Retrieve query from request.
+		::gpk::array_obj<::gpk::TKeyValConstString>			qsKeyVals;
+		::gpk::array_obj<::gpk::view_const_string>			queryStringElements			= {};
+		gpk_necall(::gpk::querystring_split({request.QueryString.begin(), request.QueryString.size()}, queryStringElements), "%s", "Out of memory?");
+		gpk_necall(qsKeyVals.resize(queryStringElements.size()), "%s", "Out of memory?");
+		for(uint32_t iKeyVal = 0; iKeyVal < qsKeyVals.size(); ++iKeyVal) {
+			::gpk::TKeyValConstString							& keyValDst					= qsKeyVals[iKeyVal];
+			::gpk::keyval_split(queryStringElements[iKeyVal], keyValDst);
+		}
+		gpk_necall(::blt::queryLoad(query, qsKeyVals, expansionKeyStorage), "%s", "Out of memory?");
+	}
 	return 0;
 }
 
@@ -74,6 +74,9 @@ GPK_CGI_JSON_APP_IMPL();
 			}
 		}
 	}
+
+	if(requestReceived.Path.size())
+		gpk_necall(::gpk::expressionReaderParse(app.ExpressionReader, {requestReceived.Path.begin(), requestReceived.Path.size()}), "Error: %s", "Invalid path syntax?");
 
 	gpk_necall(::requestProcess(app.Query, requestReceived, app.ExpansionKeyStorage), "%s", "Failed to process request.");
 	//if(0 == ::gpk::keyValVerify(environViews, "REQUEST_METHOD", "GET")) {

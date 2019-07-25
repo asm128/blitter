@@ -73,15 +73,11 @@
 	return 0;
 }
 
-::gpk::error_t									blt::tableFileLoad			(::blt::SLoadCache & loadCache, ::blt::TKeyValBlitterDB & jsonDB, const ::gpk::view_const_string & folder)	{
-	::gpk::array_pod<char_t>							fileName					= folder;
-	gpk_necall(fileName.push_back('/')		, "%s", "Out of memory?");
-	gpk_necall(::blt::tableFileName(fileName, jsonDB.Val.HostType, jsonDB.Val.EncryptionKey.size() > 0,jsonDB.Key), "%s", "Out of memory?");
-	info_printf("Loading database file: %s.", fileName.begin());
+static	::gpk::error_t							dbFileLoad					(::blt::SLoadCache & loadCache, ::blt::TKeyValBlitterDB & jsonDB, const ::gpk::view_const_string & fileName, uint32_t idBlock)	{
 	const int32_t										idxBlock					= jsonDB.Val.Blocks.push_back({});
 	gpk_necall(idxBlock, "%s", "Out of memory?");
-	gpk_necall(jsonDB.Val.BlockIndices.push_back(idxBlock), "%s", "Out of memory?");
-	gpk_necall(jsonDB.Val.Offsets.push_back(0), "%s", "Out of memory?");
+	gpk_necall(jsonDB.Val.BlockIndices.push_back(idBlock), "%s", "Out of memory?");
+	gpk_necall(jsonDB.Val.Offsets.push_back(idBlock * jsonDB.Val.BlockSize), "%s", "Out of memory?");
 	jsonDB.Val.Blocks[idxBlock].create();
 	::gpk::SJSONFile									& dbBlock					= *jsonDB.Val.Blocks[idxBlock];
 	loadCache										= {};
@@ -108,7 +104,16 @@
 		}
 	}
 	gpk_necall(::crcVerifyAndRemove(dbBlock.Bytes), "CRC check failed: %s.", "??");
-	return ::gpk::jsonParse(dbBlock.Reader, {dbBlock.Bytes.begin(), dbBlock.Bytes.size()});
+	::gpk::jsonParse(dbBlock.Reader, {dbBlock.Bytes.begin(), dbBlock.Bytes.size()});
+	return idxBlock;
+}
+
+::gpk::error_t									blt::tableFileLoad			(::blt::SLoadCache & loadCache, ::blt::TKeyValBlitterDB & jsonDB, const ::gpk::view_const_string & folder)	{
+	::gpk::array_pod<char_t>							fileName					= folder;
+	gpk_necall(fileName.push_back('/')		, "%s", "Out of memory?");
+	gpk_necall(::blt::tableFileName(fileName, jsonDB.Val.HostType, jsonDB.Val.EncryptionKey.size() > 0,jsonDB.Key), "%s", "Out of memory?");
+	info_printf("Loading database file: %s.", fileName.begin());
+	return ::dbFileLoad(loadCache, jsonDB, {fileName.begin(), fileName.size()}, 0);
 }
 
 ::gpk::error_t									blt::blockFileLoad			(::blt::SLoadCache & loadCache, ::blt::TKeyValBlitterDB & jsonDB, const ::gpk::view_const_string & folder, uint32_t block)	{
@@ -117,46 +122,13 @@
 		rvi_if(blockIndex, 0 <= blockIndex, "Block already loaded: %u.", block);
 	}
 	gpk_necall(::gpk::find(block, ::gpk::view_const_uint32{jsonDB.Val.BlocksOnDisk}), "Block %u doesn't exist.", block);
-
 	::gpk::array_pod<char_t>							fileName					= folder;
 	gpk_necall(fileName.push_back('/'), "%s", "Out of memory?");
 	gpk_necall(::blt::tableFolderName(fileName, jsonDB.Key, jsonDB.Val.BlockSize), "%s", "Out of memory?");
 	gpk_necall(fileName.push_back('/'), "%s", "Out of memory?");
 	gpk_necall(::blt::blockFileName(fileName, jsonDB.Key, jsonDB.Val.EncryptionKey.size() > 0, jsonDB.Val.HostType, block), "%s", "Out of memory?");
-
-	const int32_t										idxBlock					= jsonDB.Val.Blocks.push_back({});
-	gpk_necall(idxBlock, "%s", "Out of memory?");
-	gpk_necall(jsonDB.Val.BlockIndices.push_back(block), "%s", "Out of memory?");
-	gpk_necall(jsonDB.Val.Offsets.push_back(block * jsonDB.Val.BlockSize), "%s", "Out of memory?");
-	jsonDB.Val.Blocks[idxBlock].create();
-	::gpk::SJSONFile									& dbBlock					= *jsonDB.Val.Blocks[idxBlock];
 	info_printf("Loading database file: %s.", fileName.begin());
-	loadCache										= {};
-	if(0 == jsonDB.Val.EncryptionKey.size()) {
-		if(gbit_false(jsonDB.Val.HostType, ::blt::DATABASE_HOST_DEFLATE))
-			gpk_necall(::gpk::fileToMemory({fileName.begin(), fileName.size()}, dbBlock.Bytes), "Failed to load file: '%s'", fileName.begin());
-		else {
-			::gpk::array_pod<char_t>							& deflated				= loadCache.Deflated;
-			gpk_necall(::gpk::fileToMemory({fileName.begin(), fileName.size()}, deflated), "Failed to load file: '%s'", fileName.begin());
-			gpk_necall(::gpk::arrayInflate({&deflated[sizeof(uint32_t)], deflated.size() - sizeof(uint32_t)}, dbBlock.Bytes), "Failed to load file: '%s'", fileName.begin());
-		}
-	}
-	else {
-		::gpk::array_pod<char_t>							& encrypted				= loadCache.Encrypted;
-		if(gbit_false(jsonDB.Val.HostType, ::blt::DATABASE_HOST_DEFLATE)) {
-			gpk_necall(::gpk::fileToMemory({fileName.begin(), fileName.size()}, encrypted), "Failed to load file: '%s'", fileName.begin());
-			gpk_necall(::gpk::aesDecode(encrypted, jsonDB.Val.EncryptionKey, ::gpk::AES_LEVEL_256, dbBlock.Bytes), "Failed to decrypt file: '%s'", fileName.begin());
-		}
-		else {
-			gpk_necall(::gpk::fileToMemory({fileName.begin(), fileName.size()}, encrypted), "Failed to load file: '%s'", fileName.begin());
-			::gpk::array_pod<char_t>							& deflated				= loadCache.Deflated;
-			gpk_necall(::gpk::aesDecode(encrypted, jsonDB.Val.EncryptionKey, ::gpk::AES_LEVEL_256, deflated), "Failed to decrypt file: '%s'", fileName.begin());
-			gpk_necall(::gpk::arrayInflate({&deflated[sizeof(uint32_t)], deflated.size() - sizeof(uint32_t)}, dbBlock.Bytes), "Failed to decompress file: '%s'", fileName.begin());
-		}
-	}
-	gpk_necall(::crcVerifyAndRemove(dbBlock.Bytes), "CRC check failed: %s.", "??");
-	gpk_necall(::gpk::jsonParse(dbBlock.Reader, {dbBlock.Bytes.begin(), dbBlock.Bytes.size()}), "Failed to parse json for database block file: '%s'", fileName.begin());
-	return idxBlock;
+	return ::dbFileLoad(loadCache, jsonDB, {fileName.begin(), fileName.size()}, block);
 }
 
 ::gpk::error_t									blt::configDatabases		(::gpk::array_obj<::blt::TKeyValBlitterDB> & databases, const ::gpk::SJSONReader & configReader, const int32_t indexConfigNode, const ::gpk::view_array<const ::gpk::view_const_string> & databasesToLoad, const ::gpk::view_const_string & folder)	{

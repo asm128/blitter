@@ -1,5 +1,6 @@
 #include "gpk_json.h"
 #include "gpk_http.h"
+#include "gpk_expression.h"
 
 #ifndef BLITTER_H_20190712
 #define BLITTER_H_20190712
@@ -55,6 +56,7 @@ namespace blt
 		::gpk::SJSONFile									Config								= {};
 		::gpk::view_const_string							Folder								= {};
 		::gpk::array_obj<::gpk::view_const_string>			ExpansionKeyStorage					= {};
+		::gpk::SExpressionReader							ExpressionReader					= {};
 	};
 
 	//
