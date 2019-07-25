@@ -96,4 +96,3 @@ GPK_CGI_JSON_APP_IMPL();
 	}
 	return 0;
 }
-

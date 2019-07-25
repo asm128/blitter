@@ -48,16 +48,14 @@ static	::gpk::error_t							processDetail
 				const char										* appendStart						= currentRecordView.begin();
 				const char										* appendStop						= digitsToDetailView.begin();
 				gpk_necall(output.append(appendStart, (uint32_t)(appendStop - appendStart)), "%s", "Out of memory?");
-				bool bFound		= false;
+				bool											bFound								= false;
 				for(uint32_t iDB = 0; iDB < databases.size(); ++iDB) {
 					::blt::TKeyValBlitterDB							& nextTable							= databases[iDB];
 					if(nextTable.Key == fieldToExpand || 0 <= ::gpk::find(fieldToExpand, ::gpk::view_array<const ::gpk::view_const_string>{nextTable.Val.Bindings})) {
 						bFound										= true;
-						::blt::SBlitterQuery nextQuery;
+						::blt::SBlitterQuery							nextQuery							= query;
 						nextQuery.Database							= nextTable.Key;
 						nextQuery.Detail							= nextTableRecordIndex;
-						nextQuery.Expand							= query.Expand;
-						nextQuery.ExpansionKeys						= query.ExpansionKeys;
 						ce_if(::processDetail(loadCache, databases, iDB, nextQuery, output, folder, idxExpand + 1), "%s", "Failed to unroll detail.");
 						break;
 					}
@@ -74,7 +72,8 @@ static	::gpk::error_t							processDetail
 				const char										* appendStop						= arrayToDetailView.begin();
 				gpk_necall(output.append(appendStart, (uint32_t)(appendStop - appendStart)), "%s", "Out of memory?");
 				gpk_necall(output.push_back('['), "%s", "Out of memory?");
-				const ::gpk::SJSONNode							& arrayNode								= *currentDBBlock.Reader.Tree[indexValueNode];
+				const ::gpk::SJSONNode							& arrayNode							= *currentDBBlock.Reader.Tree[indexValueNode];
+				bool											bFound								= false;
 				for(uint32_t iRef = 0, refCount = ::gpk::jsonArraySize(*currentDBBlock.Reader.Tree[indexValueNode]); iRef < refCount; ++iRef) {
 					uint64_t										nextTableRecordIndex					= (uint64_t)-1LL;
 					const ::gpk::error_t							indexArrayElement						= ::gpk::jsonArrayValueGet(arrayNode, iRef);
@@ -83,15 +82,16 @@ static	::gpk::error_t							processDetail
 					for(uint32_t iDB = 0; iDB < databases.size(); ++iDB) {
 						::blt::TKeyValBlitterDB							& nextTable							= databases[iDB];
 						if(nextTable.Key == fieldToExpand || 0 <= ::gpk::find(fieldToExpand, ::gpk::view_array<const ::gpk::view_const_string>{nextTable.Val.Bindings})) {
-							::blt::SBlitterQuery nextQuery;
+							bFound										= true;
+							::blt::SBlitterQuery							nextQuery							= query;
 							nextQuery.Database							= nextTable.Key;
 							nextQuery.Detail							= nextTableRecordIndex;
-							nextQuery.Expand							= query.Expand;
-							nextQuery.ExpansionKeys						= query.ExpansionKeys;
 							ce_if(::processDetail(loadCache, databases, iDB, nextQuery, output, folder, idxExpand + 1), "%s", "Failed to unroll detail.");
 							break;
 						}
 					}
+					if(false == bFound)
+						gpk_necall(output.append(::gpk::view_const_string{"{}"}), "%s", "?¿??");
 					if(refCount - 1 != iRef)
 						gpk_necall(output.push_back(','), "%s", "Out of memory?");
 				}
