@@ -77,7 +77,7 @@ static	::gpk::error_t							dbFileLoad					(::blt::SLoadCache & loadCache, ::blt
 	const int32_t										idxBlock					= jsonDB.Val.Blocks.push_back({});
 	gpk_necall(idxBlock, "%s", "Out of memory?");
 	gpk_necall(jsonDB.Val.BlockIndices.push_back(idBlock), "%s", "Out of memory?");
-	gpk_necall(jsonDB.Val.Offsets.push_back(idBlock * jsonDB.Val.BlockSize), "%s", "Out of memory?");
+	gpk_necall(jsonDB.Val.Offsets.push_back(idBlock * (int64_t)jsonDB.Val.BlockSize), "%s", "Out of memory?");
 	jsonDB.Val.Blocks[idxBlock].create();
 	::gpk::SJSONFile									& dbBlock					= *jsonDB.Val.Blocks[idxBlock];
 	loadCache										= {};
