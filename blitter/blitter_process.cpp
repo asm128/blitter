@@ -1,7 +1,8 @@
 #include "blitter_process.h"
-#include "gpk_find.h"
-#include "gpk_expression.h"
+#include "blitter_expression.h"
+
 #include "gpk_parse.h"
+#include "gpk_find.h"
 
 static	::gpk::error_t							processDetail
 	( ::blt::SLoadCache								& loadCache
