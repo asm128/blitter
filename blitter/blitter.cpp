@@ -241,7 +241,10 @@ static	::gpk::error_t							dbFileLoad					(::blt::SLoadCache & loadCache, ::blt
 	const ::gpk::error_t								indexDB					= ::gpk::jsonExpressionResolve("database", appState.Config.Reader, (uint32_t)indexApp, appState.Folder);
 	gpk_necall(indexDB, "'database' not found in '%s'.", "application.blitter");
 	const ::gpk::error_t								indexPath				= ::gpk::jsonExpressionResolve("path.database", appState.Config.Reader, (uint32_t)indexApp, appState.Folder);
-	gwarn_if(errored(indexPath), "'path.database' not found in '%s'. Using current path as database root.", "application.blitter");
+	if(errored(indexPath)) {
+		warning_printf("'path.database' not found in '%s'. Using current path as database root.", "application.blitter");
+		appState.Folder									= "./";
+	}
 	gpk_necall(::blt::configDatabases(appState.Databases, appState.Config.Reader, indexDB, {}, appState.Folder), "%s", "Failed to load query.");
 	return 0;
 }
