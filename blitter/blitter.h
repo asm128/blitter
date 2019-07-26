@@ -50,6 +50,11 @@ namespace blt
 		int64_t														Detail								= -1;
 	};
 
+	struct SBlitterOutput {
+		::gpk::array_pod<char_t>									CurrentOutput;
+		::gpk::array_obj<::gpk::ptr_obj<::gpk::array_pod<byte_t>>>	BlocksToWrite;
+	};
+
 	::gpk::error_t												queryProcess
 		( ::gpk::array_obj<::blt::TNamedBlitterDB>	& databases
 		, const ::gpk::SExpressionReader			& expressionReader
@@ -77,7 +82,6 @@ namespace blt
 	};
 
 	::gpk::error_t												requestProcess						(::gpk::SExpressionReader & expressionReader, ::blt::SBlitterQuery & query, const ::blt::SBlitterRequest & request, ::gpk::array_obj<::gpk::view_const_string> & expansionKeyStorage);
-
 	static constexpr const uint32_t								CRC_SEED							= 18973;
 
 } // namespace

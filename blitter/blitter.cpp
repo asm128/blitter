@@ -11,12 +11,12 @@
 #include "gpk_aes.h"
 #include "gpk_cgi.h"
 
-::gpk::error_t									blt::loadConfig			(::blt::SBlitter & appState, const ::gpk::view_const_string & jsonFileName)	{
+::gpk::error_t									blt::loadConfig				(::blt::SBlitter & appState, const ::gpk::view_const_string & jsonFileName)	{
 	gpk_necall(::gpk::jsonFileRead(appState.Config, jsonFileName), "Failed to load configuration file: %s.", jsonFileName.begin());
-	const ::gpk::error_t								indexApp				= ::gpk::jsonExpressionResolve("application.blitter", appState.Config.Reader, (uint32_t)0, appState.Folder);
-	const ::gpk::error_t								indexDB					= ::gpk::jsonExpressionResolve("database", appState.Config.Reader, (uint32_t)indexApp, appState.Folder);
+	const ::gpk::error_t								indexApp					= ::gpk::jsonExpressionResolve("application.blitter", appState.Config.Reader, (uint32_t)0, appState.Folder);
+	const ::gpk::error_t								indexDB						= ::gpk::jsonExpressionResolve("database", appState.Config.Reader, (uint32_t)indexApp, appState.Folder);
 	gpk_necall(indexDB, "'database' not found in '%s'.", "application.blitter");
-	const ::gpk::error_t								indexPath				= ::gpk::jsonExpressionResolve("path.database", appState.Config.Reader, (uint32_t)indexApp, appState.Folder);
+	const ::gpk::error_t								indexPath					= ::gpk::jsonExpressionResolve("path.database", appState.Config.Reader, (uint32_t)indexApp, appState.Folder);
 	if(errored(indexPath)) {
 		warning_printf("'path.database' not found in '%s'. Using current path as database root.", "application.blitter");
 		appState.Folder									= "./";
@@ -280,8 +280,6 @@ static	::gpk::error_t							queryLoad						(::blt::SBlitterQuery& query, const :
 		if(query.Path.size())
 			gpk_necall(::gpk::expressionReaderParse(expressionReader, query.Path), "Error: %s", "Invalid path syntax?");
 	}
-
-
 	{	// --- Retrieve query data from querystring.
 		::gpk::array_obj<::gpk::TKeyValConstString>			qsKeyVals;
 		::gpk::array_obj<::gpk::view_const_string>			queryStringElements				= {};
