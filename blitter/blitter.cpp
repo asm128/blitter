@@ -249,7 +249,7 @@ static	::gpk::error_t							queryLoad						(::blt::SBlitterQuery& query, const :
 	return 0;
 }
 
-::gpk::error_t									blt::requestProcess				(::gpk::SExpressionReader & expressionReader, ::blt::SBlitterQuery & query, const ::blt::SBlitterRequest & request, ::gpk::array_obj<::gpk::view_const_string> & expansionKeyStorage)						{
+::gpk::error_t									blt::requestProcess				(::gpk::SExpressionReader & expressionReader, ::blt::SBlitterQuery & query, const ::gpk::SHTTPAPIRequest & request, ::gpk::array_obj<::gpk::view_const_string> & expansionKeyStorage)						{
 	// --- Generate response
 	query.Database									= (request.Path.size() > 1)
 		? (('/' == request.Path[0]) ? ::gpk::view_const_string{&request.Path[1], request.Path.size() - 1} : ::gpk::view_const_string{request.Path.begin(), request.Path.size()})

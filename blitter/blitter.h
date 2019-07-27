@@ -74,14 +74,7 @@ namespace blt
 
 	::gpk::error_t												loadConfig							(::blt::SBlitter & appState, const ::gpk::view_const_string & jsonFileName);
 
-	struct SBlitterRequest {
-		::gpk::HTTP_METHOD											Method		;
-		::gpk::view_const_char										Path		;
-		::gpk::view_const_char										QueryString	;
-		::gpk::view_const_char										ContentBody	;
-	};
-
-	::gpk::error_t												requestProcess						(::gpk::SExpressionReader & expressionReader, ::blt::SBlitterQuery & query, const ::blt::SBlitterRequest & request, ::gpk::array_obj<::gpk::view_const_string> & expansionKeyStorage);
+	::gpk::error_t												requestProcess						(::gpk::SExpressionReader & expressionReader, ::blt::SBlitterQuery & query, const ::gpk::SHTTPAPIRequest & request, ::gpk::array_obj<::gpk::view_const_string> & expansionKeyStorage);
 	static constexpr const uint32_t								CRC_SEED							= 18973;
 
 } // namespace
