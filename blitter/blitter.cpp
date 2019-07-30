@@ -280,18 +280,8 @@ static	::gpk::error_t							queryLoad						(::blt::SBlitterQuery& query, const :
 		if(query.Path.size())
 			gpk_necall(::gpk::expressionReaderParse(expressionReader, query.Path), "Error: %s", "Invalid path syntax?");
 	}
-	{	// --- Retrieve query data from querystring.
-		::gpk::array_obj<::gpk::TKeyValConstString>			qsKeyVals;
-		::gpk::array_obj<::gpk::view_const_string>			queryStringElements				= {};
 
-		gpk_necall(::gpk::split({request.QueryString.begin(), request.QueryString.size()}, '&', queryStringElements), "%s", "Out of memory?");
-		gpk_necall(qsKeyVals.resize(queryStringElements.size()), "%s", "Out of memory?");
-		for(uint32_t iKeyVal = 0; iKeyVal < qsKeyVals.size(); ++iKeyVal) {
-			::gpk::TKeyValConstString							& keyValDst						= qsKeyVals[iKeyVal];
-			::gpk::keyval_split(queryStringElements[iKeyVal], keyValDst);
-		}
-		gpk_necall(::queryLoad(query, qsKeyVals, expansionKeyStorage), "%s", "Out of memory?");
-	}
-
+	// --- Retrieve query data from querystring.
+	gpk_necall(::queryLoad(query, request.QueryStringKeyVals, expansionKeyStorage), "%s", "Out of memory?");
 	return 0;
 }
