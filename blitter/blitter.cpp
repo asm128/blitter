@@ -145,12 +145,12 @@ static	::gpk::error_t							dbFileLoad					(::blt::SLoadCache & loadCache, ::blt
 	gpk_necall(databases.resize(databaseArraySize), "%s", "Out of memory?");
 	::blt::SLoadCache									loadCache;
 	for(uint32_t iDatabase = 0, countDatabases = (uint32_t)databaseArraySize; iDatabase < countDatabases; ++iDatabase) {
-		sprintf_s(temp, "[%u].name", iDatabase);
+		sprintf_s(temp, "['%u'].name", iDatabase);
 		gpk_necall(::gpk::jsonExpressionResolve(temp, configReader, indexObjectDatabases, jsonResult), "Failed to load config from json! Last contents found: %s.", jsonResult.begin());
 		::blt::TNamedBlitterDB								& jsonDB					= databases[iDatabase];
 		jsonDB.Key										= jsonResult;
 		{	// -- Load database block size
-			sprintf_s(temp, "[%u].block", iDatabase);
+			sprintf_s(temp, "['%u'].block", iDatabase);
 			int32_t												indexBlockNode				= ::gpk::jsonExpressionResolve(temp, configReader, indexObjectDatabases, jsonResult);
 			gwarn_if(errored(indexBlockNode), "Failed to load config from json! Last contents found: %s.", jsonResult.begin())
 			else
@@ -160,12 +160,12 @@ static	::gpk::error_t							dbFileLoad					(::blt::SLoadCache & loadCache, ::blt
 		gpk_necall(::blt::tableFileName(dbfilename, jsonDB.Val.HostType, jsonDB.Val.EncryptionKey.size() > 0, jsonDB.Key), "%s", "??");
 		{	// -- Load database modes (remote, deflate)
 			info_printf("Loading database info for '%s'.", dbfilename.begin());
-			sprintf_s(temp, "[%u].source", iDatabase);
+			sprintf_s(temp, "['%u'].source", iDatabase);
 			jsonResult										= {};
 			int32_t												typeFound					= ::gpk::jsonExpressionResolve(temp, configReader, indexObjectDatabases, jsonResult);
 			gwarn_if(errored(typeFound), "Failed to load database type for database: %s. Defaulting to local.", dbfilename.begin());
 			jsonDB.Val.HostType								= (::gpk::view_const_string{"local"} == jsonResult || errored(typeFound)) ? ::blt::DATABASE_HOST_LOCAL : ::blt::DATABASE_HOST_REMOTE;
-			sprintf_s(temp, "[%u].deflate", iDatabase);
+			sprintf_s(temp, "['%u'].deflate", iDatabase);
 			jsonResult										= {};
 			typeFound										= ::gpk::jsonExpressionResolve(temp, configReader, indexObjectDatabases, jsonResult);
 			gwarn_if(errored(typeFound), "Failed to load database compression for database: %s. Defaulting to uncompressed.", dbfilename.begin());
@@ -173,7 +173,7 @@ static	::gpk::error_t							dbFileLoad					(::blt::SLoadCache & loadCache, ::blt
 				jsonDB.Val.HostType								|= ::blt::DATABASE_HOST_DEFLATE;
 		}
 		{	// -- Load field bindings
-			sprintf_s(temp, "[%u].bind", iDatabase);
+			sprintf_s(temp, "['%u'].bind", iDatabase);
 			::gpk::error_t										indexBindArray				= ::gpk::jsonExpressionResolve(temp, configReader, indexObjectDatabases, jsonResult);
 			w_if(errored(indexBindArray), "No bindings found for database file: %s.", dbfilename.begin())
 			else {
@@ -181,7 +181,7 @@ static	::gpk::error_t							dbFileLoad					(::blt::SLoadCache & loadCache, ::blt
 				gpk_necall(sizeBindArray, "Cannot get size of array: %s.", "??");
 				gpk_necall(jsonDB.Val.Bindings.resize(sizeBindArray), "%s", "Out of memory?");;
 				for(uint32_t iBind = 0; iBind < jsonDB.Val.Bindings.size(); ++iBind) {
-					sprintf_s(temp, "[%u]", iBind);
+					sprintf_s(temp, "['%u']", iBind);
 					gpk_necall(::gpk::jsonExpressionResolve(temp, configReader, indexBindArray, jsonResult), "Failed to load config from json! Last contents found: %s.", jsonResult.begin());
 					jsonDB.Val.Bindings[iBind]						= jsonResult;
 				}
