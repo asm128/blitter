@@ -36,7 +36,7 @@ static	::gpk::error_t							processDetail
 			gpk_necall(output.append(currentRecordView), "%s", "Out of memory?");
 		}
 		else {
-			const ::gpk::JSON_TYPE							refNodeTYpe								= currentDBBlock.Reader.Object[indexValueNode].Type;
+			const ::gpk::JSON_TYPE							refNodeTYpe								= currentDBBlock.Reader.Token[indexValueNode].Type;
 			if(::gpk::JSON_TYPE_NUMBER != refNodeTYpe && ::gpk::JSON_TYPE_ARRAY != refNodeTYpe) {
 				info_printf("Invalid value type: %s.", ::gpk::get_value_label(refNodeTYpe).begin());
 				gpk_necall(output.append(currentRecordView), "%s", "Out of memory?");
@@ -256,7 +256,7 @@ static	::gpk::error_t							processRange
 	ree_if(0 == readerBlock.Tree.size(), "%s", "Invalid block data.");
 
 	const ::gpk::SJSONNode								& jsonRoot								= *readerBlock.Tree[0];
-	ree_if(::gpk::JSON_TYPE_ARRAY != jsonRoot.Object->Type, "Invalid json type: %s", ::gpk::get_value_label(jsonRoot.Object->Type).begin());
+	ree_if(::gpk::JSON_TYPE_ARRAY != jsonRoot.Token->Type, "Invalid json type: %s", ::gpk::get_value_label(jsonRoot.Token->Type).begin());
 	const uint64_t										offsetRecord							= database.Val.Offsets[iBlockElem];
 	relativeIndex									= ::gpk::max(0U, (uint32_t)(absoluteIndex - offsetRecord));
 	blockIndex										= iBlockElem;
@@ -274,7 +274,7 @@ static	::gpk::error_t							processRange
 	const ::gpk::SJSONReader							& readerBlock		= database.Val.Blocks[iNewBlock]->Reader;
 	ree_if(0 == readerBlock.Tree.size(), "%s", "Invalid block data.");
 	const ::gpk::SJSONNode								& jsonRoot			= *readerBlock.Tree[0];
-	ree_if(::gpk::JSON_TYPE_ARRAY != jsonRoot.Object->Type, "Invalid json type: %s", ::gpk::get_value_label(jsonRoot.Object->Type).begin());
+	ree_if(::gpk::JSON_TYPE_ARRAY != jsonRoot.Token->Type, "Invalid json type: %s", ::gpk::get_value_label(jsonRoot.Token->Type).begin());
 
 	const uint64_t										offsetRecord		= database.Val.Offsets[iNewBlock];
 	::blt::SRangeBlockInfo								rangeInfo			= {};

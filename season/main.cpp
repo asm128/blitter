@@ -46,7 +46,7 @@ struct SSplitParams {
 	::gpk::error_t								indexOfDot						= ::gpk::rfind('.', params.FileNameSrc);
 	::gpk::error_t								indexOfLastSlash				= ::gpk::findLastSlash(params.FileNameSrc);
 	params.PathWithoutExtension				= (indexOfDot > indexOfLastSlash) ? ::gpk::view_const_string{params.FileNameSrc.begin(), (uint32_t)indexOfDot} : params.FileNameSrc;
-	params.DBName							= (-1 == indexOfLastSlash) 
+	params.DBName							= (-1 == indexOfLastSlash)
 		? params.PathWithoutExtension
 		: ::gpk::view_const_string{&params.PathWithoutExtension[indexOfLastSlash], params.PathWithoutExtension.size() - indexOfLastSlash}
 		;	// First parameter is the only parameter, which is the name of the source file to be split.
@@ -81,7 +81,7 @@ struct SWriteCache {
 #endif
 	::gpk::clear(partFileName, pathToWriteTo, deflated, encrypted, verify);
 	uint64_t									crcToStore						= 0;
-	for(uint32_t i=0; i < partBytes.size(); ++i) 
+	for(uint32_t i=0; i < partBytes.size(); ++i)
 		crcToStore								+= ::gpk::noise1DBase(partBytes[i], ::blt::CRC_SEED);
 
 	gpk_necall(partBytes.append((char*)&crcToStore, sizeof(uint64_t)), "%s", "Out of memory?");;
@@ -146,7 +146,7 @@ int										main							(int argc, char ** argv)		{
 	::gpk::SJSONFile							jsonFileToSplit					= {};
 	gpk_necall(::gpk::jsonFileRead(jsonFileToSplit, params.FileNameSrc), "Failed to load file: %s.", params.FileNameSrc.begin());
 	ree_if(0 == jsonFileToSplit.Reader.Tree.size(), "Invalid input format. %s", "File content is not a JSON array.");
-	ree_if(jsonFileToSplit.Reader.Object[0].Type != ::gpk::JSON_TYPE_ARRAY, "Invalid input format. %s", ::gpk::get_value_label(jsonFileToSplit.Reader.Object[0].Type).begin());
+	ree_if(jsonFileToSplit.Reader.Token[0].Type != ::gpk::JSON_TYPE_ARRAY, "Invalid input format. %s", ::gpk::get_value_label(jsonFileToSplit.Reader.Token[0].Type).begin());
 	info_printf("Loaded file: %s. Size: %u bytes.", params.FileNameSrc.begin(), jsonFileToSplit.Bytes.size());
 
 	::gpk::array_obj<::gpk::array_pod<char_t>>	outputJsons;
@@ -158,5 +158,5 @@ int										main							(int argc, char ** argv)		{
 		::gpk::array_pod<char_t>					& partBytes						= outputJsons[iPart];
 		gpk_necall(::writePart(blockCache, params, folder, partBytes, iPart), "%s", "Unknown error!");
 	}
-	return 0; 
+	return 0;
 }
