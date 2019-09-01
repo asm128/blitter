@@ -21,18 +21,12 @@
     <ClCompile Include="blitter_process.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="blitter_expression.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="blitter.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="blitter_process.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="blitter_expression.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

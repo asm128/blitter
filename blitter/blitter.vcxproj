@@ -189,12 +189,10 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="blitter.cpp" />
-    <ClCompile Include="blitter_expression.cpp" />
     <ClCompile Include="blitter_process.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="blitter.h" />
-    <ClInclude Include="blitter_expression.h" />
     <ClInclude Include="blitter_process.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
