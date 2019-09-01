@@ -37,11 +37,11 @@ static	::gpk::error_t							processDetail
 		}
 		else {
 			const ::gpk::JSON_TYPE							refNodeTYpe								= currentDBBlock.Reader.Token[indexValueNode].Type;
-			if(::gpk::JSON_TYPE_NUMBER != refNodeTYpe && ::gpk::JSON_TYPE_ARRAY != refNodeTYpe) {
+			if(::gpk::JSON_TYPE_INTEGER != refNodeTYpe && ::gpk::JSON_TYPE_ARRAY != refNodeTYpe) {
 				info_printf("Invalid value type: %s.", ::gpk::get_value_label(refNodeTYpe).begin());
 				gpk_necall(output.append(currentRecordView), "%s", "Out of memory?");
 			}
-			else if(::gpk::JSON_TYPE_NUMBER == refNodeTYpe) {
+			else if(::gpk::JSON_TYPE_INTEGER == refNodeTYpe) {
 				uint64_t										nextTableRecordIndex				= (uint64_t)-1LL;
 				const ::gpk::view_const_string					digitsToDetailView					= currentDBBlock.Reader.View[indexValueNode];
 				gpk_necall(::gpk::parseIntegerDecimal(digitsToDetailView, &nextTableRecordIndex), "%s", "Out of memory?");

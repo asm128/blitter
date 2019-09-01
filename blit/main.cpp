@@ -15,7 +15,7 @@ GPK_CGI_JSON_APP_IMPL();
 	if (isCGIEnviron) {
 		gpk_necall(output.append(::gpk::view_const_string{"Content-type: application/json\r\n"}), "%s", "Out of memory?");
 		gpk_necall(output.append(::gpk::view_const_string{"\r\n"})								, "%s", "Out of memory?");
-		if(0 == ::gpk::keyValVerify(environViews, "REQUEST_METHOD", "GET")) {
+		if(-1 == ::gpk::keyValVerify(environViews, "REQUEST_METHOD", "GET")) {
 			output.append(::gpk::view_const_string{"{ \"status\" : 403, \"description\" :\"forbidden\" }\r\n"});
 			return 1;
 		}
