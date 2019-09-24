@@ -10,7 +10,7 @@ static	::gpk::error_t							processDetail
 	, const uint32_t								idxDatabase
 	, const ::blt::SBlitterQuery					& query
 	, ::gpk::array_pod<char_t>						& output
-	, const ::gpk::view_const_string				& folder
+	, const ::gpk::view_const_char					& folder
 	, const uint32_t								idxExpand
 	) {
 	::gpk::view_const_string							outputRecord						= {};
@@ -27,8 +27,8 @@ static	::gpk::error_t							processDetail
 	else {
 		const ::gpk::SJSONFile								& currentDBBlock					= *databaseToRead.Val.Blocks[blockIndex];
 		const int32_t										indexRecordNode						= ::gpk::jsonArrayValueGet(*currentDBBlock.Reader.Tree[0], nodeIndex);
-		const ::gpk::view_const_string						fieldToExpand						= query.ExpansionKeys[idxExpand];
-		const int32_t										indexValueNode						= ::gpk::jsonObjectValueGet(*currentDBBlock.Reader.Tree[indexRecordNode], currentDBBlock.Reader.View, fieldToExpand);
+		const ::gpk::view_const_char						fieldToExpand						= query.ExpansionKeys[idxExpand];
+		const int32_t										indexValueNode						= ::gpk::jsonObjectValueGet(currentDBBlock.Reader, (uint32_t)indexRecordNode, fieldToExpand);
 		const ::gpk::view_const_string						currentRecordView					= currentDBBlock.Reader.View[indexRecordNode];
 		if(0 > indexValueNode) {
 			info_printf("Cannot expand field. Field not found: %s.", fieldToExpand.begin());
@@ -51,7 +51,7 @@ static	::gpk::error_t							processDetail
 				bool											bFound								= false;
 				for(uint32_t iDB = 0; iDB < databases.size(); ++iDB) {
 					::blt::TNamedBlitterDB							& nextTable							= databases[iDB];
-					if(nextTable.Key == fieldToExpand || 0 <= ::gpk::find(fieldToExpand, ::gpk::view_array<const ::gpk::view_const_string>{nextTable.Val.Bindings})) {
+					if(nextTable.Key == fieldToExpand || 0 <= ::gpk::find(fieldToExpand, ::gpk::view_array<const ::gpk::view_const_char>{nextTable.Val.Bindings})) {
 						bFound										= true;
 						::blt::SBlitterQuery							nextQuery							= query;
 						nextQuery.Database							= nextTable.Key;
@@ -81,7 +81,7 @@ static	::gpk::error_t							processDetail
 					gpk_necall(::gpk::parseIntegerDecimal(digitsToDetailView, &nextTableRecordIndex), "%s", "Out of memory?");
 					for(uint32_t iDB = 0; iDB < databases.size(); ++iDB) {
 						::blt::TNamedBlitterDB							& nextTable							= databases[iDB];
-						if(nextTable.Key == fieldToExpand || 0 <= ::gpk::find(fieldToExpand, ::gpk::view_array<const ::gpk::view_const_string>{nextTable.Val.Bindings})) {
+						if(nextTable.Key == fieldToExpand || 0 <= ::gpk::find(fieldToExpand, ::gpk::view_array<const ::gpk::view_const_char>{nextTable.Val.Bindings})) {
 							bFound										= true;
 							::blt::SBlitterQuery							nextQuery							= query;
 							nextQuery.Database							= nextTable.Key;
@@ -137,7 +137,7 @@ static	::gpk::error_t							processRange
 	, const uint32_t								idxDatabase
 	, const ::blt::SBlitterQuery					& query
 	, ::gpk::array_pod<char_t>						& output
-	, const ::gpk::view_const_string				& folder
+	, const ::gpk::view_const_char					& folder
 	, const uint32_t								idxExpand
 	) {
 	if(0 == query.Range.Count) {
@@ -220,7 +220,7 @@ static	::gpk::error_t							processRange
 	( ::gpk::array_obj<::blt::TNamedBlitterDB>		& databases
 	, const ::gpk::SExpressionReader				& expressionReader
 	, const ::blt::SBlitterQuery					& query
-	, const ::gpk::view_const_string				& folder
+	, const ::gpk::view_const_char					& folder
 	, ::gpk::array_pod<char_t>						& output
 	) {
 	::blt::SLoadCache									loadCache			= {};
@@ -243,7 +243,7 @@ static	::gpk::error_t							processRange
 	, ::gpk::view_const_string			& output_record
 	, uint32_t							& relativeIndex
 	, uint32_t							& blockIndex
-	, const ::gpk::view_const_string	& folder
+	, const ::gpk::view_const_char		& folder
 	) {
 	const uint32_t										indexBlock								= (0 == database.Val.BlockSize) ? (uint32_t)-1	: (uint32_t)(absoluteIndex / database.Val.BlockSize);
 	const int32_t										iBlockElem								= (0 == database.Val.BlockSize)
@@ -298,7 +298,7 @@ static	::gpk::error_t							processRange
 	( ::blt::SLoadCache								& loadCache
 	, ::blt::TNamedBlitterDB						& database
 	, const ::gpk::SRange<uint64_t>					& range
-	, const ::gpk::view_const_string				& folder
+	, const ::gpk::view_const_char					& folder
 	, ::gpk::array_obj<::blt::SRangeBlockInfo>		& output_records
 	, ::gpk::SRange<uint32_t>						& blockRange
 	) {
@@ -307,8 +307,8 @@ static	::gpk::error_t							processRange
 	uint32_t											blockStop			= (0 == database.Val.BlockSize) ? (uint32_t)-1	: (uint32_t)(maxRecord / database.Val.BlockSize);
 	if(0 < database.Val.BlockSize) {
 		if(0 == database.Val.BlocksOnDisk.size()) {
-			blockStart									= 0;
-			blockStop									= 0;
+			blockStart										= 0;
+			blockStop										= 0;
 		}
 		else {
 			if(blockStop > database.Val.BlocksOnDisk[database.Val.BlocksOnDisk.size() - 1])

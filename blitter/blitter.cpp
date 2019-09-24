@@ -108,7 +108,7 @@ static	::gpk::error_t							dbFileLoad					(::blt::SLoadCache & loadCache, ::blt
 	return idxBlock;
 }
 
-::gpk::error_t									blt::tableFileLoad			(::blt::SLoadCache & loadCache, ::blt::TNamedBlitterDB & jsonDB, const ::gpk::view_const_string & folder)	{
+::gpk::error_t									blt::tableFileLoad			(::blt::SLoadCache & loadCache, ::blt::TNamedBlitterDB & jsonDB, const ::gpk::view_const_char & folder)	{
 	rni_if(jsonDB.Val.Blocks.size() && jsonDB.Val.Blocks[0]->Bytes.size(), "Table already loaded: '%s'.", ::gpk::toString(jsonDB.Key).begin());
 	::gpk::array_pod<char_t>							fileName					= folder;
 	gpk_necall(fileName.push_back('/')		, "%s", "Out of memory?");
@@ -117,7 +117,7 @@ static	::gpk::error_t							dbFileLoad					(::blt::SLoadCache & loadCache, ::blt
 	return ::dbFileLoad(loadCache, jsonDB, {fileName.begin(), fileName.size()}, 0);
 }
 
-::gpk::error_t									blt::blockFileLoad			(::blt::SLoadCache & loadCache, ::blt::TNamedBlitterDB & jsonDB, const ::gpk::view_const_string & folder, uint32_t block)	{
+::gpk::error_t									blt::blockFileLoad			(::blt::SLoadCache & loadCache, ::blt::TNamedBlitterDB & jsonDB, const ::gpk::view_const_char & folder, uint32_t block)	{
 	{
 		::gpk::error_t										blockIndex					= ::gpk::find(block, {jsonDB.Val.BlockIndices.begin(), jsonDB.Val.BlockIndices.size()});
 		rvi_if(blockIndex, 0 <= blockIndex, "Block already loaded for database '%s': %u.", ::gpk::toString(jsonDB.Key).begin(), block);
@@ -236,7 +236,7 @@ static	::gpk::error_t							dbFileLoad					(::blt::SLoadCache & loadCache, ::blt
 	return 0;
 }
 
-static	::gpk::error_t							queryLoad						(::blt::SBlitterQuery& query, const ::gpk::view_array<const ::gpk::TKeyValConstString> keyvals, ::gpk::array_obj<::gpk::view_const_string> & expansionKeyStorage) {
+static	::gpk::error_t							queryLoad						(::blt::SBlitterQuery& query, const ::gpk::view_array<const ::gpk::TKeyValConstString> keyvals, ::gpk::array_obj<::gpk::view_const_char> & expansionKeyStorage) {
 	::gpk::keyvalNumeric("offset", keyvals, query.Range.Offset);
 	if(0 > ::gpk::keyvalNumeric("limit", keyvals, query.Range.Count))
 		::gpk::keyvalNumeric("count", keyvals, query.Range.Count);
@@ -244,31 +244,30 @@ static	::gpk::error_t							queryLoad						(::blt::SBlitterQuery& query, const :
 	const ::gpk::error_t								indexExpand						= ::gpk::find("expand", keyvals);
 	if(0 <= indexExpand) {
 		query.Expand									= keyvals[indexExpand].Val;
-		gpk_necall(::gpk::split(query.Expand, '.', expansionKeyStorage), "%s", "Out of memory?");
+		gpk_necall(::gpk::split(::gpk::view_const_char{query.Expand}, '.', expansionKeyStorage), "%s", "Out of memory?");
 		query.ExpansionKeys								= expansionKeyStorage;
 	}
 	return 0;
 }
 
-::gpk::error_t									blt::requestProcess				(::gpk::SExpressionReader & expressionReader, ::blt::SBlitterQuery & query, const ::gpk::SHTTPAPIRequest & request, ::gpk::array_obj<::gpk::view_const_string> & expansionKeyStorage)						{
+::gpk::error_t									blt::requestProcess				(::gpk::SExpressionReader & expressionReader, ::blt::SBlitterQuery & query, const ::gpk::SHTTPAPIRequest & request, ::gpk::array_obj<::gpk::view_const_char> & expansionKeyStorage)						{
 	// --- Generate response
-	query.Database									= (request.Path.size() > 1)
-		? (('/' == request.Path[0]) ? ::gpk::view_const_string{&request.Path[1], request.Path.size() - 1} : ::gpk::view_const_string{request.Path.begin(), request.Path.size()})
-		: ::gpk::view_const_string{}
-		;
-	{	// --- Retrieve detail part
-		uint64_t											detail							= (uint64_t)-1LL;
-		::gpk::view_const_string							strDetail						= {};
-		const ::gpk::error_t								indexOfLastBar					= ::gpk::rfind('/', query.Database);
-		const uint32_t										startOfDetail					= (uint32_t)(indexOfLastBar + 1);
-		if(indexOfLastBar > 0 && startOfDetail < query.Database.size()) {
-			strDetail										= {&query.Database[startOfDetail], query.Database.size() - startOfDetail};
-			query.Database									= {query.Database.begin(), (uint32_t)indexOfLastBar};
+	{
+		::gpk::array_obj<::gpk::view_const_char>			pathSplit						= {};
+		::gpk::split(request.Path, '/', pathSplit);
+		query.Database									= (0 < pathSplit.size()) ? pathSplit[0] : request.Path;
+		query.Command									= (1 < pathSplit.size()) ? pathSplit[1] : ::gpk::view_const_char{};
+		if(2 < pathSplit.size()) {
+			// --- Retrieve detail part
+			uint64_t											detail							= (uint64_t)-1LL;
+			::gpk::view_const_char								strDetail						= {};
+			strDetail										= pathSplit[pathSplit.size() - 1];
 			if(strDetail.size()) {
-				::gpk::stoull(strDetail, &detail);
+				::gpk::parseIntegerDecimal(strDetail, &detail);
 				query.Detail									= (int64_t)detail;
 			}
 		}
+		info_printf("Parameters: \nDatabase: %s.\nCommand: %s.\nDetail: %llu.", ::gpk::toString(query.Database).begin(), ::gpk::toString(query.Command).begin(), query.Detail);
 	}
 	{ // retrieve path and database and read expression if any
 		const ::gpk::error_t								indexPath						= ::gpk::find('.', query.Database);
@@ -279,7 +278,7 @@ static	::gpk::error_t							queryLoad						(::blt::SBlitterQuery& query, const :
 			query.Database									= {query.Database.begin()			, (uint32_t)indexPath};
 
 		if(query.Path.size())
-			gpk_necall(::gpk::expressionReaderParse(expressionReader, query.Path), "Error: %s", "Invalid path syntax?");
+			gpk_necall(::gpk::expressionReaderParse(expressionReader, {query.Path.begin(), query.Path.size()}), "Error: %s", "Invalid path syntax?");
 	}
 
 	// --- Retrieve query data from querystring.

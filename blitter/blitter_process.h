@@ -16,7 +16,7 @@ namespace blt
 		( ::blt::SLoadCache								& loadCache
 		, ::blt::TNamedBlitterDB						& database
 		, const ::gpk::SRange<uint64_t>					& range
-		, const ::gpk::view_const_string				& folder
+		, const ::gpk::view_const_char					& folder
 		, ::gpk::array_obj<::blt::SRangeBlockInfo>		& output_records
 		, ::gpk::SRange<uint32_t>						& blockRange
 		);
@@ -28,7 +28,7 @@ namespace blt
 		, ::gpk::view_const_string						& output_record
 		, uint32_t										& relativeIndex
 		, uint32_t										& blockIndex
-		, const ::gpk::view_const_string				& folder
+		, const ::gpk::view_const_char					& folder
 		);
 
 
