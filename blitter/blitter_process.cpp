@@ -259,6 +259,7 @@ static	::gpk::error_t							processRange
 	const uint64_t										offsetRecord							= database.Val.Offsets[iBlockElem];
 	relativeIndex									= ::gpk::max(0U, (uint32_t)(absoluteIndex - offsetRecord));
 	blockIndex										= iBlockElem;
+	ree_if(relativeIndex >= (uint32_t)::gpk::jsonArraySize(*readerBlock[0]), "Index out of range: %i. Array size: %u.", relativeIndex, ::gpk::jsonArraySize(*readerBlock[0]));
 	output_record									= readerBlock.View[::gpk::jsonArrayValueGet(*readerBlock[0], relativeIndex)];
 	return 0;
 }
@@ -280,6 +281,12 @@ static	::gpk::error_t							processRange
 	// Actuallly I believe we should handle this differently than for single-file database access, but it is possible that I already thought about this before.
 	rangeInfo.RelativeIndices.Min					= ::gpk::max(0, (int32_t)(range.Offset - offsetRecord));
 	rangeInfo.RelativeIndices.Max					= ::gpk::min(::gpk::jsonArraySize(jsonRoot) - 1U, ::gpk::min(database.Val.BlockSize - 1, (uint32_t)((range.Offset + range.Count) - offsetRecord - 1)));
+	if(rangeInfo.RelativeIndices.Max <= rangeInfo.RelativeIndices.Min) {
+		rangeInfo.OutputRecords							= {};
+		error_printf("Invalid range: {Offset: %i, Count: %i}", range.Offset, range.Count);
+		return -1;
+	}
+
 	rangeInfo.BlockIndex							= iNewBlock;
 	rangeInfo.BlockId								= idBlock;
 	::gpk::SMinMax<int32_t>								blockNodeIndices	=
