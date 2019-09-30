@@ -4,7 +4,7 @@
 #include "gpk_find.h"
 
 static	::gpk::error_t							processDetail
-	( ::blt::SLoadCache								& loadCache
+	( ::gpk::SLoadCache								& loadCache
 	, const ::gpk::SExpressionReader				& expressionReader
 	, ::gpk::array_obj<::blt::TNamedBlitterDB>		& databases
 	, const uint32_t								idxDatabase
@@ -131,7 +131,7 @@ static	::gpk::error_t							nextBlock					(const uint32_t iRangeInfo, const uint
 }
 
 static	::gpk::error_t							processRange
-	( ::blt::SLoadCache								& loadCache
+	( ::gpk::SLoadCache								& loadCache
 	, const ::gpk::SExpressionReader				& expressionReader
 	, ::gpk::array_obj<::blt::TNamedBlitterDB>		& databases
 	, const uint32_t								idxDatabase
@@ -223,7 +223,7 @@ static	::gpk::error_t							processRange
 	, const ::gpk::view_const_char					& folder
 	, ::gpk::array_pod<char_t>						& output
 	) {
-	::blt::SLoadCache									loadCache			= {};
+	::gpk::SLoadCache									loadCache			= {};
 	for(uint32_t iDB = 0; iDB < databases.size(); ++iDB) {
 		if(query.Database == databases[iDB].Key) {
 			if(0 <= query.Detail)
@@ -237,7 +237,7 @@ static	::gpk::error_t							processRange
 }
 
 ::gpk::error_t									blt::recordGet
-	( ::blt::SLoadCache					& loadCache
+	( ::gpk::SLoadCache					& loadCache
 	, ::blt::TNamedBlitterDB			& database
 	, const uint64_t					absoluteIndex
 	, ::gpk::view_const_string			& output_record
@@ -295,7 +295,7 @@ static	::gpk::error_t							processRange
 }
 
 ::gpk::error_t									blt::recordRange
-	( ::blt::SLoadCache								& loadCache
+	( ::gpk::SLoadCache								& loadCache
 	, ::blt::TNamedBlitterDB						& database
 	, const ::gpk::SRange<uint64_t>					& range
 	, const ::gpk::view_const_char					& folder

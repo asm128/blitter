@@ -13,7 +13,7 @@ namespace blt
 	};
 
 	::gpk::error_t									recordRange
-		( ::blt::SLoadCache								& loadCache
+		( ::gpk::SLoadCache								& loadCache
 		, ::blt::TNamedBlitterDB						& database
 		, const ::gpk::SRange<uint64_t>					& range
 		, const ::gpk::view_const_char					& folder
@@ -22,7 +22,7 @@ namespace blt
 		);
 
 	::gpk::error_t									recordGet
-		( ::blt::SLoadCache								& loadCache
+		( ::gpk::SLoadCache								& loadCache
 		, ::blt::TNamedBlitterDB						& database
 		, const uint64_t								absoluteIndex
 		, ::gpk::view_const_string						& output_record

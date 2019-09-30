@@ -64,8 +64,7 @@ struct SSplitParams {
 struct SWriteCache {
 	::gpk::array_pod<char_t>				PartFileName					= {};
 	::gpk::array_pod<char_t>				PathToWriteTo					= {};
-	::gpk::array_pod<char_t>				Deflated						= {};
-	::gpk::array_pod<char_t>				Encrypted						= {};
+	::gpk::SLoadCache						LoadCache						= {};
 #if defined SEASON_ENABLE_VERIFICATION
 	::gpk::array_pod<char_t>				Verify							= {};
 #endif
@@ -74,59 +73,12 @@ struct SWriteCache {
 ::gpk::error_t							writePart						(::SWriteCache & blockCache, const ::SSplitParams & params, const ::gpk::view_const_string dbFolderName, ::gpk::array_pod<char_t> & partBytes, uint32_t iPart)		{
 	::gpk::array_pod<char_t>					& partFileName					= blockCache.PartFileName					;
 	::gpk::array_pod<char_t>					& pathToWriteTo					= blockCache.PathToWriteTo					;
-	::gpk::array_pod<char_t>					& deflated						= blockCache.Deflated						;
-	::gpk::array_pod<char_t>					& encrypted						= blockCache.Encrypted						;
-#if defined SEASON_ENABLE_VERIFICATION
-	::gpk::array_pod<char_t>					& verify						= blockCache.Verify							;
-#endif
-	::gpk::clear(partFileName, pathToWriteTo, deflated, encrypted, verify);
-	uint64_t									crcToStore						= 0;
-	for(uint32_t i=0; i < partBytes.size(); ++i)
-		crcToStore								+= ::gpk::noise1DBase(partBytes[i], ::blt::CRC_SEED);
-
-	gpk_necall(partBytes.append((char*)&crcToStore, sizeof(uint64_t)), "%s", "Out of memory?");;
-
+	::gpk::clear(partFileName, pathToWriteTo);
 	pathToWriteTo							= dbFolderName;
 	gpk_necall(::blt::blockFileName(partFileName, params.DBName, params.EncryptionKey.size() > 0, params.DeflatedOutput ? ::blt::DATABASE_HOST_DEFLATE : ::blt::DATABASE_HOST_LOCAL, iPart), "%s", "??");
 	gpk_necall(pathToWriteTo.append(partFileName), "%s", "Out of memory?");
-	if(false == params.DeflatedOutput) {
-		if(0 == params.EncryptionKey.size()) {
-			info_printf("Saving part file to disk: '%s'. Size: %u.", pathToWriteTo.begin(), partBytes.size());
-			gpk_necall(::gpk::fileFromMemory({pathToWriteTo.begin(), pathToWriteTo.size()}, partBytes), "Failed to write part: %u.", iPart);
-		}
-		else {
-			gpk_necall(::gpk::aesEncode({partBytes.begin(), partBytes.size()}, params.EncryptionKey, ::gpk::AES_LEVEL_256, encrypted), "Failed to encrypt part: %u.", iPart);
-			info_printf("Saving part file to disk: '%s'. Size: %u.", pathToWriteTo.begin(), encrypted.size());
-			gpk_necall(::gpk::fileFromMemory({pathToWriteTo.begin(), pathToWriteTo.size()}, encrypted), "Failed to write part: %u.", iPart);
-#if defined SEASON_ENABLE_VERIFICATION
-			gpk_necall(::gpk::aesDecode(encrypted, params.EncryptionKey, ::gpk::AES_LEVEL_256, verify), "Failed to inflate part: %u.", iPart);
-			ree_if(verify != partBytes, "Sanity check failed: %s.", "??");
-#endif
-		}
-	}
-	else {
-		gpk_necall(deflated.append((char*)&partBytes.size(), sizeof(uint32_t)), "%s", "Out of memory?");;
-		gpk_necall(::gpk::arrayDeflate(partBytes, deflated), "Failed to deflate part: %u.", iPart);
-		if(0 == params.EncryptionKey.size()) {
-			info_printf("Saving part file to disk: '%s'. Size: %u.", pathToWriteTo.begin(), deflated.size());
-			gpk_necall(::gpk::fileFromMemory({pathToWriteTo.begin(), pathToWriteTo.size()}, deflated), "Failed to write part: %u.", iPart);
-#if defined SEASON_ENABLE_VERIFICATION
-			gpk_necall(::gpk::arrayInflate({&deflated[sizeof(uint32_t)], deflated.size() - sizeof(uint32_t)}, verify), "Failed to inflate part: %u.", iPart);
-			ree_if(verify != partBytes, "Sanity check failed: %s.", "??");
-#endif
-		} else {
-			gpk_necall(::gpk::aesEncode(::gpk::view_const_byte{deflated.begin(), deflated.size()}, params.EncryptionKey, ::gpk::AES_LEVEL_256, encrypted), "Failed to encrypt part: %u.", iPart);
-			info_printf("Saving part file to disk: '%s'. Size: %u.", pathToWriteTo.begin(), encrypted.size());
-			gpk_necall(::gpk::fileFromMemory({pathToWriteTo.begin(), pathToWriteTo.size()}, encrypted), "Failed to write part: %u.", iPart);
-#if defined SEASON_ENABLE_VERIFICATION
-			deflated.clear();
-			gpk_necall(::gpk::aesDecode(encrypted, params.EncryptionKey, ::gpk::AES_LEVEL_256, deflated), "Failed to inflate part: %u.", iPart);
-			gpk_necall(::gpk::arrayInflate({&deflated[sizeof(uint32_t)], deflated.size() - sizeof(uint32_t)}, verify), "Failed to inflate part: %u.", iPart);
-			ree_if(verify != partBytes, "Sanity check failed: %s.", "??");
-#endif
-		}
-	}
-	return 0;
+
+	return ::gpk::fileFromMemorySecure(blockCache.LoadCache, partBytes, pathToWriteTo, params.EncryptionKey, params.DeflatedOutput);
 }
 
 // Splits a file.json into file.#blocksize.db/file.##.json parts.

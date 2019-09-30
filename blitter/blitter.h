@@ -2,6 +2,7 @@
 #include "gpk_json.h"
 #include "gpk_http.h"
 #include "gpk_expression.h"
+#include "gpk_deflate.h"
 
 #ifndef BLITTER_H_20190712
 #define BLITTER_H_20190712
@@ -64,13 +65,8 @@ namespace blt
 		::gpk::SExpressionReader									ExpressionReader					= {};
 	};
 
-	struct SLoadCache {
-		::gpk::array_pod<byte_t>									Deflated;
-		::gpk::array_pod<byte_t>									Encrypted;
-	};
-
-	::gpk::error_t												blockFileLoad						(::blt::SLoadCache & loadCache, ::blt::TNamedBlitterDB & jsonDB, const ::gpk::view_const_char & folder, uint32_t block);
-	::gpk::error_t												tableFileLoad						(::blt::SLoadCache & loadCache, ::blt::TNamedBlitterDB & jsonDB, const ::gpk::view_const_char & folder);
+	::gpk::error_t												blockFileLoad						(::gpk::SLoadCache & loadCache, ::blt::TNamedBlitterDB & jsonDB, const ::gpk::view_const_char & folder, uint32_t block);
+	::gpk::error_t												tableFileLoad						(::gpk::SLoadCache & loadCache, ::blt::TNamedBlitterDB & jsonDB, const ::gpk::view_const_char & folder);
 	::gpk::error_t												configDatabases						(::gpk::array_obj<::blt::TNamedBlitterDB> & databases, const ::gpk::SJSONReader & configReader, const int32_t indexConfigNode, const ::gpk::view_array<const ::gpk::view_const_string> & databasesToLoad, const ::gpk::view_const_string & folder);
 
 	::gpk::error_t												loadConfig							(::blt::SBlitter & appState, const ::gpk::view_const_string & jsonFileName);
