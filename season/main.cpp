@@ -65,15 +65,12 @@ struct SWriteCache {
 	::gpk::array_pod<char_t>				PartFileName					= {};
 	::gpk::array_pod<char_t>				PathToWriteTo					= {};
 	::gpk::SLoadCache						LoadCache						= {};
-#if defined SEASON_ENABLE_VERIFICATION
-	::gpk::array_pod<char_t>				Verify							= {};
-#endif
 };
 
 ::gpk::error_t							writePart						(::SWriteCache & blockCache, const ::SSplitParams & params, const ::gpk::view_const_string dbFolderName, ::gpk::array_pod<char_t> & partBytes, uint32_t iPart)		{
 	::gpk::array_pod<char_t>					& partFileName					= blockCache.PartFileName					;
 	::gpk::array_pod<char_t>					& pathToWriteTo					= blockCache.PathToWriteTo					;
-	::gpk::clear(partFileName, pathToWriteTo);
+	::gpk::clear(partFileName, pathToWriteTo, blockCache.LoadCache.Deflated, blockCache.LoadCache.Encrypted);
 	pathToWriteTo							= dbFolderName;
 	gpk_necall(::blt::blockFileName(partFileName, params.DBName, params.EncryptionKey.size() > 0, params.DeflatedOutput ? ::blt::DATABASE_HOST_DEFLATE : ::blt::DATABASE_HOST_LOCAL, iPart), "%s", "??");
 	gpk_necall(pathToWriteTo.append(partFileName), "%s", "Out of memory?");

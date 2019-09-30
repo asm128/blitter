@@ -65,7 +65,7 @@ struct SWriteCache {
 ::gpk::error_t							writePart						(::SWriteCache & blockCache, const ::SSplitParams & params, ::gpk::array_pod<char_t> & partBytes)		{
 	::gpk::array_pod<char_t>					& partFileName					= blockCache.PartFileName					;
 	::gpk::array_pod<char_t>					& pathToWriteTo					= blockCache.PathToWriteTo					;
-	::gpk::clear(partFileName, pathToWriteTo);
+	::gpk::clear(partFileName, pathToWriteTo, blockCache.LoadCache.Deflated, blockCache.LoadCache.Encrypted);
 	gpk_necall(::blt::tableFileName(partFileName, params.DeflatedOutput ? ::blt::DATABASE_HOST_DEFLATE : ::blt::DATABASE_HOST_LOCAL, params.EncryptionKey.size() > 0, params.DBName), "%s", "??");
 	gpk_necall(pathToWriteTo.append(partFileName), "%s", "Out of memory?");
 	return ::gpk::fileFromMemorySecure(blockCache.LoadCache, partBytes, pathToWriteTo, params.EncryptionKey, params.DeflatedOutput);
