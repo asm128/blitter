@@ -15,13 +15,13 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="blitter.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="blitter_process.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="bitter_query_get.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="blitter_init.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
