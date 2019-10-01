@@ -217,14 +217,14 @@ static	::gpk::error_t							queryGetRange
 }
 
 ::gpk::error_t									blt::queryProcess
-	( ::gpk::array_obj<::blt::TNamedBlitterDB>		& databases
+	( ::gpk::SLoadCache								& loadCache
+	, ::gpk::array_obj<::blt::TNamedBlitterDB>		& databases
 	, const ::gpk::SExpressionReader				& expressionReader
 	, const ::blt::SBlitterQuery					& query
 	, const ::gpk::view_const_char					& folder
 	, ::gpk::array_pod<char_t>						& output
 	) {
 	if(query.Command == ::gpk::view_const_string{"get"}) {
-		::gpk::SLoadCache									loadCache								= {};
 		for(uint32_t iDB = 0; iDB < databases.size(); ++iDB) {
 			if(query.Database == databases[iDB].Key)
 				return (0 <= query.Detail)
@@ -233,6 +233,50 @@ static	::gpk::error_t							queryGetRange
 					;
 		}
 	}
-	error_printf("Database not found: %s.", query.Database.begin());
+	else if(query.Command == ::gpk::view_const_string{"push_back"}) {
+		for(uint32_t iDB = 0; iDB < databases.size(); ++iDB) {
+			::blt::TNamedBlitterDB								& database			= databases[iDB];
+			if(query.Database == database.Key) {
+				if(database.Val.BlocksOnDisk.size()) {
+					const uint32_t										idBlock			= ::gpk::max(::gpk::view_const_uint32{database.Val.BlocksOnDisk});
+					uint32_t											indexRecord			= (uint32_t)-1;
+					uint32_t											indexBlock			= (uint32_t)-1;
+					if errored(::blt::recordLoad(loadCache, database, idBlock * database.Val.BlockSize, indexRecord, indexBlock, folder)) {
+						error_printf("Failed to load block for record: %lli.", query.Detail);
+					}
+					else {
+						::gpk::SJSONFile								& block				= *database.Val.Blocks[indexBlock];
+						::gpk::SJSONReader								recordReader		= {};
+						gpk_necall(::gpk::jsonParse(recordReader, {query.Record.begin(), query.Record.size()}), "%s", "Failed to parse JSON record!");
+						loadCache.Deflated.clear();
+						loadCache.Deflated.push_back(',');
+						::gpk::jsonWrite(recordReader.Tree[0], recordReader.View, loadCache.Deflated);
+						gpk_necall(block.Bytes.insert(block.Bytes.size() - 1, loadCache.Deflated), "Failed to append record! %s", "Out of memory?");
+						block.Reader.Reset();
+						gpk_necall(::gpk::jsonParse(block.Reader, {block.Bytes.begin(), block.Bytes.size()}), "%s", "Failed to read JSON!");
+						return 0;
+					}
+				}
+			}
+		}
+	}
+	else if(query.Command == ::gpk::view_const_string{"pop_back"}) {
+		//for(uint32_t iDB = 0; iDB < databases.size(); ++iDB) {
+		//	if(query.Database == databases[iDB].Key) {
+		//		uint32_t											idBlock				= 0;;
+		//		::gpk::max(::gpk::view_const_uint32{databases[iDB].Val.BlocksOnDisk}, &idBlock);
+		//	}
+		//}
+	}
+	else if(query.Command == ::gpk::view_const_string{"replace"}) {
+		//for(uint32_t iDB = 0; iDB < databases.size(); ++iDB) {
+		//	if(query.Database == databases[iDB].Key) {
+		//		uint32_t											idBlock				= 0;;
+		//		::gpk::max(::gpk::view_const_uint32{databases[iDB].Val.BlocksOnDisk}, &idBlock);
+		//	}
+		//}
+	}
+
+	error_printf("Database not found: %s.", ::gpk::toString(query.Database).begin());
 	return -1;
 }

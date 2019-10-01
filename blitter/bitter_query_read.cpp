@@ -1,10 +1,9 @@
 #include "blitter_process.h"
 
-::gpk::error_t									blt::recordGet
+::gpk::error_t									blt::recordLoad
 	( ::gpk::SLoadCache					& loadCache
 	, ::blt::TNamedBlitterDB			& database
 	, const uint64_t					absoluteIndex
-	, ::gpk::view_const_string			& output_record
 	, uint32_t							& relativeIndex
 	, uint32_t							& blockIndex
 	, const ::gpk::view_const_char		& folder
@@ -15,14 +14,27 @@
 		: ::blt::blockFileLoad(loadCache, database, folder, indexBlock)
 		;
 	gpk_necall(iBlockElem, "Failed to load database file: %s.", "??");
-	const ::gpk::SJSONReader							& readerBlock							= database.Val.Blocks[iBlockElem]->Reader;
-	ree_if(0 == readerBlock.Tree.size(), "%s", "Invalid block data.");
-
-	const ::gpk::SJSONNode								& jsonRoot								= *readerBlock.Tree[0];
-	ree_if(::gpk::JSON_TYPE_ARRAY != jsonRoot.Token->Type, "Invalid json type: %s", ::gpk::get_value_label(jsonRoot.Token->Type).begin());
 	const uint64_t										offsetRecord							= database.Val.Offsets[iBlockElem];
 	relativeIndex									= ::gpk::max(0U, (uint32_t)(absoluteIndex - offsetRecord));
 	blockIndex										= iBlockElem;
+	return 0;
+}
+
+::gpk::error_t									blt::recordGet
+	( ::gpk::SLoadCache					& loadCache
+	, ::blt::TNamedBlitterDB			& database
+	, const uint64_t					absoluteIndex
+	, ::gpk::view_const_char			& output_record
+	, uint32_t							& relativeIndex
+	, uint32_t							& blockIndex
+	, const ::gpk::view_const_char		& folder
+	) {
+	gpk_necall(::blt::recordLoad(loadCache, database, absoluteIndex, relativeIndex, blockIndex, folder), "Failed to load record indices.");
+
+	const ::gpk::SJSONReader							& readerBlock							= database.Val.Blocks[blockIndex]->Reader;
+	ree_if(0 == readerBlock.Tree.size(), "%s", "Invalid block data.");
+	const ::gpk::SJSONNode								& jsonRoot								= *readerBlock.Tree[0];
+	ree_if(::gpk::JSON_TYPE_ARRAY != jsonRoot.Token->Type, "Invalid json type: %s", ::gpk::get_value_label(jsonRoot.Token->Type).begin());
 	ree_if(relativeIndex >= (uint32_t)::gpk::jsonArraySize(*readerBlock[0]), "Index out of range: %i. Array size: %u.", relativeIndex, ::gpk::jsonArraySize(*readerBlock[0]));
 	output_record									= readerBlock.View[::gpk::jsonArrayValueGet(*readerBlock[0], relativeIndex)];
 	return 0;

@@ -33,22 +33,24 @@ namespace blt
 
 	struct SBlitterQuery {
 		::gpk::view_const_char										Database							= "";
-		::gpk::view_const_char										Command							= "";
+		::gpk::view_const_char										Command								= "";
 		::gpk::view_const_char										Path								= "";
+		::gpk::view_const_char										Record								= "";
 		::gpk::SRange<uint64_t>										Range								= {0, MAX_TABLE_RECORD_COUNT};
 		::gpk::view_array<::gpk::view_const_char>					ExpansionKeys						= {};
 		int64_t														Detail								= -1;
 	};
 
-	struct SBlitterOutput {
-		::gpk::array_pod<char_t>									CurrentOutput;
-		::gpk::array_obj<::gpk::ptr_obj<::gpk::array_pod<byte_t>>>	BlocksToWrite;
-	};
+	//struct SBlitterOutput {
+	//	::gpk::array_pod<char_t>									CurrentOutput;
+	//	::gpk::array_obj<::gpk::ptr_obj<::gpk::array_pod<byte_t>>>	BlocksToWrite;
+	//};
 
 	typedef ::gpk::SKeyVal<::gpk::view_const_string, ::blt::SBlitterDB>
 																TNamedBlitterDB;
 	::gpk::error_t												queryProcess
-		( ::gpk::array_obj<::blt::TNamedBlitterDB>	& databases
+		( ::gpk::SLoadCache							& loadCache
+		, ::gpk::array_obj<::blt::TNamedBlitterDB>	& databases
 		, const ::gpk::SExpressionReader			& expressionReader
 		, const ::blt::SBlitterQuery				& query
 		, const ::gpk::view_const_char				& folder
@@ -62,6 +64,7 @@ namespace blt
 		::gpk::view_const_string									Folder								= {};
 		::gpk::array_obj<::gpk::view_const_char>					ExpansionKeyStorage					= {};
 		::gpk::SExpressionReader									ExpressionReader					= {};
+		::gpk::SLoadCache											LoadCache							= {};
 	};
 
 	::gpk::error_t												blockFileLoad						(::gpk::SLoadCache & loadCache, ::blt::TNamedBlitterDB & jsonDB, const ::gpk::view_const_char & folder, uint32_t block);

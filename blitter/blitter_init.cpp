@@ -200,12 +200,17 @@ static	::gpk::error_t							dbFileLoad					(::gpk::SLoadCache & loadCache, ::blt
 			continue;
 		}
 		// -- Load json database file.
-		if(0 == databasesToLoad.size())
+		if(0 == databasesToLoad.size()) {
 			gpk_necall(::blt::tableFileLoad(loadCache, jsonDB, folder), "Failed to load database: %s.", dbfilename.begin());
+			jsonDB.Val.BlocksOnDisk							= {};
+			jsonDB.Val.BlocksOnDisk.push_back(0);
+		}
 		else {
 			for(uint32_t iDB = 0; iDB = databasesToLoad.size(); ++iDB)
 				if(databasesToLoad[iDB] == jsonDB.Key) {
 					gpk_necall(::blt::tableFileLoad(loadCache, jsonDB, folder), "Failed to load database: %s.", dbfilename.begin());
+					jsonDB.Val.BlocksOnDisk							= {};
+					jsonDB.Val.BlocksOnDisk.push_back(0);
 					break;
 				}
 		}

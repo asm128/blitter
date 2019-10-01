@@ -18,10 +18,10 @@
     <ClCompile Include="blitter_process.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="bitter_query_get.cpp">
+    <ClCompile Include="blitter_init.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="blitter_init.cpp">
+    <ClCompile Include="bitter_query_read.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

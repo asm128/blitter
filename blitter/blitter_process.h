@@ -21,17 +21,25 @@ namespace blt
 		, ::gpk::SRange<uint32_t>						& blockRange
 		);
 
+
+	::gpk::error_t									recordLoad
+		( ::gpk::SLoadCache					& loadCache
+		, ::blt::TNamedBlitterDB			& database
+		, const uint64_t					absoluteIndex
+		, uint32_t							& relativeIndex
+		, uint32_t							& blockIndex
+		, const ::gpk::view_const_char		& folder
+		);
+
 	::gpk::error_t									recordGet
 		( ::gpk::SLoadCache								& loadCache
 		, ::blt::TNamedBlitterDB						& database
 		, const uint64_t								absoluteIndex
-		, ::gpk::view_const_string						& output_record
+		, ::gpk::view_const_char						& output_record
 		, uint32_t										& relativeIndex
 		, uint32_t										& blockIndex
 		, const ::gpk::view_const_char					& folder
 		);
-
-
 } // namespace
 
 #endif // BLITTER_PROCESS_H_29038679283
