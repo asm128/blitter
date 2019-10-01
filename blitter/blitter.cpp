@@ -220,8 +220,7 @@ static	::gpk::error_t							queryLoad						(::blt::SBlitterQuery& query, const :
 
 	const ::gpk::error_t								indexExpand						= ::gpk::find("expand", keyvals);
 	if(0 <= indexExpand) {
-		query.Expand									= keyvals[indexExpand].Val;
-		gpk_necall(::gpk::split(::gpk::view_const_char{query.Expand}, '.', expansionKeyStorage), "%s", "Out of memory?");
+		gpk_necall(::gpk::split(::gpk::view_const_char{keyvals[indexExpand].Val}, '.', expansionKeyStorage), "%s", "Out of memory?");
 		query.ExpansionKeys								= expansionKeyStorage;
 	}
 	return 0;

@@ -36,7 +36,6 @@ namespace blt
 		::gpk::view_const_char										Command							= "";
 		::gpk::view_const_char										Path								= "";
 		::gpk::SRange<uint64_t>										Range								= {0, MAX_TABLE_RECORD_COUNT};
-		::gpk::view_const_char										Expand								= "";
 		::gpk::view_array<::gpk::view_const_char>					ExpansionKeys						= {};
 		int64_t														Detail								= -1;
 	};

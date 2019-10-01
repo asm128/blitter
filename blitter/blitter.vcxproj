@@ -188,6 +188,7 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="bitter_query_get.cpp" />
     <ClCompile Include="blitter.cpp" />
     <ClCompile Include="blitter_process.cpp" />
   </ItemGroup>

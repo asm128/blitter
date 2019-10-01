@@ -21,6 +21,9 @@
     <ClCompile Include="blitter_process.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="bitter_query_get.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="blitter.h">
