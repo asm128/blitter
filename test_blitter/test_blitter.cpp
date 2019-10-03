@@ -62,16 +62,16 @@ int												main							()		{
 	::testQuery(app, output, "get", "company"	, 0		, "", {10	, 20}, ""							);
 	::testQuery(app, output, "get", "company"	, 3		, "", {10	, 20}, "owner"						);
 
-	::testPush(app, output, "push_back", "user"			, "{ \"name\" : \"test0\" }");
+	::testPush(app, output, "push_back", "user"			, "1.5");
 	::testPush(app, output, "push_back", "user"			, "{ \"name\" : \"test1\" }");
 	::testPush(app, output, "push_back", "user"			, "{ \"name\" : \"test2\" }");
-	::testPush(app, output, "push_back", "website"		, "{ \"name\" : \"test3\" }");
+	::testPush(app, output, "push_back", "website"		, "null");
 	::testPush(app, output, "push_back", "website"		, "{ \"name\" : \"test4\" }");
 	::testPush(app, output, "push_back", "website"		, "{ \"name\" : \"test5\" }");
-	::testPush(app, output, "push_back", "publisher"	, "{ \"name\" : \"test6\" }");
+	::testPush(app, output, "push_back", "publisher"	, "false");
 	::testPush(app, output, "push_back", "publisher"	, "{ \"name\" : \"test7\" }");
-	::testPush(app, output, "push_back", "publisher"	, "{ \"name\" : \"test8\" }");
-	::testPush(app, output, "push_back", "company"		, "{ \"name\" : \"test9\" }");
+	::testPush(app, output, "push_back", "publisher"	, "true");
+	::testPush(app, output, "push_back", "company"		, "1");
 	::testPush(app, output, "push_back", "company"		, "{ \"name\" : \"testA\" }");
 	::testPush(app, output, "push_back", "company"		, "{ \"name\" : \"testB\" }");
 

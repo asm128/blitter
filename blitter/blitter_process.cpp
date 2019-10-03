@@ -2,6 +2,7 @@
 
 #include "gpk_parse.h"
 #include "gpk_find.h"
+#include "gpk_view_bit.h"
 
 static	::gpk::error_t							queryGetDetail
 	( ::gpk::SLoadCache								& loadCache
@@ -238,24 +239,26 @@ static	::gpk::error_t							queryGetRange
 			::blt::TNamedBlitterDB								& database			= databases[iDB];
 			if(query.Database == database.Key) {
 				if(database.Val.BlocksOnDisk.size()) {
-					const uint32_t										idBlock			= ::gpk::max(::gpk::view_const_uint32{database.Val.BlocksOnDisk});
+					const uint32_t										idBlock				= ::gpk::max(::gpk::view_const_uint32{database.Val.BlocksOnDisk});
 					uint32_t											indexRecord			= (uint32_t)-1;
 					uint32_t											indexBlock			= (uint32_t)-1;
-					if errored(::blt::recordLoad(loadCache, database, idBlock * database.Val.BlockSize, indexRecord, indexBlock, folder)) {
-						error_printf("Failed to load block for record: %lli.", query.Detail);
-					}
-					else {
-						::gpk::SJSONFile								& block				= *database.Val.Blocks[indexBlock];
-						::gpk::SJSONReader								recordReader		= {};
-						gpk_necall(::gpk::jsonParse(recordReader, {query.Record.begin(), query.Record.size()}), "%s", "Failed to parse JSON record!");
+					gpk_necall(::blt::recordLoad(loadCache, database, idBlock * database.Val.BlockSize, indexRecord, indexBlock, folder), "Failed to load block for record: %lli.", query.Detail);
+					::gpk::SJSONFile									& block				= *database.Val.Blocks[indexBlock];
+					if(block.Reader[0]->Children.size() < database.Val.BlockSize) {
+						::gpk::SJSONReader									recordReader		= {};
+						gpk_necall(::gpk::jsonParse(recordReader, query.Record), "%s", "Failed to parse JSON record!");
 						loadCache.Deflated.clear();
 						loadCache.Deflated.push_back(',');
-						::gpk::jsonWrite(recordReader.Tree[0], recordReader.View, loadCache.Deflated);
+						gpk_necall(::gpk::jsonWrite(recordReader.Tree[0], recordReader.View, loadCache.Deflated), "Failed to write json record! %s", "Invalid format?");
 						gpk_necall(block.Bytes.insert(block.Bytes.size() - 1, loadCache.Deflated), "Failed to append record! %s", "Out of memory?");
 						block.Reader.Reset();
-						gpk_necall(::gpk::jsonParse(block.Reader, {block.Bytes.begin(), block.Bytes.size()}), "%s", "Failed to read JSON!");
-						return 0;
+						gpk_necall(::gpk::jsonParse(block.Reader, block.Bytes), "%s", "Failed to read JSON!");
+						::gpk::view_bit<uint32_t>{database.Val.BlockDirty.begin(), database.Val.Blocks.size()}[indexBlock]	= true;
 					}
+					else {
+
+					}
+					return 0;
 				}
 			}
 		}

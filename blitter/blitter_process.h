@@ -23,22 +23,22 @@ namespace blt
 
 
 	::gpk::error_t									recordLoad
-		( ::gpk::SLoadCache					& loadCache
-		, ::blt::TNamedBlitterDB			& database
-		, const uint64_t					absoluteIndex
-		, uint32_t							& relativeIndex
-		, uint32_t							& blockIndex
-		, const ::gpk::view_const_char		& folder
+		( ::gpk::SLoadCache				& loadCache
+		, ::blt::TNamedBlitterDB		& database
+		, const uint64_t				absoluteIndex
+		, uint32_t						& relativeIndex
+		, uint32_t						& blockIndex
+		, const ::gpk::view_const_char	& folder
 		);
 
 	::gpk::error_t									recordGet
-		( ::gpk::SLoadCache								& loadCache
-		, ::blt::TNamedBlitterDB						& database
-		, const uint64_t								absoluteIndex
-		, ::gpk::view_const_char						& output_record
-		, uint32_t										& relativeIndex
-		, uint32_t										& blockIndex
-		, const ::gpk::view_const_char					& folder
+		( ::gpk::SLoadCache				& loadCache
+		, ::blt::TNamedBlitterDB		& database
+		, const uint64_t				absoluteIndex
+		, ::gpk::view_const_char		& output_record
+		, uint32_t						& relativeIndex
+		, uint32_t						& blockIndex
+		, const ::gpk::view_const_char	& folder
 		);
 } // namespace
 
