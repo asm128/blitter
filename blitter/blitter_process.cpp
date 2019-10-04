@@ -29,10 +29,10 @@ static	::gpk::error_t							queryGetDetail
 		const ::gpk::SJSONFile								& currentDBBlock					= *databaseToRead.Val.Blocks[blockIndex];
 		const int32_t										indexRecordNode						= ::gpk::jsonArrayValueGet(*currentDBBlock.Reader.Tree[0], nodeIndex);
 		const ::gpk::view_const_char						fieldToExpand						= query.ExpansionKeys[idxExpand];
-		const int32_t										indexValueNode						= ::gpk::jsonObjectValueGet(currentDBBlock.Reader, (uint32_t)indexRecordNode, fieldToExpand);
+		const int32_t										indexValueNode						= ::gpk::jsonObjectValueGet(currentDBBlock.Reader, (uint32_t)indexRecordNode, {fieldToExpand.begin(), fieldToExpand.size()});
 		const ::gpk::view_const_char						currentRecordView					= currentDBBlock.Reader.View[indexRecordNode];
 		if(0 > indexValueNode) {
-			info_printf("Cannot expand field. Field not found: %s.", fieldToExpand.begin());
+			info_printf("Cannot expand field. Field not found: %s.", ::gpk::toString(fieldToExpand).begin());
 			gpk_necall(output.append(currentRecordView), "%s", "Out of memory?");
 		}
 		else {
