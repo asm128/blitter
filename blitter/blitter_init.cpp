@@ -13,10 +13,10 @@
 
 ::gpk::error_t									blt::loadConfig				(::blt::SBlitter & appState, const ::gpk::view_const_string & jsonFileName)	{
 	gpk_necall(::gpk::jsonFileRead(appState.Config, jsonFileName), "Failed to load configuration file: %s.", ::gpk::toString(jsonFileName).begin());
-	const ::gpk::error_t								indexApp					= ::gpk::jsonExpressionResolve("application.blitter", appState.Config.Reader, (uint32_t)0, appState.Folder);
-	const ::gpk::error_t								indexDB						= ::gpk::jsonExpressionResolve("database", appState.Config.Reader, (uint32_t)indexApp, appState.Folder);
+	const ::gpk::error_t								indexApp					= ::gpk::jsonExpressionResolve(::gpk::view_const_string{"application.blitter"	}, appState.Config.Reader, (uint32_t)0, appState.Folder);
+	const ::gpk::error_t								indexDB						= ::gpk::jsonExpressionResolve(::gpk::view_const_string{"database"				}, appState.Config.Reader, (uint32_t)indexApp, appState.Folder);
 	gpk_necall(indexDB, "'database' not found in '%s'.", "application.blitter");
-	const ::gpk::error_t								indexPath					= ::gpk::jsonExpressionResolve("path.database", appState.Config.Reader, (uint32_t)indexApp, appState.Folder);
+	const ::gpk::error_t								indexPath					= ::gpk::jsonExpressionResolve(::gpk::view_const_string{"path.database"			}, appState.Config.Reader, (uint32_t)indexApp, appState.Folder);
 	if(errored(indexPath)) {
 		warning_printf("'path.database' not found in '%s'. Using current path as database root.", "application.blitter");
 		appState.Folder									= "./";
@@ -113,7 +113,7 @@ static	::gpk::error_t							dbFileLoad					(::gpk::SLoadCache & loadCache, ::blt
 ::gpk::error_t									blt::configDatabases		(::gpk::array_obj<::blt::TNamedBlitterDB> & databases, const ::gpk::SJSONReader & configReader, const int32_t indexConfigNode, const ::gpk::view_array<const ::gpk::view_const_string> & databasesToLoad, const ::gpk::view_const_string & folder)	{
 	::gpk::view_const_string							jsonResult					= {};
 	const int32_t										indexObjectDatabases		= (-1 == indexConfigNode)
-		? ::gpk::jsonExpressionResolve("application.blitter.database", configReader, 0, jsonResult)
+		? ::gpk::jsonExpressionResolve(::gpk::view_const_string{"application.blitter.database"}, configReader, 0, jsonResult)
 		: indexConfigNode
 		;
 	gpk_necall(indexObjectDatabases, "%s", "Failed to get database config from JSON file.");
@@ -125,12 +125,12 @@ static	::gpk::error_t							dbFileLoad					(::gpk::SLoadCache & loadCache, ::blt
 	::gpk::SLoadCache									loadCache;
 	for(uint32_t iDatabase = 0, countDatabases = (uint32_t)databaseArraySize; iDatabase < countDatabases; ++iDatabase) {
 		sprintf_s(temp, "['%u'].name", iDatabase);
-		gpk_necall(::gpk::jsonExpressionResolve(temp, configReader, indexObjectDatabases, jsonResult), "Failed to load config from json! Last contents found: %s.", jsonResult.begin());
+		gpk_necall(::gpk::jsonExpressionResolve(::gpk::view_const_string{temp}, configReader, indexObjectDatabases, jsonResult), "Failed to load config from json! Last contents found: %s.", jsonResult.begin());
 		::blt::TNamedBlitterDB								& jsonDB					= databases[iDatabase];
 		jsonDB.Key										= jsonResult;
 		{	// -- Load database block size
 			sprintf_s(temp, "['%u'].block", iDatabase);
-			int32_t												indexBlockNode				= ::gpk::jsonExpressionResolve(temp, configReader, indexObjectDatabases, jsonResult);
+			int32_t												indexBlockNode				= ::gpk::jsonExpressionResolve(::gpk::view_const_string{temp}, configReader, indexObjectDatabases, jsonResult);
 			gwarn_if(errored(indexBlockNode), "Failed to load config from json! Last contents found: %s.", jsonResult.begin())
 			else
 				::gpk::parseIntegerDecimal(jsonResult, &(jsonDB.Val.BlockSize = 0));
@@ -141,19 +141,19 @@ static	::gpk::error_t							dbFileLoad					(::gpk::SLoadCache & loadCache, ::blt
 			info_printf("Loading database info for '%s'.", dbfilename.begin());
 			sprintf_s(temp, "['%u'].source", iDatabase);
 			jsonResult										= {};
-			int32_t												typeFound					= ::gpk::jsonExpressionResolve(temp, configReader, indexObjectDatabases, jsonResult);
+			int32_t												typeFound					= ::gpk::jsonExpressionResolve(::gpk::view_const_string{temp}, configReader, indexObjectDatabases, jsonResult);
 			gwarn_if(errored(typeFound), "Failed to load database type for database: %s. Defaulting to local.", dbfilename.begin());
 			jsonDB.Val.HostType								= (::gpk::view_const_string{"local"} == jsonResult || errored(typeFound)) ? ::blt::DATABASE_HOST_LOCAL : ::blt::DATABASE_HOST_REMOTE;
 			sprintf_s(temp, "['%u'].deflate", iDatabase);
 			jsonResult										= {};
-			typeFound										= ::gpk::jsonExpressionResolve(temp, configReader, indexObjectDatabases, jsonResult);
+			typeFound										= ::gpk::jsonExpressionResolve(::gpk::view_const_string{temp}, configReader, indexObjectDatabases, jsonResult);
 			gwarn_if(errored(typeFound), "Failed to load database compression for database: %s. Defaulting to uncompressed.", dbfilename.begin());
 			if(::gpk::view_const_string{"true"} == jsonResult)
 				jsonDB.Val.HostType								|= ::blt::DATABASE_HOST_DEFLATE;
 		}
 		{	// -- Load field bindings
 			sprintf_s(temp, "['%u'].bind", iDatabase);
-			::gpk::error_t										indexBindArray				= ::gpk::jsonExpressionResolve(temp, configReader, indexObjectDatabases, jsonResult);
+			::gpk::error_t										indexBindArray				= ::gpk::jsonExpressionResolve(::gpk::view_const_string{temp}, configReader, indexObjectDatabases, jsonResult);
 			w_if(errored(indexBindArray), "No bindings found for database file: %s.", dbfilename.begin())
 			else {
 				::gpk::error_t										sizeBindArray				= ::gpk::jsonArraySize(*configReader[indexBindArray]);
@@ -161,7 +161,7 @@ static	::gpk::error_t							dbFileLoad					(::gpk::SLoadCache & loadCache, ::blt
 				gpk_necall(jsonDB.Val.Bindings.resize(sizeBindArray), "%s", "Out of memory?");;
 				for(uint32_t iBind = 0; iBind < jsonDB.Val.Bindings.size(); ++iBind) {
 					sprintf_s(temp, "['%u']", iBind);
-					gpk_necall(::gpk::jsonExpressionResolve(temp, configReader, indexBindArray, jsonResult), "Failed to load config from json! Last contents found: %s.", jsonResult.begin());
+					gpk_necall(::gpk::jsonExpressionResolve(::gpk::view_const_string{temp}, configReader, indexBindArray, jsonResult), "Failed to load config from json! Last contents found: %s.", jsonResult.begin());
 					jsonDB.Val.Bindings[iBind]						= jsonResult;
 				}
 			}

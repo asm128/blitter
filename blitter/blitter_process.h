@@ -6,7 +6,7 @@
 namespace blt
 {
 	struct SRangeBlockInfo {
-		::gpk::view_const_string						OutputRecords			= {};
+		::gpk::view_const_char							OutputRecords			= {};
 		::gpk::SMinMax<uint32_t>						RelativeIndices			= {};
 		uint32_t										BlockIndex				= 0;
 		uint32_t										BlockId					= 0;
