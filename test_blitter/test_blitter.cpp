@@ -34,6 +34,8 @@ int												testPush						(::blt::SBlitter & app, ::gpk::array_pod<char_t> & 
 	app.Query.Command								= command;
 	app.Query.Database								= database;
 	app.Query.Record								= record;
+	app.Query.RecordReader.Reset();
+	::gpk::jsonParse(app.Query.RecordReader, record);
 	gpk_necall(::blt::queryProcess(app.LoadCache, app.Databases, app.ExpressionReader, app.Query, app.Folder, output), "%s", "Execution of query failed.");
 	if(output.size()) {
 		output.push_back(0);

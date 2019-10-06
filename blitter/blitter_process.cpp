@@ -256,15 +256,14 @@ static	::gpk::error_t							queryGetRange
 static	::gpk::error_t							pushNewBlock
 	( ::gpk::SLoadCache								& loadCache
 	, ::blt::SBlitterDB								& database
-	, const ::gpk::view_const_char					& recordToAdd
+	, const ::gpk::SJSONReader						& recordToAdd
 	, const int32_t									idMaxBlockOnDisk
 	) {
 	::gpk::ptr_obj<::gpk::SJSONFile>					newBlock;
 	newBlock->Bytes.push_back('[');
-	::gpk::SJSONReader									recordReader		= {};
-	gpk_necall(::gpk::jsonParse(recordReader, recordToAdd), "%s", "Failed to parse JSON record!");
 	loadCache.Deflated.clear();
-	gpk_necall(::gpk::jsonWrite(recordReader.Tree[0], recordReader.View, loadCache.Deflated), "Failed to write json record! %s", "Invalid format?");
+	ree_if(0 == recordToAdd.Tree.size(), "Invalid json record! %s.", "Forgot to build the reader from the record?")
+	gpk_necall(::gpk::jsonWrite(recordToAdd[0], recordToAdd.View, loadCache.Deflated), "Failed to write json record! %s", "Invalid format?");
 	newBlock->Bytes.append(loadCache.Deflated);
 	newBlock->Bytes.push_back(']');
 	gpk_necall(::gpk::jsonParse(newBlock->Reader, newBlock->Bytes), "%s", "Failed to parse new block.");
@@ -301,7 +300,7 @@ static	::gpk::error_t							pushNewBlock
 			if(query.Database != database.Key)
 				continue;
 			if(0 == database.Val.BlocksOnDisk.size())
-				return ::pushNewBlock(loadCache, database.Val, query.Record, -1);
+				return ::pushNewBlock(loadCache, database.Val, query.RecordReader, -1);
 			else {
 				const uint32_t										idBlock				= ::gpk::max(::gpk::view_const_uint32{database.Val.BlocksOnDisk});
 				uint32_t											indexRecord			= (uint32_t)-1;
@@ -310,13 +309,11 @@ static	::gpk::error_t							pushNewBlock
 				::gpk::SJSONFile									& block				= *database.Val.Blocks[indexBlock];
 				const ::gpk::SJSONNode								& tableNode			= *block.Reader[0];
 				if(database.Val.BlockSize && tableNode.Children.size() >= database.Val.BlockSize)
-					return ::pushNewBlock(loadCache, database.Val, query.Record, idBlock);
+					return ::pushNewBlock(loadCache, database.Val, query.RecordReader, idBlock);
 				else {
-					::gpk::SJSONReader									recordReader		= {};
-					gpk_necall(::gpk::jsonParse(recordReader, query.Record), "%s", "Failed to parse JSON record!");
 					loadCache.Deflated.clear();
 					loadCache.Deflated.push_back(',');
-					gpk_necall(::gpk::jsonWrite(recordReader.Tree[0], recordReader.View, loadCache.Deflated), "Failed to write json record! %s", "Invalid format?");
+					gpk_necall(::gpk::jsonWrite(query.RecordReader.Tree[0], query.RecordReader.View, loadCache.Deflated), "Failed to write json record! %s", "Invalid format?");
 					gpk_necall(block.Bytes.insert(block.Bytes.size() - 1, loadCache.Deflated), "Failed to append record! %s", "Out of memory?");
 					block.Reader.Reset();
 					gpk_necall(::gpk::jsonParse(block.Reader, block.Bytes), "%s", "Failed to read JSON!");

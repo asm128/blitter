@@ -276,7 +276,8 @@ static	::gpk::error_t							queryLoad						(::blt::SBlitterQuery& query, const :
 		if(query.Path.size())
 			gpk_necall(::gpk::expressionReaderParse(expressionReader, {query.Path.begin(), query.Path.size()}), "Error: %s", "Invalid path syntax?");
 	}
-
+	query.Record									= request.ContentBody;
+	gpk_necall(::gpk::jsonParse(query.RecordReader, query.Record), "Failed to parse JSON record '%s'", ::gpk::toString(query.Record).begin());
 	// --- Retrieve query data from querystring.
 	gpk_necall(::queryLoad(query, request.QueryStringKeyVals, expansionKeyStorage), "%s", "Out of memory?");
 	return 0;

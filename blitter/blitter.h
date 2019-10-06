@@ -41,6 +41,7 @@ namespace blt
 		::gpk::SRange<uint64_t>										Range								= {0, MAX_TABLE_RECORD_COUNT};
 		::gpk::view_array<::gpk::view_const_char>					ExpansionKeys						= {};
 		int64_t														Detail								= -1;
+		::gpk::SJSONReader											RecordReader						= {};
 	};
 
 	//struct SBlitterOutput {
