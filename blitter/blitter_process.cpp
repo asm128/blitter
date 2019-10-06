@@ -42,7 +42,7 @@ static	::gpk::error_t							queryGetDetail
 				gpk_necall(output.append(currentRecordView), "%s", "Out of memory?");
 			}
 			else if(::gpk::JSON_TYPE_INTEGER == refNodeTYpe) {
-				uint64_t										nextTableRecordIndex				= (uint64_t)-1LL;
+				int64_t											nextTableRecordIndex				= -1LL;
 				const ::gpk::view_const_char					digitsToDetailView					= currentDBBlock.Reader.View[indexValueNode];
 				gpk_necall(::gpk::parseIntegerDecimal(digitsToDetailView, &nextTableRecordIndex), "%s", "Out of memory?");
 
@@ -217,6 +217,32 @@ static	::gpk::error_t							queryGetRange
 	return 0;
 }
 
+
+static	::gpk::error_t							pushNewBlock
+	( ::gpk::SLoadCache								& loadCache
+	, ::blt::SBlitterDB								& database
+	, const ::gpk::view_const_char					& recordToAdd
+	, const int32_t									idMaxBlockOnDisk
+	) {
+	::gpk::ptr_obj<::gpk::SJSONFile>					newBlock;
+	newBlock->Bytes.push_back('[');
+	::gpk::SJSONReader									recordReader		= {};
+	gpk_necall(::gpk::jsonParse(recordReader, recordToAdd), "%s", "Failed to parse JSON record!");
+	loadCache.Deflated.clear();
+	gpk_necall(::gpk::jsonWrite(recordReader.Tree[0], recordReader.View, loadCache.Deflated), "Failed to write json record! %s", "Invalid format?");
+	newBlock->Bytes.append(loadCache.Deflated);
+	newBlock->Bytes.push_back(']');
+	gpk_necall(::gpk::jsonParse(newBlock->Reader, newBlock->Bytes), "%s", "Failed to parse new block.");
+	const uint32_t										indexBlock			= database.Blocks.push_back(newBlock);
+	const uint32_t										idNewBlock			= idMaxBlockOnDisk + 1;
+	database.BlockIndices.push_back(idNewBlock);
+	database.BlocksOnDisk.push_back(idNewBlock);
+	database.Offsets.push_back(idNewBlock * database.BlockSize);
+	database.BlockDirty.resize((database.Blocks.size() / 32) + 1, 0);
+	::gpk::view_bit<uint32_t>{database.BlockDirty.begin(), database.Blocks.size()}[indexBlock]	= true;
+	return 0;
+}
+
 ::gpk::error_t									blt::queryProcess
 	( ::gpk::SLoadCache								& loadCache
 	, ::gpk::array_obj<::blt::TNamedBlitterDB>		& databases
@@ -237,47 +263,52 @@ static	::gpk::error_t							queryGetRange
 	else if(query.Command == ::gpk::view_const_string{"push_back"}) {
 		for(uint32_t iDB = 0; iDB < databases.size(); ++iDB) {
 			::blt::TNamedBlitterDB								& database			= databases[iDB];
-			if(query.Database == database.Key) {
-				if(database.Val.BlocksOnDisk.size()) {
-					const uint32_t										idBlock				= ::gpk::max(::gpk::view_const_uint32{database.Val.BlocksOnDisk});
-					uint32_t											indexRecord			= (uint32_t)-1;
-					uint32_t											indexBlock			= (uint32_t)-1;
-					gpk_necall(::blt::recordLoad(loadCache, database, idBlock * database.Val.BlockSize, indexRecord, indexBlock, folder), "Failed to load block for record: %lli.", query.Detail);
-					::gpk::SJSONFile									& block				= *database.Val.Blocks[indexBlock];
-					if(block.Reader[0]->Children.size() < database.Val.BlockSize) {
-						::gpk::SJSONReader									recordReader		= {};
-						gpk_necall(::gpk::jsonParse(recordReader, query.Record), "%s", "Failed to parse JSON record!");
-						loadCache.Deflated.clear();
-						loadCache.Deflated.push_back(',');
-						gpk_necall(::gpk::jsonWrite(recordReader.Tree[0], recordReader.View, loadCache.Deflated), "Failed to write json record! %s", "Invalid format?");
-						gpk_necall(block.Bytes.insert(block.Bytes.size() - 1, loadCache.Deflated), "Failed to append record! %s", "Out of memory?");
-						block.Reader.Reset();
-						gpk_necall(::gpk::jsonParse(block.Reader, block.Bytes), "%s", "Failed to read JSON!");
-						::gpk::view_bit<uint32_t>{database.Val.BlockDirty.begin(), database.Val.Blocks.size()}[indexBlock]	= true;
-					}
-					else {
-
-					}
-					return 0;
+			if(query.Database != database.Key)
+				continue;
+			if(0 == database.Val.BlocksOnDisk.size())
+				return ::pushNewBlock(loadCache, database.Val, query.Record, -1);
+			else {
+				const uint32_t										idBlock				= ::gpk::max(::gpk::view_const_uint32{database.Val.BlocksOnDisk});
+				uint32_t											indexRecord			= (uint32_t)-1;
+				uint32_t											indexBlock			= (uint32_t)-1;
+				gpk_necall(::blt::recordLoad(loadCache, database, idBlock * (uint64_t)database.Val.BlockSize, indexRecord, indexBlock, folder), "Failed to load block for record: %lli.", query.Detail);
+				::gpk::SJSONFile									& block				= *database.Val.Blocks[indexBlock];
+				const ::gpk::SJSONNode								& tableNode			= *block.Reader[0];
+				if(database.Val.BlockSize && tableNode.Children.size() >= database.Val.BlockSize)
+					return ::pushNewBlock(loadCache, database.Val, query.Record, idBlock);
+				else {
+					::gpk::SJSONReader									recordReader		= {};
+					gpk_necall(::gpk::jsonParse(recordReader, query.Record), "%s", "Failed to parse JSON record!");
+					loadCache.Deflated.clear();
+					loadCache.Deflated.push_back(',');
+					gpk_necall(::gpk::jsonWrite(recordReader.Tree[0], recordReader.View, loadCache.Deflated), "Failed to write json record! %s", "Invalid format?");
+					gpk_necall(block.Bytes.insert(block.Bytes.size() - 1, loadCache.Deflated), "Failed to append record! %s", "Out of memory?");
+					block.Reader.Reset();
+					gpk_necall(::gpk::jsonParse(block.Reader, block.Bytes), "%s", "Failed to read JSON!");
+					database.Val.BlockDirty.resize((database.Val.Blocks.size() / 32) + 1, 0);
+					::gpk::view_bit<uint32_t>{database.Val.BlockDirty.begin(), database.Val.Blocks.size()}[indexBlock]	= true;
 				}
 			}
+			return 0;
 		}
 	}
 	else if(query.Command == ::gpk::view_const_string{"pop_back"}) {
-		//for(uint32_t iDB = 0; iDB < databases.size(); ++iDB) {
-		//	if(query.Database == databases[iDB].Key) {
+		for(uint32_t iDB = 0; iDB < databases.size(); ++iDB) {
+			if(query.Database == databases[iDB].Key) {
+				return -1;	// Not implemented
 		//		uint32_t											idBlock				= 0;;
 		//		::gpk::max(::gpk::view_const_uint32{databases[iDB].Val.BlocksOnDisk}, &idBlock);
-		//	}
-		//}
+			}
+		}
 	}
 	else if(query.Command == ::gpk::view_const_string{"replace"}) {
-		//for(uint32_t iDB = 0; iDB < databases.size(); ++iDB) {
-		//	if(query.Database == databases[iDB].Key) {
+		for(uint32_t iDB = 0; iDB < databases.size(); ++iDB) {
+			if(query.Database == databases[iDB].Key) {
+				return -1;	// Not implemented
 		//		uint32_t											idBlock				= 0;;
 		//		::gpk::max(::gpk::view_const_uint32{databases[iDB].Val.BlocksOnDisk}, &idBlock);
-		//	}
-		//}
+			}
+		}
 	}
 
 	error_printf("Database not found: %s.", ::gpk::toString(query.Database).begin());

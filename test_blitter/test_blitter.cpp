@@ -62,32 +62,36 @@ int												main							()		{
 	::testQuery(app, output, "get", "company"	, 0		, "", {10	, 20}, ""							);
 	::testQuery(app, output, "get", "company"	, 3		, "", {10	, 20}, "owner"						);
 
-	::testPush(app, output, "push_back", "user"			, "1.5");
-	::testPush(app, output, "push_back", "user"			, "{ \"name\" : \"test1\" }");
-	::testPush(app, output, "push_back", "user"			, "{ \"name\" : \"test2\" }");
-	::testPush(app, output, "push_back", "website"		, "null");
-	::testPush(app, output, "push_back", "website"		, "{ \"name\" : \"test4\" }");
-	::testPush(app, output, "push_back", "website"		, "{ \"name\" : \"test5\" }");
-	::testPush(app, output, "push_back", "publisher"	, "false");
-	::testPush(app, output, "push_back", "publisher"	, "{ \"name\" : \"test7\" }");
-	::testPush(app, output, "push_back", "publisher"	, "true");
-	::testPush(app, output, "push_back", "company"		, "1");
-	::testPush(app, output, "push_back", "company"		, "{ \"name\" : \"testA\" }");
-	::testPush(app, output, "push_back", "company"		, "{ \"name\" : \"testB\" }");
-
-	::testQuery(app, output, "get", "user"		, -1	, "", {0, 1000}, "referral.referral"			);
-	::testQuery(app, output, "get", "user"		, 0		, "", {0, 1000}, "website"					);
-	::testQuery(app, output, "get", "user"		, 10	, "", {0, 1000}, "referral.referral"			);
-	::testQuery(app, output, "get", "website"	, -1	, "", {0, 1000}, "publisher"					);
-	::testQuery(app, output, "get", "website"	, 0		, "", {0, 1000}, "publisher.company"			);
-	::testQuery(app, output, "get", "website"	, 3		, "", {0, 1000}, "publisher.company.owner"	);
-	::testQuery(app, output, "get", "publisher"	, -1	, "", {0, 1000}, ""							);
-	::testQuery(app, output, "get", "publisher"	, 0		, "", {0, 1000}, "company"					);
-	::testQuery(app, output, "get", "publisher"	, 3		, "", {0, 1000}, "company.owner"				);
-	::testQuery(app, output, "get", "company"	, -1	, "", {0, 1000}, ""							);
-	::testQuery(app, output, "get", "company"	, 0		, "", {0, 1000}, ""							);
-	::testQuery(app, output, "get", "company"	, 3		, "", {0, 1000}, "owner"						);
-
+	for(uint32_t i = 0; i < 50; ++i) {
+		::testPush(app, output, "push_back", "user"			, "1.5");
+		::testPush(app, output, "push_back", "user"			, "{ \"name\" : \"test1\" }");
+		::testPush(app, output, "push_back", "user"			, "{ \"name\" : \"test2\" }");
+		::testPush(app, output, "push_back", "website"		, "null");
+		::testPush(app, output, "push_back", "website"		, "{ \"name\" : \"test4\" }");
+		::testPush(app, output, "push_back", "website"		, "{ \"name\" : \"test5\" }");
+		::testPush(app, output, "push_back", "publisher"	, "false");
+		::testPush(app, output, "push_back", "publisher"	, "{ \"name\" : \"test7\" }");
+		::testPush(app, output, "push_back", "publisher"	, "true");
+		::testPush(app, output, "push_back", "company"		, "1");
+		::testPush(app, output, "push_back", "company"		, "{ \"name\" : \"testA\" }");
+		::testPush(app, output, "push_back", "company"		, "{ \"name\" : \"testB\" }");
+	}
+	info_printf("Test ------------------------------------------");
+	{
+		::testQuery(app, output, "get", "user"		, -1	, "", {0, 1000}, "referral.referral"			);
+		::testQuery(app, output, "get", "user"		, -1	, "", {0, 1000}, ""								);
+		::testQuery(app, output, "get", "user"		, 0		, "", {0, 1000}, "website"					);
+		::testQuery(app, output, "get", "user"		, 10	, "", {0, 1000}, "referral.referral"			);
+		::testQuery(app, output, "get", "website"	, -1	, "", {0, 1000}, "publisher"					);
+		::testQuery(app, output, "get", "website"	, 0		, "", {0, 1000}, "publisher.company"			);
+		::testQuery(app, output, "get", "website"	, 3		, "", {0, 1000}, "publisher.company.owner"	);
+		::testQuery(app, output, "get", "publisher"	, -1	, "", {0, 1000}, ""							);
+		::testQuery(app, output, "get", "publisher"	, 0		, "", {0, 1000}, "company"					);
+		::testQuery(app, output, "get", "publisher"	, 3		, "", {0, 1000}, "company.owner"				);
+		::testQuery(app, output, "get", "company"	, -1	, "", {0, 1000}, ""							);
+		::testQuery(app, output, "get", "company"	, 0		, "", {0, 1000}, ""							);
+		::testQuery(app, output, "get", "company"	, 3		, "", {0, 1000}, "owner"						);
+	}
 	return 0;
 }
 

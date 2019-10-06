@@ -92,7 +92,9 @@ static	::gpk::error_t							dbFileLoad					(::gpk::SLoadCache & loadCache, ::blt
 	gpk_necall(fileName.push_back('/')		, "%s", "Out of memory?");
 	gpk_necall(::blt::tableFileName(fileName, jsonDB.Val.HostType, jsonDB.Val.EncryptionKey.size() > 0,jsonDB.Key), "%s", "Out of memory?");
 	info_printf("Loading database file: %s.", ::gpk::toString(fileName).begin());
-	return ::dbFileLoad(loadCache, jsonDB.Val, fileName, 0);
+	gpk_necall(::dbFileLoad(loadCache, jsonDB.Val, fileName, 0), "Failed to load database from file: %s.", ::gpk::toString(fileName).begin());
+	jsonDB.Val.BlocksOnDisk							= {};
+	return jsonDB.Val.BlocksOnDisk.push_back(0);
 }
 
 ::gpk::error_t									blt::blockFileLoad			(::gpk::SLoadCache & loadCache, ::blt::TNamedBlitterDB & jsonDB, const ::gpk::view_const_char & folder, uint32_t block)	{
@@ -203,15 +205,11 @@ static	::gpk::error_t							dbFileLoad					(::gpk::SLoadCache & loadCache, ::blt
 		// -- Load json database file.
 		if(0 == databasesToLoad.size()) {
 			gpk_necall(::blt::tableFileLoad(loadCache, jsonDB, folder), "Failed to load database: %s.", dbfilename.begin());
-			jsonDB.Val.BlocksOnDisk							= {};
-			jsonDB.Val.BlocksOnDisk.push_back(0);
 		}
 		else {
 			for(uint32_t iDB = 0; iDB = databasesToLoad.size(); ++iDB)
 				if(databasesToLoad[iDB] == jsonDB.Key) {
 					gpk_necall(::blt::tableFileLoad(loadCache, jsonDB, folder), "Failed to load database: %s.", dbfilename.begin());
-					jsonDB.Val.BlocksOnDisk							= {};
-					jsonDB.Val.BlocksOnDisk.push_back(0);
 					break;
 				}
 		}
