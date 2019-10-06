@@ -53,9 +53,9 @@ struct SSplitParams {
 
 	info_printf("Deflated output: %s", params.DeflatedOutput ? "true" : "false");
 	if(params.EncryptionKey.size())
-		info_printf("Encryption: %s.", "false");
-	else
 		info_printf("Encryption key: %s.", params.EncryptionKey.begin());
+	else
+		info_printf("Encryption: %s.", "false");
 	return 0;
 }
 
@@ -82,6 +82,12 @@ int										main							(int argc, char ** argv)		{
 	::SSplitParams								params							= {};
 	gpk_necall(::loadParams(params, argc, argv), "%s", "");
 
+	::gpk::SJSONFile							jsonFileToSplit					= {};
+	gpk_necall(::gpk::jsonFileRead(jsonFileToSplit, params.FileNameSrc), "Failed to load file: %s.", params.FileNameSrc.begin());
+	ree_if(0 == jsonFileToSplit.Reader.Tree.size(), "Invalid input format. %s", "File content is not a JSON array.");
+	ree_if(jsonFileToSplit.Reader.Token[0].Type != ::gpk::JSON_TYPE_ARRAY, "Invalid input format. %s", ::gpk::get_value_label(jsonFileToSplit.Reader.Token[0].Type).begin());
+	info_printf("Loaded file: %s. Size: %u bytes.", params.FileNameSrc.begin(), jsonFileToSplit.Bytes.size());
+
 	::gpk::array_pod<char_t>					dbFolderName					= {};
 	gpk_necall(::blt::tableFolderName(dbFolderName, params.DBName, params.BlockSize), "%s", "??");
 	gpk_necall(::gpk::pathCreate({dbFolderName.begin(), dbFolderName.size()}), "Failed to create database folder: %s.", dbFolderName.begin());
@@ -90,12 +96,6 @@ int										main							(int argc, char ** argv)		{
 		gpk_necall(dbFolderName.push_back('/'), "%s", "Out of memory?");
 	else if(0 == dbFolderName.size())
 		gpk_necall(dbFolderName.append(::gpk::view_const_string{"./"}), "%s", "Out of memory?");
-
-	::gpk::SJSONFile							jsonFileToSplit					= {};
-	gpk_necall(::gpk::jsonFileRead(jsonFileToSplit, params.FileNameSrc), "Failed to load file: %s.", params.FileNameSrc.begin());
-	ree_if(0 == jsonFileToSplit.Reader.Tree.size(), "Invalid input format. %s", "File content is not a JSON array.");
-	ree_if(jsonFileToSplit.Reader.Token[0].Type != ::gpk::JSON_TYPE_ARRAY, "Invalid input format. %s", ::gpk::get_value_label(jsonFileToSplit.Reader.Token[0].Type).begin());
-	info_printf("Loaded file: %s. Size: %u bytes.", params.FileNameSrc.begin(), jsonFileToSplit.Bytes.size());
 
 	::gpk::array_obj<::gpk::array_pod<char_t>>	outputJsons;
 	gpk_necall(::gpk::jsonArraySplit(*jsonFileToSplit.Reader.Tree[0], jsonFileToSplit.Reader.View , params.BlockSize, outputJsons), "%s", "Unknown error!");

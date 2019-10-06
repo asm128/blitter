@@ -4,6 +4,41 @@
 #include "gpk_find.h"
 #include "gpk_view_bit.h"
 
+struct SWriteCache {
+	::gpk::SLoadCache						& LoadCache						;
+	::gpk::array_pod<char_t>				PartFileName					;
+	::gpk::array_pod<char_t>				PathToWriteTo					;
+};
+
+::gpk::error_t									blockWrite						(::SWriteCache & writeCache, const ::gpk::view_const_char & dbFolderName, const ::gpk::view_const_char & dbName, const ::gpk::view_const_char & encryptionKey, ::blt::DATABASE_HOST hostType, const ::gpk::view_const_byte & partBytes, uint32_t iPart)		{
+	::gpk::array_pod<char_t>							partFileName					= writeCache.PartFileName;
+	::gpk::array_pod<char_t>							pathToWriteTo					= writeCache.PathToWriteTo;
+	::gpk::clear(partFileName, pathToWriteTo, writeCache.LoadCache.Deflated, writeCache.LoadCache.Encrypted);
+	pathToWriteTo									= dbFolderName;
+	if(pathToWriteTo.size() && pathToWriteTo[pathToWriteTo.size() - 1] != '/')
+		pathToWriteTo.push_back('/');
+	gpk_necall(::blt::blockFileName(partFileName, dbName, encryptionKey.size() > 0, hostType, iPart), "%s", "??");
+	gpk_necall(pathToWriteTo.append(partFileName), "%s", "Out of memory?");
+	return ::gpk::fileFromMemorySecure(writeCache.LoadCache, partBytes, pathToWriteTo, encryptionKey, gbit_true(hostType, ::blt::DATABASE_HOST_DEFLATE));
+}
+
+::gpk::error_t									blt::blitterFlush						(::blt::SBlitter & appState) {
+	::SWriteCache										cache									= {appState.LoadCache};
+	for(uint32_t iDatabase = 0; iDatabase < appState.Databases.size(); ++iDatabase) {
+		::blt::TNamedBlitterDB								& db									= appState.Databases[iDatabase];
+		::gpk::view_bit<const uint32_t>						dirty									= {db.Val.BlockDirty.begin(), db.Val.Blocks.size()};
+		for(uint32_t iBlock = 0; iBlock < db.Val.Blocks.size(); ++iBlock) {
+			if(dirty[iBlock]) {
+				::gpk::array_pod<char_t>						folderName								= {};
+				gpk_necall(::blt::tableFolderInit(folderName, appState.Folder, db.Key, db.Val.BlockSize), "Failed to initialize folder for table '%s'. Not enough permissions?", ::gpk::toString(db.Key).begin());
+				gpk_necall(::blockWrite(cache, folderName, db.Key, db.Val.EncryptionKey, db.Val.HostType, db.Val.Blocks[iBlock]->Bytes, db.Val.BlockIndices[iBlock]), "%s", "Unknown error!");
+			}
+		}
+		memset(db.Val.BlockDirty.begin(), 0, sizeof(uint32_t) * db.Val.BlockDirty.size());
+	}
+	return 0;
+}
+
 static	::gpk::error_t							queryGetDetail
 	( ::gpk::SLoadCache								& loadCache
 	, const ::gpk::SExpressionReader				& expressionReader

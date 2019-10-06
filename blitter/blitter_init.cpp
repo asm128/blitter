@@ -33,7 +33,7 @@
 	return 0;
 }
 
-::gpk::error_t									blt::blockFileName			(::gpk::array_pod<char_t> & filename, const ::gpk::view_const_string & dbName, bool bEncrypted, const ::blt::DATABASE_HOST hostType, const uint32_t block) {
+::gpk::error_t									blt::blockFileName			(::gpk::array_pod<char_t> & filename, const ::gpk::view_const_char & dbName, bool bEncrypted, const ::blt::DATABASE_HOST hostType, const uint32_t block) {
 	gpk_necall(filename.append(dbName), "%s", "Out of memory?");
 	char												temp[64]					= {};
 	::gpk::view_const_string							extension					= {};
@@ -43,7 +43,7 @@
 	return 0;
 }
 
-::gpk::error_t									blt::tableFolderName		(::gpk::array_pod<char_t> & foldername, const ::gpk::view_const_string & dbName, const uint32_t blockSize) {
+::gpk::error_t									blt::tableFolderName		(::gpk::array_pod<char_t> & foldername, const ::gpk::view_const_char & dbName, const uint32_t blockSize) {
 	gpk_necall(foldername.append(dbName), "%s", "Out of memory?");
 	char												temp[128]					= {};
 	sprintf_s(temp, ".%u.db", blockSize);
@@ -51,13 +51,29 @@
 	return 0;
 }
 
-::gpk::error_t									blt::tableFileName			(::gpk::array_pod<char_t> & filename, const ::blt::DATABASE_HOST & hostType, bool bEncrypted, const ::gpk::view_const_string & jsonDBKey) {
+::gpk::error_t									blt::tableFileName			(::gpk::array_pod<char_t> & filename, const ::blt::DATABASE_HOST & hostType, bool bEncrypted, const ::gpk::view_const_char & jsonDBKey) {
 	gpk_necall(filename.append(jsonDBKey), "%s", "Out of memory?");
 	char												temp[64]					= {};
 	::gpk::view_const_string							extension					= {};
 	::dbFileExtension(hostType, bEncrypted, extension);
 	sprintf_s(temp, ".%s", extension.begin());
 	gpk_necall(filename.append(::gpk::view_const_string{temp}), "%s", "Out of memory?");
+	return 0;
+}
+
+::gpk::error_t									blt::tableFolderInit		(::gpk::array_pod<char_t> & finalFolderName, const ::gpk::view_const_char & dbPath, const ::gpk::view_const_char & dbName, const uint32_t blockSize) {
+	finalFolderName										= dbPath;
+	if(finalFolderName.size()) {
+		if(finalFolderName[finalFolderName.size()-1] != '/' && finalFolderName[finalFolderName.size()-1] != '\\')
+			gpk_necall(finalFolderName.push_back('/'), "%s", "Out of memory?");
+		gpk_necall(::blt::tableFolderName(finalFolderName, dbName, blockSize), "%s", "??");
+		gpk_necall(::gpk::pathCreate({finalFolderName.begin(), finalFolderName.size()}), "Failed to create database folder: %s.", finalFolderName.begin());
+		info_printf("Output folder: %s.", finalFolderName.begin());
+		if(finalFolderName[finalFolderName.size()-1] != '/' && finalFolderName[finalFolderName.size()-1] != '\\')
+			gpk_necall(finalFolderName.push_back('/'), "%s", "Out of memory?");
+	}
+	else if(0 == finalFolderName.size())
+		gpk_necall(finalFolderName.append(::gpk::view_const_string{"./"}), "%s", "Out of memory?");
 	return 0;
 }
 

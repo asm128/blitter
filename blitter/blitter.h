@@ -15,9 +15,10 @@ namespace blt
 	GDEFINE_ENUM_VALUE(DATABASE_HOST, DEFLATE			, 2);
 	GDEFINE_ENUM_VALUE(DATABASE_HOST, REMOTE_DEFLATE	, 3);
 
-	::gpk::error_t												tableFolderName						(::gpk::array_pod<char_t> & foldername	, const ::gpk::view_const_string & dbName, const uint32_t block);
-	::gpk::error_t												blockFileName						(::gpk::array_pod<char_t> & filename	, const ::gpk::view_const_string & dbName, bool bEncrypted, const ::blt::DATABASE_HOST hostType, const uint32_t block);
-	::gpk::error_t												tableFileName						(::gpk::array_pod<char_t> & filename, const ::blt::DATABASE_HOST & hostType, bool bEncrypted, const ::gpk::view_const_string & jsonDBKey);
+	::gpk::error_t												tableFolderName						(::gpk::array_pod<char_t> & foldername	, const ::gpk::view_const_char & dbName, const uint32_t block);
+	::gpk::error_t												blockFileName						(::gpk::array_pod<char_t> & filename	, const ::gpk::view_const_char & dbName, bool bEncrypted, const ::blt::DATABASE_HOST hostType, const uint32_t block);
+	::gpk::error_t												tableFileName						(::gpk::array_pod<char_t> & filename	, const ::blt::DATABASE_HOST & hostType, bool bEncrypted, const ::gpk::view_const_char & jsonDBKey);
+	::gpk::error_t												tableFolderInit						(::gpk::array_pod<char_t> & finalFolderName, const ::gpk::view_const_char & dbPath, const ::gpk::view_const_char & dbName, const uint32_t blockSize);
 
 	static constexpr	const uint64_t							MAX_TABLE_RECORD_COUNT				= 0x7FFFFFFFFFFFFFFF;
 	struct SBlitterDB {
@@ -73,6 +74,7 @@ namespace blt
 	::gpk::error_t												configDatabases						(::gpk::array_obj<::blt::TNamedBlitterDB> & databases, const ::gpk::SJSONReader & configReader, const int32_t indexConfigNode, const ::gpk::view_array<const ::gpk::view_const_string> & databasesToLoad, const ::gpk::view_const_string & folder);
 
 	::gpk::error_t												loadConfig							(::blt::SBlitter & appState, const ::gpk::view_const_string & jsonFileName);
+	::gpk::error_t												blitterFlush						(::blt::SBlitter & appState);
 
 	::gpk::error_t												requestProcess						(::gpk::SExpressionReader & expressionReader, ::blt::SBlitterQuery & query, const ::gpk::SHTTPAPIRequest & request, ::gpk::array_obj<::gpk::view_const_char> & expansionKeyStorage);
 	static constexpr const uint32_t								CRC_SEED							= 18973;
