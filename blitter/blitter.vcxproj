@@ -110,7 +110,7 @@
       <TreatLibWarningAsErrors>true</TreatLibWarningAsErrors>
     </Lib>
     <PostBuildEvent>
-      <Command>$(ProjectDir)refresh.bat</Command>
+      <Command>"$(ProjectDir)refresh.bat"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -132,7 +132,7 @@
       <TreatLibWarningAsErrors>true</TreatLibWarningAsErrors>
     </Lib>
     <PostBuildEvent>
-      <Command>$(ProjectDir)refresh.bat</Command>
+      <Command>"$(ProjectDir)refresh.bat"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -158,7 +158,7 @@
       <TreatLibWarningAsErrors>true</TreatLibWarningAsErrors>
     </Lib>
     <PostBuildEvent>
-      <Command>$(ProjectDir)refresh.bat</Command>
+      <Command>"$(ProjectDir)refresh.bat"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -184,7 +184,7 @@
       <TreatLibWarningAsErrors>true</TreatLibWarningAsErrors>
     </Lib>
     <PostBuildEvent>
-      <Command>$(ProjectDir)refresh.bat</Command>
+      <Command>"$(ProjectDir)refresh.bat"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
