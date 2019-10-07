@@ -21,13 +21,15 @@ namespace blt
 	::gpk::error_t												tableFolderInit						(::gpk::array_pod<char_t> & finalFolderName, const ::gpk::view_const_char & dbPath, const ::gpk::view_const_char & dbName, const uint32_t blockSize);
 
 	static constexpr	const uint64_t							MAX_TABLE_RECORD_COUNT				= 0x7FFFFFFFFFFFFFFF;
+	static constexpr	const uint64_t							MAX_TABLE_BLOCKS_IN_MEMORY			= 64;
 	struct SBlitterDB {
 		::gpk::array_obj<::gpk::view_const_char>					Bindings							= {};
 		uint32_t													BlockSize							= 0;
 		::gpk::array_obj<uint64_t>									Offsets								= {};
 		::gpk::array_obj<::gpk::ptr_obj<::gpk::SJSONFile>>			Blocks								= {};
 		::gpk::array_pod<uint32_t>									BlockDirty							= {};
-		::gpk::array_obj<uint32_t>									BlockIndices						= {};
+		::gpk::array_pod<uint32_t>									BlockIndices						= {};
+		::gpk::array_pod<uint64_t>									BlockTimes							= {};
 		::gpk::view_const_char										EncryptionKey						= {};
 		::blt::DATABASE_HOST										HostType							= ::blt::DATABASE_HOST_LOCAL;
 		::gpk::array_obj<uint32_t>									BlocksOnDisk						= {};
@@ -60,6 +62,12 @@ namespace blt
 		, ::gpk::array_pod<char_t>					& output
 		);
 
+	struct SWriteCache {
+		::gpk::SLoadCache											& LoadCache						;
+		::gpk::array_pod<char_t>									PartFileName					;
+		::gpk::array_pod<char_t>									PathToWriteTo					;
+	};
+
 	struct SBlitter {
 		::gpk::array_obj<::blt::TNamedBlitterDB>					Databases							= {};
 		::blt::SBlitterQuery										Query								= {};
@@ -74,7 +82,10 @@ namespace blt
 	::gpk::error_t												tableFileLoad						(::gpk::SLoadCache & loadCache, ::blt::TNamedBlitterDB & jsonDB, const ::gpk::view_const_char & folder);
 	::gpk::error_t												configDatabases						(::gpk::array_obj<::blt::TNamedBlitterDB> & databases, const ::gpk::SJSONReader & configReader, const int32_t indexConfigNode, const ::gpk::view_array<const ::gpk::view_const_string> & databasesToLoad, const ::gpk::view_const_string & folder);
 
+	::gpk::error_t												blockWrite							(::blt::SWriteCache & writeCache, const ::gpk::view_const_char & dbFolderName, const ::gpk::view_const_char & dbName, const ::gpk::view_const_char & encryptionKey, ::blt::DATABASE_HOST hostType, const ::gpk::view_const_byte & partBytes, uint32_t iPart);
+
 	::gpk::error_t												loadConfig							(::blt::SBlitter & appState, const ::gpk::view_const_string & jsonFileName);
+
 	::gpk::error_t												blitterFlush						(::blt::SBlitter & appState);
 
 	::gpk::error_t												requestProcess						(::gpk::SExpressionReader & expressionReader, ::blt::SBlitterQuery & query, const ::gpk::SHTTPAPIRequest & request, ::gpk::array_obj<::gpk::view_const_char> & expansionKeyStorage);

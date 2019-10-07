@@ -28,6 +28,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		blitter\blitter.json = blitter\blitter.json
 		blitter\refresh.bat = blitter\refresh.bat
 	EndProjectSection
+	ProjectSection(FolderGlobals) = preProject
+		C_5_4asm128_3test_4blitter_4blitter_4blitter_1json__JsonSchema =  
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "reason", "reason\reason.vcxproj", "{5358C214-1784-4D7E-AC12-76CD0B9F548C}"
 	ProjectSection(ProjectDependencies) = postProject

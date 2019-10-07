@@ -3,16 +3,11 @@
 #include "gpk_parse.h"
 #include "gpk_find.h"
 #include "gpk_view_bit.h"
+#include "gpk_chrono.h"
 
-struct SWriteCache {
-	::gpk::SLoadCache						& LoadCache						;
-	::gpk::array_pod<char_t>				PartFileName					;
-	::gpk::array_pod<char_t>				PathToWriteTo					;
-};
-
-::gpk::error_t									blockWrite						(::SWriteCache & writeCache, const ::gpk::view_const_char & dbFolderName, const ::gpk::view_const_char & dbName, const ::gpk::view_const_char & encryptionKey, ::blt::DATABASE_HOST hostType, const ::gpk::view_const_byte & partBytes, uint32_t iPart)		{
-	::gpk::array_pod<char_t>							partFileName					= writeCache.PartFileName;
-	::gpk::array_pod<char_t>							pathToWriteTo					= writeCache.PathToWriteTo;
+::gpk::error_t									blt::blockWrite							(::blt::SWriteCache & writeCache, const ::gpk::view_const_char & dbFolderName, const ::gpk::view_const_char & dbName, const ::gpk::view_const_char & encryptionKey, ::blt::DATABASE_HOST hostType, const ::gpk::view_const_byte & partBytes, uint32_t iPart)		{
+	::gpk::array_pod<char_t>							partFileName							= writeCache.PartFileName;
+	::gpk::array_pod<char_t>							pathToWriteTo							= writeCache.PathToWriteTo;
 	::gpk::clear(partFileName, pathToWriteTo, writeCache.LoadCache.Deflated, writeCache.LoadCache.Encrypted);
 	pathToWriteTo									= dbFolderName;
 	if(pathToWriteTo.size() && pathToWriteTo[pathToWriteTo.size() - 1] != '/')
@@ -23,7 +18,7 @@ struct SWriteCache {
 }
 
 ::gpk::error_t									blt::blitterFlush						(::blt::SBlitter & appState) {
-	::SWriteCache										cache									= {appState.LoadCache};
+	::blt::SWriteCache									cache									= {appState.LoadCache};
 	for(uint32_t iDatabase = 0; iDatabase < appState.Databases.size(); ++iDatabase) {
 		::blt::TNamedBlitterDB								& db									= appState.Databases[iDatabase];
 		::gpk::view_bit<const uint32_t>						dirty									= {db.Val.BlockDirty.begin(), db.Val.Blocks.size()};
@@ -31,7 +26,7 @@ struct SWriteCache {
 			if(dirty[iBlock]) {
 				::gpk::array_pod<char_t>						folderName								= {};
 				gpk_necall(::blt::tableFolderInit(folderName, appState.Folder, db.Key, db.Val.BlockSize), "Failed to initialize folder for table '%s'. Not enough permissions?", ::gpk::toString(db.Key).begin());
-				gpk_necall(::blockWrite(cache, folderName, db.Key, db.Val.EncryptionKey, db.Val.HostType, db.Val.Blocks[iBlock]->Bytes, db.Val.BlockIndices[iBlock]), "%s", "Unknown error!");
+				gpk_necall(::blt::blockWrite(cache, folderName, db.Key, db.Val.EncryptionKey, db.Val.HostType, db.Val.Blocks[iBlock]->Bytes, db.Val.BlockIndices[iBlock]), "%s", "Unknown error!");
 			}
 		}
 		memset(db.Val.BlockDirty.begin(), 0, sizeof(uint32_t) * db.Val.BlockDirty.size());
@@ -255,23 +250,109 @@ static	::gpk::error_t							queryGetRange
 
 static	::gpk::error_t							pushNewBlock
 	( ::gpk::SLoadCache								& loadCache
-	, ::blt::SBlitterDB								& database
+	, ::blt::TNamedBlitterDB						& database
+	, const ::gpk::view_const_char					& folder
 	, const ::gpk::SJSONReader						& recordToAdd
 	, const int32_t									idMaxBlockOnDisk
 	) {
-	::gpk::ptr_obj<::gpk::SJSONFile>					newBlock;
-	newBlock->Bytes.push_back('[');
+	if(database.Val.Blocks.size() < ::blt::MAX_TABLE_BLOCKS_IN_MEMORY) {
+		::gpk::ptr_obj<::gpk::SJSONFile>					newBlock;
+		newBlock->Bytes.push_back('[');
+		loadCache.Deflated.clear();
+		ree_if(0 == recordToAdd.Tree.size(), "Invalid json record! %s.", "Forgot to build the reader from the record?")
+		gpk_necall(::gpk::jsonWrite(recordToAdd[0], recordToAdd.View, loadCache.Deflated), "Failed to write json record! %s", "Invalid format?");
+		newBlock->Bytes.append(loadCache.Deflated);
+		newBlock->Bytes.push_back(']');
+		gpk_necall(::gpk::jsonParse(newBlock->Reader, newBlock->Bytes), "%s", "Failed to parse new block.");
+		const uint32_t										indexBlock			= database.Val.Blocks.push_back(newBlock);
+		const uint32_t										idNewBlock			= idMaxBlockOnDisk + 1;
+		database.Val.BlockIndices.push_back(idNewBlock);
+		database.Val.BlocksOnDisk.push_back(idNewBlock);
+		database.Val.Offsets.push_back(idNewBlock * database.Val.BlockSize);
+		database.Val.BlockDirty.resize((database.Val.Blocks.size() / 32) + 1, 0);
+		database.Val.BlockTimes.push_back(::gpk::timeCurrentInUs());
+		::gpk::view_bit<uint32_t>{database.Val.BlockDirty.begin(), database.Val.Blocks.size()}[indexBlock]	= true;
+	}
+	else {
+		const uint64_t										* time						= 0;
+		const uint32_t										idxBlock					= ::gpk::min(::gpk::view_array<const uint64_t>{database.Val.BlockTimes}, &time);
+		::gpk::view_bit<uint32_t>							dirty						= {database.Val.BlockDirty.begin(), database.Val.Blocks.size()};
+		if(dirty[idxBlock]) {
+			::gpk::array_pod<char_t>						folderName						= {};
+			::blt::SWriteCache								writeCache						= {loadCache};
+			gpk_necall(::blt::tableFolderInit(folderName, folder, database.Key, database.Val.BlockSize), "Failed to initialize folder for table '%s'. Not enough permissions?", ::gpk::toString(database.Key).begin());
+			gpk_necall(::blt::blockWrite(writeCache, folderName, database.Key, database.Val.EncryptionKey, database.Val.HostType, database.Val.Blocks[idxBlock]->Bytes, database.Val.BlockIndices[idxBlock]), "%s", "Unknown error!");
+			dirty[idxBlock]									= false;
+		}
+		gpk_necall(idxBlock, "%s", "Out of memory?");
+		::gpk::ptr_obj<::gpk::SJSONFile>					& pBlock					= database.Val.Blocks[idxBlock];
+		::gpk::SJSONFile									& newBlock					= *pBlock;
+		newBlock.Bytes.clear();
+		newBlock.Reader.Reset();
+		newBlock.Bytes.push_back('[');
+		loadCache.Deflated.clear();
+		ree_if(0 == recordToAdd.Tree.size(), "Invalid json record! %s.", "Forgot to build the reader from the record?")
+		gpk_necall(::gpk::jsonWrite(recordToAdd[0], recordToAdd.View, loadCache.Deflated), "Failed to write json record! %s", "Invalid format?");
+		newBlock.Bytes.append(loadCache.Deflated);
+		newBlock.Bytes.push_back(']');
+		gpk_necall(::gpk::jsonParse(newBlock.Reader, newBlock.Bytes), "%s", "Failed to parse new block.");
+		const uint32_t										idNewBlock			= idMaxBlockOnDisk + 1;
+		database.Val.BlockIndices	[idxBlock]				= idNewBlock;
+		database.Val.BlocksOnDisk.push_back(idNewBlock);
+		database.Val.Offsets		[idxBlock]				= idNewBlock * database.Val.BlockSize;
+		database.Val.BlockTimes		[idxBlock]				= ::gpk::timeCurrentInUs();
+		::gpk::view_bit<uint32_t>{database.Val.BlockDirty.begin(), database.Val.Blocks.size()}[idxBlock]	= true;
+	}
+	return 0;
+}
+
+static	::gpk::error_t							appendRecord
+	( ::gpk::SLoadCache								& loadCache
+	, ::blt::SBlitterDB								& database
+	, const uint32_t								indexBlock
+	, const ::gpk::SJSONReader						& recordToAdd
+	) {
 	loadCache.Deflated.clear();
-	ree_if(0 == recordToAdd.Tree.size(), "Invalid json record! %s.", "Forgot to build the reader from the record?")
-	gpk_necall(::gpk::jsonWrite(recordToAdd[0], recordToAdd.View, loadCache.Deflated), "Failed to write json record! %s", "Invalid format?");
-	newBlock->Bytes.append(loadCache.Deflated);
-	newBlock->Bytes.push_back(']');
-	gpk_necall(::gpk::jsonParse(newBlock->Reader, newBlock->Bytes), "%s", "Failed to parse new block.");
-	const uint32_t										indexBlock			= database.Blocks.push_back(newBlock);
-	const uint32_t										idNewBlock			= idMaxBlockOnDisk + 1;
-	database.BlockIndices.push_back(idNewBlock);
-	database.BlocksOnDisk.push_back(idNewBlock);
-	database.Offsets.push_back(idNewBlock * database.BlockSize);
+	loadCache.Deflated.push_back(',');
+	gpk_necall(::gpk::jsonWrite(recordToAdd.Tree[0], recordToAdd.View, loadCache.Deflated), "Failed to write json record! %s", "Invalid format?");
+	::gpk::SJSONFile									& block				= *database.Blocks[indexBlock];
+	const uint32_t										insertPos			= block.Bytes.size() - 1;
+	const uint32_t										indexOfToken		= block.Reader.Token.size();
+	gpk_necall(block.Bytes.insert(insertPos, loadCache.Deflated), "Failed to append record! %s", "Out of memory?");
+	::gpk::SJSONReaderState								& stateReader										= block.Reader.StateRead;
+	block.Reader.Token[0].Span.End					= block.Reader.Token[0].Span.Begin;
+	stateReader.Escaping							= false;
+	stateReader.ExpectingSeparator					= true;
+	stateReader.InsideString						= false;
+	stateReader.NestLevel							= 1;
+	stateReader.IndexCurrentElement					= 0;
+	stateReader.CurrentElement						= &block.Reader.Token[stateReader.IndexCurrentElement];
+	stateReader.DoneReading							= false;
+	for(stateReader.IndexCurrentChar = insertPos; stateReader.IndexCurrentChar < (int32_t)block.Bytes.size(); ++stateReader.IndexCurrentChar) {
+		gpk_necall(::gpk::jsonParseStep(block.Reader, block.Bytes), "%s", "Parse step failed.");
+		bi_if(stateReader.DoneReading, "%i json characters read.", stateReader.IndexCurrentChar + 1);
+	}
+	ree_if(stateReader.NestLevel, "Nest level: %i (Needs to be zero).", stateReader.NestLevel);
+	block.Reader.View.resize(block.Reader.Token.size());
+	for(uint32_t iView = 0; iView < block.Reader.Token.size(); ++iView) {
+		::gpk::SJSONToken												& currentElement									= block.Reader.Token[iView];
+		block.Reader.View[iView]									= ::gpk::view_const_char{&block.Bytes[currentElement.Span.Begin], currentElement.Span.End - currentElement.Span.Begin};
+	}
+	block.Reader.Tree.resize(block.Reader.Token.size());
+	for(uint32_t iToken = 0; iToken < block.Reader.Token.size(); ++iToken) {
+		::gpk::ptr_obj<::gpk::SJSONNode>				& pcurrentNode				= block.Reader.Tree[iToken];
+		pcurrentNode->Token							= &block.Reader.Token[iToken];
+		::gpk::SJSONNode								& currentNode				= *pcurrentNode;
+		currentNode.ObjectIndex						= iToken;
+		if(-1 != currentNode.Token->ParentIndex)
+			currentNode.Parent							= block.Reader.Tree[currentNode.Token->ParentIndex];
+	}
+	//const int32_t										idxRecordNode			= ::gpk::jsonArrayValueGet(block.Reader, 0, ::gpk::jsonArraySize(block.Reader, 0) - 1);
+	::gpk::ptr_obj<::gpk::SJSONNode>					& recordNode			= block.Reader.Tree[indexOfToken];
+	block.Reader.Tree[0]->Children.push_back(recordNode);
+	//::gpk::jsonTreeRebuild(block.Reader.Token, block.Reader.Tree);
+	//block.Reader.Reset();
+	//gpk_necall(::gpk::jsonParse(block.Reader, block.Bytes), "%s", "Failed to read JSON!");
 	database.BlockDirty.resize((database.Blocks.size() / 32) + 1, 0);
 	::gpk::view_bit<uint32_t>{database.BlockDirty.begin(), database.Blocks.size()}[indexBlock]	= true;
 	return 0;
@@ -300,7 +381,7 @@ static	::gpk::error_t							pushNewBlock
 			if(query.Database != database.Key)
 				continue;
 			if(0 == database.Val.BlocksOnDisk.size())
-				return ::pushNewBlock(loadCache, database.Val, query.RecordReader, -1);
+				return ::pushNewBlock(loadCache, database, folder, query.RecordReader, -1);
 			else {
 				const uint32_t										idBlock				= ::gpk::max(::gpk::view_const_uint32{database.Val.BlocksOnDisk});
 				uint32_t											indexRecord			= (uint32_t)-1;
@@ -309,19 +390,10 @@ static	::gpk::error_t							pushNewBlock
 				::gpk::SJSONFile									& block				= *database.Val.Blocks[indexBlock];
 				const ::gpk::SJSONNode								& tableNode			= *block.Reader[0];
 				if(database.Val.BlockSize && tableNode.Children.size() >= database.Val.BlockSize)
-					return ::pushNewBlock(loadCache, database.Val, query.RecordReader, idBlock);
-				else {
-					loadCache.Deflated.clear();
-					loadCache.Deflated.push_back(',');
-					gpk_necall(::gpk::jsonWrite(query.RecordReader.Tree[0], query.RecordReader.View, loadCache.Deflated), "Failed to write json record! %s", "Invalid format?");
-					gpk_necall(block.Bytes.insert(block.Bytes.size() - 1, loadCache.Deflated), "Failed to append record! %s", "Out of memory?");
-					block.Reader.Reset();
-					gpk_necall(::gpk::jsonParse(block.Reader, block.Bytes), "%s", "Failed to read JSON!");
-					database.Val.BlockDirty.resize((database.Val.Blocks.size() / 32) + 1, 0);
-					::gpk::view_bit<uint32_t>{database.Val.BlockDirty.begin(), database.Val.Blocks.size()}[indexBlock]	= true;
-				}
+					return ::pushNewBlock(loadCache, database, folder, query.RecordReader, idBlock);
+				else
+					return ::appendRecord(loadCache, database.Val, indexBlock, query.RecordReader);
 			}
-			return 0;
 		}
 	}
 	else if(query.Command == ::gpk::view_const_string{"pop_back"}) {

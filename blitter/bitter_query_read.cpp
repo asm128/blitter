@@ -69,9 +69,15 @@
 		{ ::gpk::jsonArrayValueGet(jsonRoot, rangeInfo.RelativeIndices.Min)
 		, ::gpk::jsonArrayValueGet(jsonRoot, rangeInfo.RelativeIndices.Max)
 		};
+	const ::gpk::view_const_char						viewRecordFirst				= readerBlock.View[(((uint32_t)blockNodeIndices.Min) < readerBlock.View.size()) ? blockNodeIndices.Min : 0];
+	const ::gpk::view_const_char						viewRecordLast				= readerBlock.View[blockNodeIndices.Max];
+	const uint32_t										charCount	= (uint32_t)
+		( viewRecordLast.end()
+		- viewRecordFirst.begin()
+		);
 	rangeInfo.OutputRecords							=
-		{ readerBlock.View[(((uint32_t)blockNodeIndices.Min) < readerBlock.View.size()) ? blockNodeIndices.Min : 0].begin()
-		, (uint32_t)(readerBlock.View[blockNodeIndices.Max].end() - readerBlock.View[(((uint32_t)blockNodeIndices.Min) < readerBlock.View.size()) ? blockNodeIndices.Min : 0].begin())
+		{ viewRecordFirst.begin()
+		, charCount
 		};
 	gpk_necall(output_records.push_back(rangeInfo), "%s", "Out of memory?");
 	return 0;
