@@ -182,9 +182,16 @@ static	::gpk::error_t							dbFileLoad					(::gpk::SLoadCache & loadCache, ::blt
 		{	// -- Load database block size
 			sprintf_s(temp, "['%u'].block", iDatabase);
 			int32_t												indexBlockNode				= ::gpk::jsonExpressionResolve(::gpk::view_const_string{temp}, configReader, indexObjectDatabases, jsonResult);
-			gwarn_if(errored(indexBlockNode), "Failed to load config from json! Last contents found: %s.", jsonResult.begin())
+			gwarn_if(errored(indexBlockNode), "Failed to load config from json! Last contents found: %s.", ::gpk::toString(jsonResult).begin())
 			else
 				::gpk::parseIntegerDecimal(jsonResult, &(jsonDB.Val.BlockSize = 0));
+		}
+		{	// -- Load database block size
+			sprintf_s(temp, "['%u'].key", iDatabase);
+			int32_t												indexKeyNode				= ::gpk::jsonExpressionResolve(::gpk::view_const_string{temp}, configReader, indexObjectDatabases, jsonResult);
+			gwarn_if(errored(indexKeyNode), "Failed to load config from json! Last contents found: %s.", ::gpk::toString(jsonResult).begin())
+			else
+				jsonDB.Val.EncryptionKey = jsonResult;
 		}
 		::gpk::array_pod<char_t>							dbfilename					= {};
 		gpk_necall(::blt::tableFileName(dbfilename, jsonDB.Val.HostType, jsonDB.Val.EncryptionKey.size() > 0, jsonDB.Key), "%s", "??");
