@@ -247,14 +247,14 @@ static	::gpk::error_t							queryGetRange
 	return 0;
 }
 
-
-static	::gpk::error_t							pushNewBlock
+static	int64_t									pushNewBlock
 	( ::gpk::SLoadCache								& loadCache
 	, ::blt::TNamedBlitterDB						& database
 	, const ::gpk::view_const_char					& folder
 	, const ::gpk::SJSONReader						& recordToAdd
 	, const int32_t									idMaxBlockOnDisk
 	) {
+	const uint32_t										idNewBlock			= idMaxBlockOnDisk + 1;
 	if(database.Val.Blocks.size() < ::blt::MAX_TABLE_BLOCKS_IN_MEMORY) {
 		::gpk::ptr_obj<::gpk::SJSONFile>					newBlock;
 		newBlock->Bytes.push_back('[');
@@ -265,7 +265,6 @@ static	::gpk::error_t							pushNewBlock
 		newBlock->Bytes.push_back(']');
 		gpk_necall(::gpk::jsonParse(newBlock->Reader, newBlock->Bytes), "%s", "Failed to parse new block.");
 		const uint32_t										indexBlock			= database.Val.Blocks.push_back(newBlock);
-		const uint32_t										idNewBlock			= idMaxBlockOnDisk + 1;
 		database.Val.BlockIndices.push_back(idNewBlock);
 		database.Val.BlocksOnDisk.push_back(idNewBlock);
 		database.Val.Offsets.push_back(idNewBlock * database.Val.BlockSize);
@@ -296,17 +295,16 @@ static	::gpk::error_t							pushNewBlock
 		newBlock.Bytes.append(loadCache.Deflated);
 		newBlock.Bytes.push_back(']');
 		gpk_necall(::gpk::jsonParse(newBlock.Reader, newBlock.Bytes), "%s", "Failed to parse new block.");
-		const uint32_t										idNewBlock			= idMaxBlockOnDisk + 1;
-		database.Val.BlockIndices	[idxBlock]				= idNewBlock;
+		database.Val.BlockIndices	[idxBlock]			= idNewBlock;
 		database.Val.BlocksOnDisk.push_back(idNewBlock);
-		database.Val.Offsets		[idxBlock]				= idNewBlock * database.Val.BlockSize;
-		database.Val.BlockTimes		[idxBlock]				= ::gpk::timeCurrentInUs();
+		database.Val.Offsets		[idxBlock]			= idNewBlock * database.Val.BlockSize;
+		database.Val.BlockTimes		[idxBlock]			= ::gpk::timeCurrentInUs();
 		::gpk::view_bit<uint32_t>{database.Val.BlockDirty.begin(), database.Val.Blocks.size()}[idxBlock]	= true;
 	}
-	return 0;
+	return idNewBlock * (uint64_t)database.Val.BlockSize;
 }
 
-static	::gpk::error_t							appendRecord
+static	int64_t								appendRecord
 	( ::gpk::SLoadCache								& loadCache
 	, ::blt::SBlitterDB								& database
 	, const uint32_t								indexBlock
@@ -339,26 +337,29 @@ static	::gpk::error_t							appendRecord
 		block.Reader.View[iView]									= ::gpk::view_const_char{&block.Bytes[currentElement.Span.Begin], currentElement.Span.End - currentElement.Span.Begin};
 	}
 	block.Reader.Tree.resize(block.Reader.Token.size());
-	for(uint32_t iToken = 0; iToken < block.Reader.Token.size(); ++iToken) {
+	for(uint32_t iToken = indexOfToken; iToken < block.Reader.Token.size(); ++iToken) {
 		::gpk::ptr_obj<::gpk::SJSONNode>				& pcurrentNode				= block.Reader.Tree[iToken];
 		pcurrentNode->Token							= &block.Reader.Token[iToken];
 		::gpk::SJSONNode								& currentNode				= *pcurrentNode;
 		currentNode.ObjectIndex						= iToken;
-		if(-1 != currentNode.Token->ParentIndex)
-			currentNode.Parent							= block.Reader.Tree[currentNode.Token->ParentIndex];
+		//if(-1 != currentNode.Token->ParentIndex)
+		//	currentNode.Parent							= block.Reader.Tree[currentNode.Token->ParentIndex];
 	}
 	//const int32_t										idxRecordNode			= ::gpk::jsonArrayValueGet(block.Reader, 0, ::gpk::jsonArraySize(block.Reader, 0) - 1);
 	::gpk::ptr_obj<::gpk::SJSONNode>					& recordNode			= block.Reader.Tree[indexOfToken];
-	block.Reader.Tree[0]->Children.push_back(recordNode);
+	if(-1 != recordNode->Token->ParentIndex)
+		recordNode->Parent								= block.Reader.Tree[recordNode->Token->ParentIndex];
+	::gpk::SJSONNode									& arrayNode				= *block.Reader.Tree[0];
+	arrayNode.Children.push_back(recordNode);
 	//::gpk::jsonTreeRebuild(block.Reader.Token, block.Reader.Tree);
 	//block.Reader.Reset();
 	//gpk_necall(::gpk::jsonParse(block.Reader, block.Bytes), "%s", "Failed to read JSON!");
 	database.BlockDirty.resize((database.Blocks.size() / 32) + 1, 0);
 	::gpk::view_bit<uint32_t>{database.BlockDirty.begin(), database.Blocks.size()}[indexBlock]	= true;
-	return 0;
+	return database.Offsets[indexBlock] + arrayNode.Children.size() - 1;
 }
 
-::gpk::error_t									blt::queryProcess
+int64_t											blt::queryProcess
 	( ::gpk::SLoadCache								& loadCache
 	, ::gpk::array_obj<::blt::TNamedBlitterDB>		& databases
 	, const ::gpk::SExpressionReader				& expressionReader
@@ -383,7 +384,7 @@ static	::gpk::error_t							appendRecord
 			if(0 == database.Val.BlocksOnDisk.size())
 				return ::pushNewBlock(loadCache, database, folder, query.RecordReader, -1);
 			else {
-				const uint32_t										idBlock				= ::gpk::max(::gpk::view_const_uint32{database.Val.BlocksOnDisk});
+				const uint32_t										idBlock				= ::gpk::rmax(::gpk::view_const_uint32{database.Val.BlocksOnDisk});
 				uint32_t											indexRecord			= (uint32_t)-1;
 				uint32_t											indexBlock			= (uint32_t)-1;
 				gpk_necall(::blt::recordLoad(loadCache, database, idBlock * (uint64_t)database.Val.BlockSize, indexRecord, indexBlock, folder), "Failed to load block for record: %lli.", query.Detail);

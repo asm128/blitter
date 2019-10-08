@@ -19,7 +19,8 @@ int												testQuery						(::blt::SBlitter & app, ::gpk::array_pod<char_t> &
 	app.Query.ExpansionKeys							= app.ExpansionKeyStorage;
 	app.Query.Path									= path;
 	app.Query.Range									= range;
-	gpk_necall(::blt::queryProcess(app.LoadCache, app.Databases, app.ExpressionReader, app.Query, app.Folder, output), "%s", "Execution of query failed.");
+	const int64_t										result							= ::blt::queryProcess(app.LoadCache, app.Databases, app.ExpressionReader, app.Query, app.Folder, output);
+	ree_if(0 > result, "%s", "Execution of query failed.");
 	if(output.size()) {
 		output.push_back(0);
 		if(output.size() < 1024*3)
@@ -45,7 +46,8 @@ int												testPush						(::blt::SBlitter & app, ::gpk::array_pod<char_t> & 
 	app.Query.Record								= record;
 	app.Query.RecordReader.Reset();
 	::gpk::jsonParse(app.Query.RecordReader, record);
-	gpk_necall(::blt::queryProcess(app.LoadCache, app.Databases, app.ExpressionReader, app.Query, app.Folder, output), "%s", "Execution of query failed.");
+	const int64_t										result							= ::blt::queryProcess(app.LoadCache, app.Databases, app.ExpressionReader, app.Query, app.Folder, output);
+	ree_if(0 > result, "%s", "Execution of query failed.");
 	if(output.size()) {
 		output.push_back(0);
 		if(output.size() < 1024*3)
@@ -85,34 +87,85 @@ int												main							()		{
 	//::testQuery(app, output, "get", "company"	, -1	, "", {1	, 10000}, ""							);
 	//::testQuery(app, output, "get", "company"	, 0		, "", {0	, 10000}, ""							);
 	//::testQuery(app, output, "get", "company"	, 3		, "", {1	, 10000}, "owner"						);
-	::gpk::STimer						timerTotal;
-	::gpk::STimer						timerStep;
-	const uint32_t						iterations		= 100000;
-	::gpk::array_pod<double>			times;
-	double								timeTotal		= 0;
-	for(uint32_t i = 0; i < iterations; ++i) {
-		timerStep.Reset();
-		::testPush(app, output, "push_back", "user"			, "1.5");
-	//	//::testQuery(app, output, "get", "user"		, -1	, "", {0, 1000}, ""								);
-		::testPush(app, output, "push_back", "user"			, "{ \"name\" : \"test1\" }");
-	//	//::testQuery(app, output, "get", "user"		, -1	, "", {0, 1000}, ""								);
-		::testPush(app, output, "push_back", "user"			, "{ \"name\" : \"test2\" }");
-	//	//::testQuery(app, output, "get", "user"		, -1	, "", {0, 1000}, ""								);
-		//::testPush(app, output, "push_back", "website"		, "null");
-		//::testPush(app, output, "push_back", "website"		, "{ \"name\" : \"test4\" }");
-		//::testPush(app, output, "push_back", "website"		, "{ \"name\" : \"test5\" }");
-		::testPush(app, output, "push_back", "publisher"	, "false");
-		::testPush(app, output, "push_back", "publisher"			, "{ \"name\" : \"test2\" }");
-		::testPush(app, output, "push_back", "publisher"	, "{ \"name\" : \"test7\" }");
-		::testPush(app, output, "push_back", "publisher"	, "true");
-		::testPush(app, output, "push_back", "company"		, "1");
-		::testPush(app, output, "push_back", "company"		, "{ \"name\" : \"testA\" }");
-		::testPush(app, output, "push_back", "company"		, "{ \"name\" : \"testB\" }");
-		timerStep.Frame();
-		timeTotal											+= timerStep.LastTimeSeconds;
+	::gpk::STimer										timerTotal;
+	::gpk::STimer										timerStep;
+	const uint32_t										iterations						= 1000000;
+	::gpk::array_pod<double>							times;
+	{
+		timerTotal.Reset();
+		double												timeTotal						= 0;
+		for(uint32_t i = 0; i < iterations; ++i) {
+			timerStep.Reset();
+			//::testPush(app, output, "push_back", "company"		, "1");
+			//::testPush(app, output, "push_back", "company"		, "{ \"name\" : \"testA\" }");
+			::testPush(app, output, "push_back", "company"		, "{ \"name\" : \"testB\" }");
+			timerStep.Frame();
+			timeTotal											+= timerStep.LastTimeSeconds;
+		}
+		timerTotal.Frame();
+		always_printf("------ COMPANY - Insert time: %g seconds. Record count: %u. Average: %g seconds.", timeTotal, iterations, timerTotal.LastTimeSeconds / iterations);
 	}
-	timerTotal.Frame();
-	always_printf("------ Insert time: %g seconds. Record count: %u. Average: %g seconds.", timeTotal, iterations, timerTotal.LastTimeSeconds / iterations);
+
+	{
+		timerTotal.Reset();
+		double												timeTotal						= 0;
+		for(uint32_t i = 0; i < iterations; ++i) {
+			timerStep.Reset();
+			//::testPush(app, output, "push_back", "user"			, "1.5");
+		//	//////::testQuery(app, output, "get", "user"		, -1	, "", {0, 1000}, ""								);
+			//::testPush(app, output, "push_back", "user"			, "{ \"name\" : \"test1\" }");
+		//	////::testQuery(app, output, "get", "user"		, -1	, "", {0, 1000}, ""								);
+			::testPush(app, output, "push_back", "user"			, "{ \"name\" : \"test2\" }");
+			timerStep.Frame();
+			timeTotal											+= timerStep.LastTimeSeconds;
+		}
+		timerTotal.Frame();
+		always_printf("------ USER - Insert time: %g seconds. Record count: %u. Average: %g seconds.", timeTotal, iterations, timerTotal.LastTimeSeconds / iterations);
+	}
+
+	{
+		timerTotal.Reset();
+		double												timeTotal						= 0;
+		for(uint32_t i = 0; i < iterations; ++i) {
+			timerStep.Reset();
+			//::testPush(app, output, "push_back", "publisher"	, "false");
+			//::testPush(app, output, "push_back", "publisher"			, "{ \"name\" : \"test2\" }");
+			::testPush(app, output, "push_back", "publisher"	, "{ \"name\" : \"test7\" }");
+			//::testPush(app, output, "push_back", "publisher"	, "true");
+			timerStep.Frame();
+			timeTotal											+= timerStep.LastTimeSeconds;
+		}
+		timerTotal.Frame();
+		always_printf("------ PUBLISHER - Insert time: %g seconds. Record count: %u. Average: %g seconds.", timeTotal, iterations, timerTotal.LastTimeSeconds / iterations);
+	}
+
+	{
+		timerTotal.Reset();
+		double												timeTotal						= 0;
+		for(uint32_t i = 0; i < iterations; ++i) {
+			timerStep.Reset();
+			//::testPush(app, output, "push_back", "user"			, "1.5");
+		//	//////::testQuery(app, output, "get", "user"		, -1	, "", {0, 1000}, ""								);
+			//::testPush(app, output, "push_back", "user"			, "{ \"name\" : \"test1\" }");
+		//	////::testQuery(app, output, "get", "user"		, -1	, "", {0, 1000}, ""								);
+			::testPush(app, output, "push_back", "user"			, "{ \"name\" : \"test2\" }");
+		//	////::testQuery(app, output, "get", "user"		, -1	, "", {0, 1000}, ""								);
+			////::testPush(app, output, "push_back", "website"		, "null");
+			////::testPush(app, output, "push_back", "website"		, "{ \"name\" : \"test4\" }");
+			////::testPush(app, output, "push_back", "website"		, "{ \"name\" : \"test5\" }");
+			//::testPush(app, output, "push_back", "publisher"	, "false");
+			//::testPush(app, output, "push_back", "publisher"			, "{ \"name\" : \"test2\" }");
+			::testPush(app, output, "push_back", "publisher"	, "{ \"name\" : \"test7\" }");
+			//::testPush(app, output, "push_back", "publisher"	, "true");
+			//::testPush(app, output, "push_back", "company"		, "1");
+			//::testPush(app, output, "push_back", "company"		, "{ \"name\" : \"testA\" }");
+			::testPush(app, output, "push_back", "company"		, "{ \"name\" : \"testB\" }");
+			timerStep.Frame();
+			timeTotal											+= timerStep.LastTimeSeconds;
+		}
+		timerTotal.Frame();
+		always_printf("------ Insert time: %g seconds. Record count: %u. Average: %g seconds.", timeTotal, iterations * 3, timerTotal.LastTimeSeconds / (iterations * 3));
+	}
 
 	//info_printf("Test ------------------------------------------");
  	//{
@@ -122,7 +175,7 @@ int												main							()		{
 		//::testQuery(app, output, "get", "website"	, -1	, "", {0, ::blt::MAX_TABLE_RECORD_COUNT}, "publisher"				);
 		//::testQuery(app, output, "get", "website"	, 0		, "", {0, ::blt::MAX_TABLE_RECORD_COUNT}, "publisher.company"		);
 		//::testQuery(app, output, "get", "website"	, 3		, "", {0, ::blt::MAX_TABLE_RECORD_COUNT}, "publisher.company.owner"	);
-		::testQuery(app, output, "get", "publisher"	, -1	, "", {0, ::blt::MAX_TABLE_RECORD_COUNT}, ""						);
+		//::testQuery(app, output, "get", "publisher"	, -1	, "", {0, ::blt::MAX_TABLE_RECORD_COUNT}, ""						);
 		//::testQuery(app, output, "get", "publisher"	, 0		, "", {0, ::blt::MAX_TABLE_RECORD_COUNT}, "company"					);
 		//::testQuery(app, output, "get", "publisher"	, 3		, "", {0, ::blt::MAX_TABLE_RECORD_COUNT}, "company.owner"			);
 		//::testQuery(app, output, "get", "company"	, -1	, "", {0, ::blt::MAX_TABLE_RECORD_COUNT}, ""						);
