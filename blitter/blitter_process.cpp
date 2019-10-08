@@ -267,6 +267,7 @@ static	int64_t									pushNewBlock
 		const uint32_t										indexBlock			= database.Val.Blocks.push_back(newBlock);
 		database.Val.BlockIndices.push_back(idNewBlock);
 		database.Val.BlocksOnDisk.push_back(idNewBlock);
+		database.Val.MaxBlockOnDisk						= ::gpk::max(database.Val.MaxBlockOnDisk, (int32_t)idNewBlock);
 		database.Val.Offsets.push_back(idNewBlock * database.Val.BlockSize);
 		database.Val.BlockDirty.resize((database.Val.Blocks.size() / 32) + 1, 0);
 		database.Val.BlockTimes.push_back(::gpk::timeCurrentInUs());
@@ -299,6 +300,7 @@ static	int64_t									pushNewBlock
 		database.Val.BlocksOnDisk.push_back(idNewBlock);
 		database.Val.Offsets		[idxBlock]			= idNewBlock * database.Val.BlockSize;
 		database.Val.BlockTimes		[idxBlock]			= ::gpk::timeCurrentInUs();
+		database.Val.MaxBlockOnDisk						= ::gpk::max(database.Val.MaxBlockOnDisk, (int32_t)idNewBlock);
 		::gpk::view_bit<uint32_t>{database.Val.BlockDirty.begin(), database.Val.Blocks.size()}[idxBlock]	= true;
 	}
 	return idNewBlock * (uint64_t)database.Val.BlockSize;
@@ -384,7 +386,7 @@ int64_t											blt::queryProcess
 			if(0 == database.Val.BlocksOnDisk.size())
 				return ::pushNewBlock(loadCache, database, folder, query.RecordReader, -1);
 			else {
-				const uint32_t										idBlock				= ::gpk::rmax(::gpk::view_const_uint32{database.Val.BlocksOnDisk});
+				const uint32_t										idBlock				= database.Val.MaxBlockOnDisk;//::gpk::max(::gpk::view_const_uint32{database.Val.BlocksOnDisk});
 				uint32_t											indexRecord			= (uint32_t)-1;
 				uint32_t											indexBlock			= (uint32_t)-1;
 				gpk_necall(::blt::recordLoad(loadCache, database, idBlock * (uint64_t)database.Val.BlockSize, indexRecord, indexBlock, folder), "Failed to load block for record: %lli.", query.Detail);

@@ -139,12 +139,13 @@ static	::gpk::error_t							dbFileLoad					(::gpk::SLoadCache & loadCache, ::blt
 	info_printf("Loading database file: %s.", ::gpk::toString(fileName).begin());
 	gpk_necall(::dbFileLoad(loadCache, jsonDB, folder, fileName, 0), "Failed to load database from file: %s.", ::gpk::toString(fileName).begin());
 	jsonDB.Val.BlocksOnDisk							= {};
+	jsonDB.Val.MaxBlockOnDisk						= 0;
 	return jsonDB.Val.BlocksOnDisk.push_back(0);
 }
 
 ::gpk::error_t									blt::blockFileLoad			(::gpk::SLoadCache & loadCache, ::blt::TNamedBlitterDB & jsonDB, const ::gpk::view_const_char & folder, uint32_t block)	{
 	{
-		::gpk::error_t										blockIndex					= ::gpk::find(block, {jsonDB.Val.BlockIndices.begin(), jsonDB.Val.BlockIndices.size()});
+		::gpk::error_t										blockIndex					= ::gpk::rfind(block, {jsonDB.Val.BlockIndices.begin(), jsonDB.Val.BlockIndices.size()});
 		if(0 <= blockIndex) {
 			jsonDB.Val.BlockTimes[blockIndex]				= ::gpk::timeCurrentInUs();
 			info_printf("Block already loaded for database '%s': %u.", ::gpk::toString(jsonDB.Key).begin(), block);
@@ -248,6 +249,7 @@ static	::gpk::error_t							dbFileLoad					(::gpk::SLoadCache & loadCache, ::blt
 				for(uint32_t i = 0; i < jsonDB.Val.BlocksOnDisk.size(); ++i)
 					if(((uint32_t)blockIndex) < jsonDB.Val.BlocksOnDisk[i]) {
 						gpk_necall(jsonDB.Val.BlocksOnDisk.insert(i, (uint32_t)blockIndex), "%s.", "Out of memory?");
+						jsonDB.Val.MaxBlockOnDisk						= ::gpk::max(jsonDB.Val.MaxBlockOnDisk, (int32_t)blockIndex);
 						bAdd											= false;
 						break;
 					}

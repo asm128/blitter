@@ -33,6 +33,7 @@ namespace blt
 		::gpk::view_const_char										EncryptionKey						= {};
 		::blt::DATABASE_HOST										HostType							= ::blt::DATABASE_HOST_LOCAL;
 		::gpk::array_obj<uint32_t>									BlocksOnDisk						= {};
+		int32_t														MaxBlockOnDisk						= -1;
 	};
 
 	struct SBlitterQuery {
