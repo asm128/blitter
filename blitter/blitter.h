@@ -21,7 +21,7 @@ namespace blt
 	::gpk::error_t												tableFolderInit						(::gpk::array_pod<char_t> & finalFolderName, const ::gpk::view_const_char & dbPath, const ::gpk::view_const_char & dbName, const uint32_t blockSize);
 
 	static constexpr	const uint64_t							MAX_TABLE_RECORD_COUNT				= 0x7FFFFFFFFFFFFFFF;
-	static constexpr	const uint64_t							MAX_TABLE_BLOCKS_IN_MEMORY			= 1024;
+	static constexpr	const uint64_t							MAX_TABLE_BLOCKS_IN_MEMORY			= 256;
 	struct SBlitterDB {
 		::gpk::array_obj<::gpk::view_const_char>					Bindings							= {};
 		uint32_t													BlockSize							= 0;

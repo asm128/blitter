@@ -253,8 +253,10 @@ static	::gpk::error_t							dbFileLoad					(::gpk::SLoadCache & loadCache, ::blt
 						bAdd											= false;
 						break;
 					}
-				if(bAdd)
+				if(bAdd) {
+					jsonDB.Val.MaxBlockOnDisk						= ::gpk::max(jsonDB.Val.MaxBlockOnDisk, (int32_t)blockIndex);
 					gpk_necall(jsonDB.Val.BlocksOnDisk.push_back((uint32_t)blockIndex), "Failed to load database: %s. Out of memory?", dbfilename.begin());
+				}
 			}
 			for(uint32_t i = 0; i < jsonDB.Val.BlocksOnDisk.size(); ++i)
 				info_printf("Database block found for '%s': %u.", dbfilename.begin(), jsonDB.Val.BlocksOnDisk[i]);

@@ -17,19 +17,24 @@
 	return ::gpk::fileFromMemorySecure(writeCache.LoadCache, partBytes, pathToWriteTo, encryptionKey, gbit_true(hostType, ::blt::DATABASE_HOST_DEFLATE));
 }
 
+::gpk::error_t									databaseFlush								(::blt::SWriteCache & cache, ::blt::TNamedBlitterDB & db, ::gpk::view_const_char folder) {
+	::gpk::view_bit<const uint32_t>						dirty									= {db.Val.BlockDirty.begin(), db.Val.Blocks.size()};
+	for(uint32_t iBlock = 0; iBlock < db.Val.Blocks.size(); ++iBlock) {
+		if(dirty[iBlock]) {
+			::gpk::array_pod<char_t>						folderName								= {};
+			gpk_necall(::blt::tableFolderInit(folderName, folder, db.Key, db.Val.BlockSize), "Failed to initialize folder for table '%s'. Not enough permissions?", ::gpk::toString(db.Key).begin());
+			gpk_necall(::blt::blockWrite(cache, folderName, db.Key, db.Val.EncryptionKey, db.Val.HostType, db.Val.Blocks[iBlock]->Bytes, db.Val.BlockIndices[iBlock]), "%s", "Unknown error!");
+		}
+	}
+	memset(db.Val.BlockDirty.begin(), 0, sizeof(uint32_t) * db.Val.BlockDirty.size());
+	return 0;
+}
+
 ::gpk::error_t									blt::blitterFlush						(::blt::SBlitter & appState) {
 	::blt::SWriteCache									cache									= {appState.LoadCache};
 	for(uint32_t iDatabase = 0; iDatabase < appState.Databases.size(); ++iDatabase) {
 		::blt::TNamedBlitterDB								& db									= appState.Databases[iDatabase];
-		::gpk::view_bit<const uint32_t>						dirty									= {db.Val.BlockDirty.begin(), db.Val.Blocks.size()};
-		for(uint32_t iBlock = 0; iBlock < db.Val.Blocks.size(); ++iBlock) {
-			if(dirty[iBlock]) {
-				::gpk::array_pod<char_t>						folderName								= {};
-				gpk_necall(::blt::tableFolderInit(folderName, appState.Folder, db.Key, db.Val.BlockSize), "Failed to initialize folder for table '%s'. Not enough permissions?", ::gpk::toString(db.Key).begin());
-				gpk_necall(::blt::blockWrite(cache, folderName, db.Key, db.Val.EncryptionKey, db.Val.HostType, db.Val.Blocks[iBlock]->Bytes, db.Val.BlockIndices[iBlock]), "%s", "Unknown error!");
-			}
-		}
-		memset(db.Val.BlockDirty.begin(), 0, sizeof(uint32_t) * db.Val.BlockDirty.size());
+		gpk_necall(::databaseFlush(cache, db, appState.Folder), "Failed to flush database '%s'.", ::gpk::toString(db.Key).begin());
 	}
 	return 0;
 }
@@ -278,11 +283,8 @@ static	int64_t									pushNewBlock
 		const uint32_t										idxBlock					= ::gpk::min(::gpk::view_array<const uint64_t>{database.Val.BlockTimes}, &time);
 		::gpk::view_bit<uint32_t>							dirty						= {database.Val.BlockDirty.begin(), database.Val.Blocks.size()};
 		if(dirty[idxBlock]) {
-			::gpk::array_pod<char_t>						folderName						= {};
 			::blt::SWriteCache								writeCache						= {loadCache};
-			gpk_necall(::blt::tableFolderInit(folderName, folder, database.Key, database.Val.BlockSize), "Failed to initialize folder for table '%s'. Not enough permissions?", ::gpk::toString(database.Key).begin());
-			gpk_necall(::blt::blockWrite(writeCache, folderName, database.Key, database.Val.EncryptionKey, database.Val.HostType, database.Val.Blocks[idxBlock]->Bytes, database.Val.BlockIndices[idxBlock]), "%s", "Unknown error!");
-			dirty[idxBlock]									= false;
+			gpk_necall(::databaseFlush(writeCache, database, folder), "Failed to flush table '%s'. Not enough permissions?", ::gpk::toString(database.Key).begin());
 		}
 		gpk_necall(idxBlock, "%s", "Out of memory?");
 		::gpk::ptr_obj<::gpk::SJSONFile>					& pBlock					= database.Val.Blocks[idxBlock];
