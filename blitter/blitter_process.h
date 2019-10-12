@@ -40,6 +40,18 @@ namespace blt
 		, uint32_t						& blockIndex
 		, const ::gpk::view_const_char	& folder
 		);
+
+	static inline	::gpk::error_t					recordGet
+		( ::gpk::SLoadCache				& loadCache
+		, ::blt::TNamedBlitterDB		& database
+		, const uint64_t				absoluteIndex
+		, ::gpk::view_const_char		& output_record
+		, const ::gpk::view_const_char	& folder
+	) {
+		uint32_t											indexRelative					= (uint32_t)-1;
+		uint32_t											indexBlock						= (uint32_t)-1;
+		return ::blt::recordGet(loadCache, database, absoluteIndex, output_record, indexRelative, indexBlock, folder);
+	}
 } // namespace
 
 #endif // BLITTER_PROCESS_H_29038679283

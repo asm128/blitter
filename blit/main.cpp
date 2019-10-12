@@ -7,6 +7,19 @@
 
 GPK_CGI_JSON_APP_IMPL();
 
+::gpk::error_t									jsonFail						(::gpk::array_pod<char_t> & output, ::gpk::view_const_string textToLog, ::gpk::view_const_string status)	{
+	error_printf("%s", textToLog.begin());
+	output											= ::gpk::view_const_string{"Status: "};
+	gpk_necall(output.append(status)						, "%s", "Failed to generate output message.");
+	gpk_necall(output.append_string("\r\nContent-Type: application/json\r\n\r\n"), "%s", "Failed to generate output message.");
+	gpk_necall(output.append_string("{ \"status\":")		, "%s", "Failed to generate output message.");
+	gpk_necall(output.append(status)						, "%s", "Failed to generate output message.");
+	gpk_necall(output.append_string(", \"description\" :\""), "%s", "Failed to generate output message.");
+	gpk_necall(output.append(textToLog)						, "%s", "Failed to generate output message.");
+	gpk_necall(output.append_string("\" }\r\n")				, "%s", "Failed to generate output message.");
+	return 0;
+}
+
 ::gpk::error_t									gpk_cgi_generate_output			(::gpk::SCGIRuntimeValues & runtimeValues, ::gpk::array_pod<char_t> & output)	{
 	::gpk::SHTTPAPIRequest								requestReceived					= {};
 	bool												isCGIEnviron					= ::gpk::httpRequestInit(requestReceived, runtimeValues, true);
@@ -15,12 +28,9 @@ GPK_CGI_JSON_APP_IMPL();
 	if (isCGIEnviron) {
 		gpk_necall(output.append(::gpk::view_const_string{"Content-type: application/json\r\n"}), "%s", "Out of memory?");
 		gpk_necall(output.append(::gpk::view_const_string{"\r\n"})								, "%s", "Out of memory?");
-		if(-1 == ::gpk::keyValVerify(environViews, "REQUEST_METHOD", "GET")) {
-			output.append(::gpk::view_const_string{"{ \"status\" : 403, \"description\" :\"forbidden\" }\r\n"});
-			return 1;
-		}
 	}
 
+	const ::gpk::view_const_string						configFileName					= "itwapi.json";
 	::blt::SBlitter										app								= {};
 	gpk_necall(::blt::requestProcess(app.ExpressionReader, app.Query, requestReceived, app.ExpansionKeyStorage), "%s", "Failed to process request.");
 	gpk_necall(::blt::loadConfig(app, "./blitter.json"), "%s", "Failed to load blitter configuration.");

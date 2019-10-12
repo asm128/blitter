@@ -24,12 +24,21 @@
     <ClCompile Include="bitter_query_read.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="blitter_output_html.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="blitter_output_json.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="blitter.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="blitter_process.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="blitter_output.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

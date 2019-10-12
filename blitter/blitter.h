@@ -9,6 +9,34 @@
 
 namespace blt
 {
+	GDEFINE_ENUM_TYPE(FIELD_DISPLAY, uint8_t);
+	GDEFINE_ENUM_VALUE(FIELD_DISPLAY, select, 0);
+	GDEFINE_ENUM_VALUE(FIELD_DISPLAY, edit, 1);
+
+	struct SBindDescription {
+		void											* HandleModule				= 0;
+		void											* FuncModule				= 0;
+		::gpk::view_const_char							TableName					= {};
+		int32_t											TableIndex					= -1;
+		FIELD_DISPLAY									Display						= ::blt::FIELD_DISPLAY_select	;
+	};
+
+	typedef ::gpk::SKeyVal<::gpk::view_const_char, SBindDescription>
+													TKeyValBindDescription;
+
+	struct STableDescription {
+		::gpk::array_obj<::gpk::SJSONFieldBinding	>	Fields						= {};
+		::gpk::array_obj<::gpk::TKeyValConstChar	>	FieldMaps					= {};
+		::gpk::array_obj<::blt::TKeyValBindDescription>	FieldMapDescription			= {};
+		::gpk::array_pod<int32_t>						IndicesFieldToMap			= {};
+		::gpk::array_pod<int32_t>						IndicesMapToField			= {};
+		::gpk::view_const_char							TableName					= {};
+		bool											Public						= false;
+	};
+} // namespace
+
+namespace blt
+{
 	GDEFINE_ENUM_TYPE (DATABASE_HOST, int8_t);
 	GDEFINE_ENUM_VALUE(DATABASE_HOST, LOCAL				, 0);
 	GDEFINE_ENUM_VALUE(DATABASE_HOST, REMOTE			, 1);
@@ -21,8 +49,8 @@ namespace blt
 	::gpk::error_t												tableFolderInit						(::gpk::array_pod<char_t> & finalFolderName, const ::gpk::view_const_char & dbPath, const ::gpk::view_const_char & dbName, const uint32_t blockSize);
 
 	static constexpr	const uint64_t							MAX_TABLE_RECORD_COUNT				= 0x7FFFFFFFFFFFFFFF;
-	static constexpr	const uint64_t							MAX_TABLE_BLOCKS_IN_MEMORY			= 256;
-	struct SBlitterDB {
+	static constexpr	const uint64_t							MAX_TABLE_BLOCKS_IN_MEMORY			= 1024;
+	struct SDatabase {
 		::gpk::array_obj<::gpk::view_const_char>					Bindings							= {};
 		uint32_t													BlockSize							= 0;
 		::gpk::array_obj<uint64_t>									Offsets								= {};
@@ -34,6 +62,7 @@ namespace blt
 		::blt::DATABASE_HOST										HostType							= ::blt::DATABASE_HOST_LOCAL;
 		::gpk::array_obj<uint32_t>									BlocksOnDisk						= {};
 		int32_t														MaxBlockOnDisk						= -1;
+		::blt::STableDescription									Description							= {};
 	};
 
 	struct SBlitterQuery {
@@ -52,7 +81,7 @@ namespace blt
 	//	::gpk::array_obj<::gpk::ptr_obj<::gpk::array_pod<byte_t>>>	BlocksToWrite;
 	//};
 
-	typedef ::gpk::SKeyVal<::gpk::view_const_string, ::blt::SBlitterDB>
+	typedef ::gpk::SKeyVal<::gpk::view_const_string, ::blt::SDatabase>
 																TNamedBlitterDB;
 	int64_t														queryProcess
 		( ::gpk::SLoadCache							& loadCache
@@ -91,7 +120,6 @@ namespace blt
 
 	::gpk::error_t												requestProcess						(::gpk::SExpressionReader & expressionReader, ::blt::SBlitterQuery & query, const ::gpk::SHTTPAPIRequest & request, ::gpk::array_obj<::gpk::view_const_char> & expansionKeyStorage);
 	static constexpr const uint32_t								CRC_SEED							= 18973;
-
 } // namespace
 
 #endif // BLITTER_H_20190712

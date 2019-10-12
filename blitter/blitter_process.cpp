@@ -1,4 +1,5 @@
 #include "blitter_process.h"
+#include "blitter_output.h"
 
 #include "gpk_parse.h"
 #include "gpk_find.h"
@@ -17,7 +18,7 @@
 	return ::gpk::fileFromMemorySecure(writeCache.LoadCache, partBytes, pathToWriteTo, encryptionKey, gbit_true(hostType, ::blt::DATABASE_HOST_DEFLATE));
 }
 
-::gpk::error_t									databaseFlush								(::blt::SWriteCache & cache, ::blt::TNamedBlitterDB & db, ::gpk::view_const_char folder) {
+::gpk::error_t									databaseFlush							(::blt::SWriteCache & cache, ::blt::TNamedBlitterDB & db, ::gpk::view_const_char folder) {
 	::gpk::view_bit<const uint32_t>						dirty									= {db.Val.BlockDirty.begin(), db.Val.Blocks.size()};
 	for(uint32_t iBlock = 0; iBlock < db.Val.Blocks.size(); ++iBlock) {
 		if(dirty[iBlock]) {
@@ -310,7 +311,7 @@ static	int64_t									pushNewBlock
 
 static	int64_t								appendRecord
 	( ::gpk::SLoadCache								& loadCache
-	, ::blt::SBlitterDB								& database
+	, ::blt::SDatabase								& database
 	, const uint32_t								indexBlock
 	, const ::gpk::SJSONReader						& recordToAdd
 	) {
@@ -378,6 +379,18 @@ int64_t											blt::queryProcess
 					? ::queryGetDetail	(loadCache, expressionReader, databases, iDB, query, output, folder, 0)
 					: ::queryGetRange	(loadCache, expressionReader, databases, iDB, query, output, folder, 0)
 					;
+		}
+	}
+	else if(query.Command == ::gpk::view_const_string{"model"}) {
+		for(uint32_t iDB = 0; iDB < databases.size(); ++iDB) {
+			if(query.Database == databases[iDB].Key)
+				return ::blt::outputModel(output, databases[iDB].Val.Description);
+		}
+	}
+	else if(query.Command == ::gpk::view_const_string{"form"}) {
+		for(uint32_t iDB = 0; iDB < databases.size(); ++iDB) {
+			if(query.Database == databases[iDB].Key)
+				return 0;
 		}
 	}
 	else if(query.Command == ::gpk::view_const_string{"push_back"}) {

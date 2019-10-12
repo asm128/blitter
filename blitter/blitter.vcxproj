@@ -190,10 +190,13 @@
   <ItemGroup>
     <ClCompile Include="bitter_query_read.cpp" />
     <ClCompile Include="blitter_init.cpp" />
+    <ClCompile Include="blitter_output_html.cpp" />
+    <ClCompile Include="blitter_output_json.cpp" />
     <ClCompile Include="blitter_process.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="blitter.h" />
+    <ClInclude Include="blitter_output.h" />
     <ClInclude Include="blitter_process.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
