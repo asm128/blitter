@@ -5,10 +5,10 @@
 			,	"cache"		: "../blitdb/cache"	
 			},
 			"database"		  : 
-			[	{ "public": true, "source" : "local"  , "name": "website"		, "bind" : ["user.website"		, ]} // , "block": 2560
-			,	{ "public": true, "source" : "local"  , "name": "user"			, "bind" : ["user.referral"		, ], "block": 128, "file_blocks": 64, "deflate": true, "key": "MjAwOS0yMDE5IChjKSBUaGUgRHJhZ29u"} // 
-			,	{ "public": true, "source" : "local"  , "name": "publisher"		, "bind" : ["website.publisher"	, ], "block": 128, "file_blocks": 64, "deflate": true, "key": "MjAwOS0yMDE5IChjKSBUaGUgRHJhZ29u"}
-			,	{ "public": true, "source" : "local"  , "name": "company"		, "bind" : ["company.owner"		, ], "block": 128, "file_blocks": 64, "deflate": true, "key": "MjAwOS0yMDE5IChjKSBUaGUgRHJhZ29u"
+			[	{ "public": true, "source" : "local"  , "name": "website"		, "bind" : ["website"		, "user.website"		, ]} // , "block": 2560
+			,	{ "public": true, "source" : "local"  , "name": "user"			, "bind" : ["referral"		, "user.referral"		, ], "block": 128, "file_blocks": 64, "deflate": true, "key": "MjAwOS0yMDE5IChjKSBUaGUgRHJhZ29u"} // 
+			,	{ "public": true, "source" : "local"  , "name": "publisher"		, "bind" : ["publisher"		, "website.publisher"	, ], "block": 128, "file_blocks": 64, "deflate": true, "key": "MjAwOS0yMDE5IChjKSBUaGUgRHJhZ29u"}
+			,	{ "public": true, "source" : "local"  , "name": "company"		, "bind" : ["company"		, "owner"				, ], "block": 128, "file_blocks": 64, "deflate": true, "key": "MjAwOS0yMDE5IChjKSBUaGUgRHJhZ29u"
 				, "fields" : 
 					{ "name": ""
 					}
