@@ -17,10 +17,10 @@
 static constexpr const uint32_t			DEFAULT_BLOCK_SIZE				= 1024;
 
 struct SSplitParams {
-	::gpk::view_const_string				FileNameSrc						= {};	// First parameter is the only parameter, which is the name of the source file to be split.
-	::gpk::view_const_string				PathWithoutExtension			= {};	// First parameter is the only parameter, which is the name of the source file to be split.
-	::gpk::view_const_string				DBName							= {};	// First parameter is the only parameter, which is the name of the source file to be split.
-	::gpk::view_const_string				EncryptionKey					= {};	// First parameter is the only parameter, which is the name of the source file to be split.
+	::gpk::view_const_char					FileNameSrc						= {};	// First parameter is the only parameter, which is the name of the source file to be split.
+	::gpk::view_const_char					PathWithoutExtension			= {};	// First parameter is the only parameter, which is the name of the source file to be split.
+	::gpk::view_const_char					DBName							= {};	// First parameter is the only parameter, which is the name of the source file to be split.
+	::gpk::view_const_char					EncryptionKey					= {};	// First parameter is the only parameter, which is the name of the source file to be split.
 
 	uint32_t								BlockSize						= 0;
 	bool									DeflatedOutput					= false;
@@ -31,24 +31,24 @@ struct SSplitParams {
 		info_printf("Unknown parameter: %s.", argv[iArg]);
 	ree_if(2 > argc, "Usage:\n\t%s [filename] [blockSize] [deflated output (1:0)] [deflated input (1:0)] ", argv[0]);
 	ree_if(65535 < argc, "Invalid parameter count: %u.", (uint32_t)argc);
-	params.FileNameSrc						= {argv[1], (uint32_t)-1};	// First parameter is the only parameter, which is the name of the source file to be split.
+	params.FileNameSrc						= ::gpk::vcs{argv[1], (uint32_t)-1};	// First parameter is the only parameter, which is the name of the source file to be split.
 	if(argc > 2) {	// load block size param
 		::gpk::parseIntegerDecimal({argv[2], (uint32_t)-1}, &params.BlockSize);
 		info_printf("Using block size: %u.", params.BlockSize);
 	}
-	params.DeflatedOutput					= (argc >  3 && argv[3][0] != '0');
+	params.DeflatedOutput					= (argc > 3 && argv[3][0] != '0');
 	if(argc > 4)
-		params.EncryptionKey					= {argv[4], (uint32_t)-1};
+		params.EncryptionKey					= ::gpk::vcs{argv[4], (uint32_t)-1};
 
 	if(0 == params.BlockSize)
 		params.BlockSize						= ::DEFAULT_BLOCK_SIZE;
 
 	::gpk::error_t								indexOfDot						= ::gpk::rfind('.', params.FileNameSrc);
 	::gpk::error_t								indexOfLastSlash				= ::gpk::findLastSlash(params.FileNameSrc);
-	params.PathWithoutExtension				= (indexOfDot > indexOfLastSlash) ? ::gpk::view_const_string{params.FileNameSrc.begin(), (uint32_t)indexOfDot} : params.FileNameSrc;
+	params.PathWithoutExtension				= (indexOfDot > indexOfLastSlash) ? ::gpk::view_const_char{params.FileNameSrc.begin(), (uint32_t)indexOfDot} : params.FileNameSrc;
 	params.DBName							= (-1 == indexOfLastSlash)
 		? params.PathWithoutExtension
-		: ::gpk::view_const_string{&params.PathWithoutExtension[indexOfLastSlash], params.PathWithoutExtension.size() - indexOfLastSlash}
+		: ::gpk::vcs{&params.PathWithoutExtension[indexOfLastSlash], params.PathWithoutExtension.size() - indexOfLastSlash}
 		;	// First parameter is the only parameter, which is the name of the source file to be split.
 
 	info_printf("Deflated output: %s", params.DeflatedOutput ? "true" : "false");
@@ -95,7 +95,7 @@ int										main							(int argc, char ** argv)		{
 	if(dbFolderName.size() && dbFolderName[dbFolderName.size()-1] != '/' && dbFolderName[dbFolderName.size()-1] != '\\')
 		gpk_necall(dbFolderName.push_back('/'), "%s", "Out of memory?");
 	else if(0 == dbFolderName.size())
-		gpk_necall(dbFolderName.append(::gpk::view_const_string{"./"}), "%s", "Out of memory?");
+		gpk_necall(dbFolderName.append(::gpk::vcs{"./"}), "%s", "Out of memory?");
 
 	::gpk::array_obj<::gpk::array_pod<char_t>>	outputJsons;
 	gpk_necall(::gpk::jsonArraySplit(*jsonFileToSplit.Reader.Tree[0], jsonFileToSplit.Reader.View , params.BlockSize, outputJsons), "%s", "Unknown error!");

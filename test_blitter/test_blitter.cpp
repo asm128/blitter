@@ -60,33 +60,34 @@ int												testPush						(::blt::SBlitter & app, ::gpk::array_pod<char_t> & 
 
 int												main							()		{
 	::blt::SBlitter										app								= {};
-	gpk_necall(::blt::loadConfig(app, "./blitter.json"), "%s", "Failed to load blitter configuration.");
+	::gpk::vcs											configFile						= "./blitter.json";
+	gpk_necall(::blt::loadConfig(app, configFile), "%s", "Failed to load blitter configuration.");
 	::gpk::array_pod<char_t>							output							= {};
-	//::testQuery(app, output, "get", "user"		, -1	, "", {10	, 20}, "referral.referral"			);
-	//::testQuery(app, output, "get", "user"		, 0		, "", {10	, 20}, "website"					);
-	//::testQuery(app, output, "get", "user"		, 10	, "", {10	, 20}, "referral.referral"			);
-	//::testQuery(app, output, "get", "website"	, -1	, "", {1	, 20}, "publisher"					);
-	//::testQuery(app, output, "get", "website"	, 0		, "", {10	, 20}, "publisher.company"			);
-	//::testQuery(app, output, "get", "website"	, 3		, "", {10	, 20}, "publisher.company.owner"	);
-	//::testQuery(app, output, "get", "publisher"	, -1	, "", {1	, 20}, ""							);
-	//::testQuery(app, output, "get", "publisher"	, 0		, "", {10	, 20}, "company"					);
-	//::testQuery(app, output, "get", "publisher"	, 3		, "", {10	, 20}, "company.owner"				);
-	//::testQuery(app, output, "get", "company"	, -1	, "", {1	, 20}, ""							);
-	//::testQuery(app, output, "get", "company"	, 0		, "", {10	, 20}, ""							);
-	//::testQuery(app, output, "get", "company"	, 3		, "", {10	, 20}, "owner"						);
+	//::testQuery(app, output, ::gpk::vcs{"get"}, ::gpk::vcs{"user"		}, -1	, "", {10	, 20}, ::gpk::vcs{"referral.referral"		});
+	//::testQuery(app, output, ::gpk::vcs{"get"}, ::gpk::vcs{"user"		}, 0	, "", {10	, 20}, ::gpk::vcs{"website"					});
+	//::testQuery(app, output, ::gpk::vcs{"get"}, ::gpk::vcs{"user"		}, 10	, "", {10	, 20}, ::gpk::vcs{"referral.referral"		});
+	//::testQuery(app, output, ::gpk::vcs{"get"}, ::gpk::vcs{"website"	}, -1	, "", {1	, 20}, ::gpk::vcs{"publisher"				});
+	//::testQuery(app, output, ::gpk::vcs{"get"}, ::gpk::vcs{"website"	}, 0	, "", {10	, 20}, ::gpk::vcs{"publisher.company"		});
+	//::testQuery(app, output, ::gpk::vcs{"get"}, ::gpk::vcs{"website"	}, 3	, "", {10	, 20}, ::gpk::vcs{"publisher.company.owner"	});
+	//::testQuery(app, output, ::gpk::vcs{"get"}, ::gpk::vcs{"publisher"}, -1	, "", {1	, 20}, ::gpk::vcs{""						});
+	//::testQuery(app, output, ::gpk::vcs{"get"}, ::gpk::vcs{"publisher"}, 0	, "", {10	, 20}, ::gpk::vcs{"company"					});
+	//::testQuery(app, output, ::gpk::vcs{"get"}, ::gpk::vcs{"publisher"}, 3	, "", {10	, 20}, ::gpk::vcs{"company.owner"			});
+	//::testQuery(app, output, ::gpk::vcs{"get"}, ::gpk::vcs{"company"	}, -1	, "", {1	, 20}, ::gpk::vcs{""						});
+	//::testQuery(app, output, ::gpk::vcs{"get"}, ::gpk::vcs{"company"	}, 0	, "", {10	, 20}, ::gpk::vcs{""						});
+	//::testQuery(app, output, ::gpk::vcs{"get"}, ::gpk::vcs{"company"	}, 3	, "", {10	, 20}, ::gpk::vcs{"owner"					});
 	//
-	//::testQuery(app, output, "get", "user"		, -1	, "", {0	, 10000}, "referral.referral"			);
-	//::testQuery(app, output, "get", "user"		, 0		, "", {1	, 10000}, "website"						);
-	//::testQuery(app, output, "get", "user"		, 10	, "", {0	, 10000}, "referral.referral"			);
-	//::testQuery(app, output, "get", "website"	, -1	, "", {1	, 10000}, "publisher"					);
-	//::testQuery(app, output, "get", "website"	, 0		, "", {0	, 10000}, "publisher.company"			);
-	//::testQuery(app, output, "get", "website"	, 3		, "", {1	, 10000}, "publisher.company.owner"		);
-	//::testQuery(app, output, "get", "publisher"	, -1	, "", {0	, 10000}, ""							);
-	//::testQuery(app, output, "get", "publisher"	, 0		, "", {1	, 10000}, "company"						);
-	//::testQuery(app, output, "get", "publisher"	, 3		, "", {0	, 10000}, "company.owner"				);
-	//::testQuery(app, output, "get", "company"	, -1	, "", {1	, 10000}, ""							);
-	//::testQuery(app, output, "get", "company"	, 0		, "", {0	, 10000}, ""							);
-	//::testQuery(app, output, "get", "company"	, 3		, "", {1	, 10000}, "owner"						);
+	//::testQuery(app, output, ::gpk::vcs{"get"}, ::gpk::vcs{"user"		}, -1	, "", {0	, 10000}, ::gpk::vcs{"referral.referral"		});
+	//::testQuery(app, output, ::gpk::vcs{"get"}, ::gpk::vcs{"user"		}, 0	, "", {1	, 10000}, ::gpk::vcs{"website"					});
+	//::testQuery(app, output, ::gpk::vcs{"get"}, ::gpk::vcs{"user"		}, 10	, "", {0	, 10000}, ::gpk::vcs{"referral.referral"		});
+	//::testQuery(app, output, ::gpk::vcs{"get"}, ::gpk::vcs{"website"	}, -1	, "", {1	, 10000}, ::gpk::vcs{"publisher"				});
+	//::testQuery(app, output, ::gpk::vcs{"get"}, ::gpk::vcs{"website"	}, 0	, "", {0	, 10000}, ::gpk::vcs{"publisher.company"		});
+	//::testQuery(app, output, ::gpk::vcs{"get"}, ::gpk::vcs{"website"	}, 3	, "", {1	, 10000}, ::gpk::vcs{"publisher.company.owner"	});
+	//::testQuery(app, output, ::gpk::vcs{"get"}, ::gpk::vcs{"publisher"}, -1	, "", {0	, 10000}, ::gpk::vcs{""							});
+	//::testQuery(app, output, ::gpk::vcs{"get"}, ::gpk::vcs{"publisher"}, 0	, "", {1	, 10000}, ::gpk::vcs{"company"					});
+	//::testQuery(app, output, ::gpk::vcs{"get"}, ::gpk::vcs{"publisher"}, 3	, "", {0	, 10000}, ::gpk::vcs{"company.owner"			});
+	//::testQuery(app, output, ::gpk::vcs{"get"}, ::gpk::vcs{"company"	}, -1	, "", {1	, 10000}, ::gpk::vcs{""							});
+	//::testQuery(app, output, ::gpk::vcs{"get"}, ::gpk::vcs{"company"	}, 0	, "", {0	, 10000}, ::gpk::vcs{""							});
+	//::testQuery(app, output, ::gpk::vcs{"get"}, ::gpk::vcs{"company"	}, 3	, "", {1	, 10000}, ::gpk::vcs{"owner"					});
 	::gpk::STimer										timerTotal;
 	::gpk::STimer										timerStep;
 	const uint32_t										iterations						= 1000000;
@@ -96,9 +97,9 @@ int												main							()		{
 		double												timeTotal						= 0;
 		for(uint32_t i = 0; i < iterations; ++i) {
 			timerStep.Reset();
-			//::testPush(app, output, "push_back", "company"		, "1");
-			//::testPush(app, output, "push_back", "company"		, "{ \"name\" : \"testA\" }");
-			::testPush(app, output, "push_back", "company"		, "{ \"name\" : \"testB\" }");
+			//::testPush(app, output, ::gpk::vcs{"push_back"}, ::gpk::vcs{"company"}, ::gpk::vcs{"1"});
+			//::testPush(app, output, ::gpk::vcs{"push_back"}, ::gpk::vcs{"company"}, ::gpk::vcs{"{ \"name\" : \"testA\" }"});
+			::testPush(app, output, ::gpk::vcs{"push_back"}, ::gpk::vcs{"company"}, "{ \"name\" : \"testB\" }");
 			timerStep.Frame();
 			timeTotal											+= timerStep.LastTimeSeconds;
 		}
@@ -115,7 +116,7 @@ int												main							()		{
 		//	//////::testQuery(app, output, "get", "user"		, -1	, "", {0, 1000}, ""								);
 			//::testPush(app, output, "push_back", "user"			, "{ \"name\" : \"test1\" }");
 		//	////::testQuery(app, output, "get", "user"		, -1	, "", {0, 1000}, ""								);
-			::testPush(app, output, "push_back", "user"			, "{ \"name\" : \"test2\" }");
+			::testPush(app, output, ::gpk::vcs{"push_back"}, ::gpk::vcs{"user"}, ::gpk::vcs{"{ \"name\" : \"test2\" }"});
 			timerStep.Frame();
 			timeTotal											+= timerStep.LastTimeSeconds;
 		}
@@ -130,7 +131,7 @@ int												main							()		{
 			timerStep.Reset();
 			//::testPush(app, output, "push_back", "publisher"	, "false");
 			//::testPush(app, output, "push_back", "publisher"			, "{ \"name\" : \"test2\" }");
-			::testPush(app, output, "push_back", "publisher"	, "{ \"name\" : \"test7\" }");
+			::testPush(app, output, ::gpk::vcs{"push_back"}, ::gpk::vcs{"publisher"}, ::gpk::vcs{"{ \"name\" : \"test7\" }"});
 			//::testPush(app, output, "push_back", "publisher"	, "true");
 			timerStep.Frame();
 			timeTotal											+= timerStep.LastTimeSeconds;
@@ -145,21 +146,21 @@ int												main							()		{
 		for(uint32_t i = 0; i < iterations; ++i) {
 			timerStep.Reset();
 			//::testPush(app, output, "push_back", "user"			, "1.5");
-		//	//////::testQuery(app, output, "get", "user"		, -1	, "", {0, 1000}, ""								);
+			//	//////::testQuery(app, output, "get", "user"		, -1	, "", {0, 1000}, ""								);
 			//::testPush(app, output, "push_back", "user"			, "{ \"name\" : \"test1\" }");
-		//	////::testQuery(app, output, "get", "user"		, -1	, "", {0, 1000}, ""								);
-			::testPush(app, output, "push_back", "user"			, "{ \"name\" : \"test2\" }");
-		//	////::testQuery(app, output, "get", "user"		, -1	, "", {0, 1000}, ""								);
+			//	////::testQuery(app, output, "get", "user"		, -1	, "", {0, 1000}, ""								);
+			::testPush(app, output, ::gpk::vcs{"push_back"}, ::gpk::vcs{"user"}		, ::gpk::vcs{"{ \"name\" : \"test2\" }"});
+			//	////::testQuery(app, output, "get", "user"		, -1	, "", {0, 1000}, ""								);
 			////::testPush(app, output, "push_back", "website"		, "null");
 			////::testPush(app, output, "push_back", "website"		, "{ \"name\" : \"test4\" }");
 			////::testPush(app, output, "push_back", "website"		, "{ \"name\" : \"test5\" }");
 			//::testPush(app, output, "push_back", "publisher"	, "false");
 			//::testPush(app, output, "push_back", "publisher"			, "{ \"name\" : \"test2\" }");
-			::testPush(app, output, "push_back", "publisher"	, "{ \"name\" : \"test7\" }");
+			::testPush(app, output, ::gpk::vcs{"push_back"}, ::gpk::vcs{"publisher"}, ::gpk::vcs{"{ \"name\" : \"test7\" }"});
 			//::testPush(app, output, "push_back", "publisher"	, "true");
 			//::testPush(app, output, "push_back", "company"		, "1");
 			//::testPush(app, output, "push_back", "company"		, "{ \"name\" : \"testA\" }");
-			::testPush(app, output, "push_back", "company"		, "{ \"name\" : \"testB\" }");
+			::testPush(app, output, ::gpk::vcs{"push_back"}, ::gpk::vcs{"company"}	, ::gpk::vcs{"{ \"name\" : \"testB\" }"});
 			timerStep.Frame();
 			timeTotal											+= timerStep.LastTimeSeconds;
 		}
@@ -169,18 +170,18 @@ int												main							()		{
 
 	//info_printf("Test ------------------------------------------");
  	//{
-		//::testQuery(app, output, "get", "user"		, -1	, "", {0, ::blt::MAX_TABLE_RECORD_COUNT}, ""						);
-		//::testQuery(app, output, "get", "user"		, 0		, "", {0, ::blt::MAX_TABLE_RECORD_COUNT}, "website"					);
-		//::testQuery(app, output, "get", "user"		, 10	, "", {0, ::blt::MAX_TABLE_RECORD_COUNT}, "referral.referral"		);
-		//::testQuery(app, output, "get", "website"	, -1	, "", {0, ::blt::MAX_TABLE_RECORD_COUNT}, "publisher"				);
-		//::testQuery(app, output, "get", "website"	, 0		, "", {0, ::blt::MAX_TABLE_RECORD_COUNT}, "publisher.company"		);
-		//::testQuery(app, output, "get", "website"	, 3		, "", {0, ::blt::MAX_TABLE_RECORD_COUNT}, "publisher.company.owner"	);
-		//::testQuery(app, output, "get", "publisher"	, -1	, "", {0, ::blt::MAX_TABLE_RECORD_COUNT}, ""						);
-		//::testQuery(app, output, "get", "publisher"	, 0		, "", {0, ::blt::MAX_TABLE_RECORD_COUNT}, "company"					);
-		//::testQuery(app, output, "get", "publisher"	, 3		, "", {0, ::blt::MAX_TABLE_RECORD_COUNT}, "company.owner"			);
-		//::testQuery(app, output, "get", "company"	, -1	, "", {0, ::blt::MAX_TABLE_RECORD_COUNT}, ""						);
-		//::testQuery(app, output, "get", "company"	, 0		, "", {0, ::blt::MAX_TABLE_RECORD_COUNT}, ""						);
-		//::testQuery(app, output, "get", "company"	, 3		, "", {0, ::blt::MAX_TABLE_RECORD_COUNT}, "owner"					);
+		//::testQuery(app, output, ::gpk::vcs{"get"}, ::gpk::vcs{"user"		}, -1	, {}, {0, ::blt::MAX_TABLE_RECORD_COUNT}, ::gpk::vcs{""							});
+		//::testQuery(app, output, ::gpk::vcs{"get"}, ::gpk::vcs{"user"		}, 0	, {}, {0, ::blt::MAX_TABLE_RECORD_COUNT}, ::gpk::vcs{"website"					});
+		//::testQuery(app, output, ::gpk::vcs{"get"}, ::gpk::vcs{"user"		}, 10	, {}, {0, ::blt::MAX_TABLE_RECORD_COUNT}, ::gpk::vcs{"referral.referral"		});
+		//::testQuery(app, output, ::gpk::vcs{"get"}, ::gpk::vcs{"website"	}, -1	, {}, {0, ::blt::MAX_TABLE_RECORD_COUNT}, ::gpk::vcs{"publisher"				});
+		//::testQuery(app, output, ::gpk::vcs{"get"}, ::gpk::vcs{"website"	}, 0	, {}, {0, ::blt::MAX_TABLE_RECORD_COUNT}, ::gpk::vcs{"publisher.company"		});
+		//::testQuery(app, output, ::gpk::vcs{"get"}, ::gpk::vcs{"website"	}, 3	, {}, {0, ::blt::MAX_TABLE_RECORD_COUNT}, ::gpk::vcs{"publisher.company.owner"	});
+		//::testQuery(app, output, ::gpk::vcs{"get"}, ::gpk::vcs{"publisher"}, -1	, {}, {0, ::blt::MAX_TABLE_RECORD_COUNT}, ::gpk::vcs{""							});
+		//::testQuery(app, output, ::gpk::vcs{"get"}, ::gpk::vcs{"publisher"}, 0	, {}, {0, ::blt::MAX_TABLE_RECORD_COUNT}, ::gpk::vcs{"company"					});
+		//::testQuery(app, output, ::gpk::vcs{"get"}, ::gpk::vcs{"publisher"}, 3	, {}, {0, ::blt::MAX_TABLE_RECORD_COUNT}, ::gpk::vcs{"company.owner"			});
+		//::testQuery(app, output, ::gpk::vcs{"get"}, ::gpk::vcs{"company"	}, -1	, {}, {0, ::blt::MAX_TABLE_RECORD_COUNT}, ::gpk::vcs{""							});
+		//::testQuery(app, output, ::gpk::vcs{"get"}, ::gpk::vcs{"company"	}, 0	, {}, {0, ::blt::MAX_TABLE_RECORD_COUNT}, ::gpk::vcs{""							});
+		//::testQuery(app, output, ::gpk::vcs{"get"}, ::gpk::vcs{"company"	}, 3	, {}, {0, ::blt::MAX_TABLE_RECORD_COUNT}, ::gpk::vcs{"owner"					});
 	//}
 	//::blt::blitterFlush(app);
 	return 0;
