@@ -2,7 +2,6 @@
 #include "blitter_output.h"
 
 #include "gpk_parse.h"
-#include "gpk_find.h"
 #include "gpk_view_bit.h"
 #include "gpk_chrono.h"
 

@@ -6,7 +6,6 @@
 #include "blitter.h"
 
 #include "gpk_timer.h"
-#include "gpk_find.h"
 #include "gpk_process.h"
 
 int												testQuery						(::blt::SBlitter & app, ::gpk::array_pod<char_t> & output, ::gpk::view_const_string command, ::gpk::view_const_string database, int64_t detail, ::gpk::view_const_string path, ::gpk::SRange<uint64_t> range, ::gpk::view_const_string expand)		{
