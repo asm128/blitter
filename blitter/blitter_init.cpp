@@ -169,7 +169,7 @@ static	::gpk::error_t							table_description_load			(::blt::STableDescription &
 		fieldDesc.Type									= configReader.Token[indexOfValue].Type;
 		::gpk::view_const_char								viewOfValue						= configReader.View[indexOfValue];
 		if(::gpk::JSON_TYPE_OBJECT == fieldDesc.Type) {
-			const ::gpk::error_t								indexOfMode					= ::gpk::jsonObjectValueGet(configReader, indexOfValue, ::gpk::view_const_string{"resolve"});
+			[[maybe_unused]] const ::gpk::error_t								indexOfMode					= ::gpk::jsonObjectValueGet(configReader, indexOfValue, ::gpk::view_const_string{"resolve"});
 			const ::gpk::error_t								indexOfDisplay				= ::gpk::jsonObjectValueGet(configReader, indexOfValue, ::gpk::view_const_string{"display"});
 			::blt::TKeyValBindDescription						& bindDescription			= tableDesc.FieldMapDescription[tableDesc.FieldMapDescription.push_back({fieldName, {}})];
 			//bindDescription.Val.Resolve						= (0 > indexOfMode		) ? ::blt::FIELD_RESOLVE_api	: ::gpk::get_value<::blt::FIELD_RESOLVE>(configReader.View[indexOfMode]		);
