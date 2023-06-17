@@ -6,7 +6,7 @@
 
 GPK_CGI_JSON_APP_IMPL();
 
-::gpk::error_t									jsonFail						(::gpk::achar & output, ::gpk::vcs textToLog, ::gpk::vcs status)	{
+::gpk::error_t			jsonFail						(::gpk::achar & output, ::gpk::vcs textToLog, ::gpk::vcs status)	{
 	error_printf("%s", textToLog.begin());
 	output											= ::gpk::vcs{"Status: "};
 	gpk_necall(output.append(status)						, "%s", "Failed to generate output message.");
@@ -19,7 +19,7 @@ GPK_CGI_JSON_APP_IMPL();
 	return 0;
 }
 
-::gpk::error_t									gpk_cgi_generate_output			(::gpk::SCGIRuntimeValues & runtimeValues, ::gpk::achar & output)	{
+::gpk::error_t			gpk_cgi_generate_output			(::gpk::SCGIRuntimeValues & runtimeValues, ::gpk::achar & output)	{
 	::gpk::SHTTPAPIRequest								requestReceived					= {};
 	bool												isCGIEnviron					= ::gpk::httpRequestInit(requestReceived, runtimeValues, true);
 	::gpk::array_obj<::gpk::TKeyValConstString>			environViews;

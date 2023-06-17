@@ -43,10 +43,10 @@ namespace blt
 	GDEFINE_ENUM_VALUE(DATABASE_HOST, DEFLATE			, 2);
 	GDEFINE_ENUM_VALUE(DATABASE_HOST, REMOTE_DEFLATE	, 3);
 
-	::gpk::error_t												tableFolderName						(::gpk::apod<char> & foldername	, const ::gpk::vcc & dbName, const uint32_t block);
-	::gpk::error_t												blockFileName						(::gpk::apod<char> & filename	, const ::gpk::vcc & dbName, bool bEncrypted, const ::blt::DATABASE_HOST hostType, const uint32_t block);
-	::gpk::error_t												tableFileName						(::gpk::apod<char> & filename	, const ::blt::DATABASE_HOST & hostType, bool bEncrypted, const ::gpk::vcc & jsonDBKey);
-	::gpk::error_t												tableFolderInit						(::gpk::apod<char> & finalFolderName, const ::gpk::vcc & dbPath, const ::gpk::vcc & dbName, const uint32_t blockSize);
+	::gpk::error_t					tableFolderName						(::gpk::apod<char> & foldername	, const ::gpk::vcc & dbName, const uint32_t block);
+	::gpk::error_t					blockFileName						(::gpk::apod<char> & filename	, const ::gpk::vcc & dbName, bool bEncrypted, const ::blt::DATABASE_HOST hostType, const uint32_t block);
+	::gpk::error_t					tableFileName						(::gpk::apod<char> & filename	, const ::blt::DATABASE_HOST & hostType, bool bEncrypted, const ::gpk::vcc & jsonDBKey);
+	::gpk::error_t					tableFolderInit						(::gpk::apod<char> & finalFolderName, const ::gpk::vcc & dbPath, const ::gpk::vcc & dbName, const uint32_t blockSize);
 
 	static constexpr	const uint64_t							MAX_TABLE_RECORD_COUNT				= 0x7FFFFFFFFFFFFFFF;
 	static constexpr	const uint64_t							MAX_TABLE_BLOCKS_IN_MEMORY			= 1024;

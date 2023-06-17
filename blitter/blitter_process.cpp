@@ -6,7 +6,7 @@
 #include "gpk_bit.h"
 #include "gpk_chrono.h"
 
-::gpk::error_t									blt::blockWrite							(::blt::SWriteCache & writeCache, const ::gpk::vcc & dbFolderName, const ::gpk::vcc & dbName, const ::gpk::vcc & encryptionKey, ::blt::DATABASE_HOST hostType, const ::gpk::vcu8 & partBytes, uint32_t iPart)		{
+::gpk::error_t			blt::blockWrite							(::blt::SWriteCache & writeCache, const ::gpk::vcc & dbFolderName, const ::gpk::vcc & dbName, const ::gpk::vcc & encryptionKey, ::blt::DATABASE_HOST hostType, const ::gpk::vcu8 & partBytes, uint32_t iPart)		{
 	::gpk::achar							partFileName							= writeCache.PartFileName;
 	::gpk::achar							pathToWriteTo							= writeCache.PathToWriteTo;
 	::gpk::clear(partFileName, pathToWriteTo, writeCache.LoadCache.Deflated, writeCache.LoadCache.Encrypted);
@@ -18,7 +18,7 @@
 	return ::gpk::fileFromMemorySecure(writeCache.LoadCache, pathToWriteTo, encryptionKey.cu8(), ::gpk::bit_true(hostType, ::blt::DATABASE_HOST_DEFLATE), partBytes.cu8());
 }
 
-::gpk::error_t									databaseFlush							(::blt::SWriteCache & cache, ::blt::TNamedBlitterDB & db, ::gpk::vcc folder) {
+::gpk::error_t			databaseFlush							(::blt::SWriteCache & cache, ::blt::TNamedBlitterDB & db, ::gpk::vcc folder) {
 	::gpk::view_bit<const uint32_t>						dirty									= {db.Val.BlockDirty.begin(), db.Val.Blocks.size()};
 	for(uint32_t iBlock = 0; iBlock < db.Val.Blocks.size(); ++iBlock) {
 		if(dirty[iBlock]) {
@@ -31,7 +31,7 @@
 	return 0;
 }
 
-::gpk::error_t									blt::blitterFlush						(::blt::SBlitter & appState) {
+::gpk::error_t			blt::blitterFlush						(::blt::SBlitter & appState) {
 	::blt::SWriteCache									cache									= {appState.LoadCache};
 	for(uint32_t iDatabase = 0; iDatabase < appState.Databases.size(); ++iDatabase) {
 		::blt::TNamedBlitterDB								& db									= appState.Databases[iDatabase];
@@ -40,7 +40,7 @@
 	return 0;
 }
 
-static	::gpk::error_t							queryGetDetail
+static	::gpk::error_t	queryGetDetail
 	( ::gpk::SLoadCache								& loadCache
 	, const ::gpk::SExpressionReader				& expressionReader
 	, ::gpk::array_obj<::blt::TNamedBlitterDB>		& databases
@@ -50,13 +50,13 @@ static	::gpk::error_t							queryGetDetail
 	, const ::gpk::vcc					& folder
 	, const uint32_t								idxExpand
 	) {
-	::gpk::view_const_string							outputRecord						= {};
+	::gpk::vcs							outputRecord						= {};
 	uint32_t											nodeIndex							= (uint32_t)-1;
 	uint32_t											blockIndex							= (uint32_t)-1;
 	::blt::TNamedBlitterDB								& databaseToRead					= databases[idxDatabase];
 	if errored(::blt::recordGet(loadCache, databaseToRead, query.Detail, outputRecord, nodeIndex, blockIndex, folder)) {
 		error_printf("Failed to load record detail. Offset: %llu. Length: %llu.", query.Range.Offset, query.Range.Count);
-		gpk_necall(output.append(::gpk::view_const_string{"{}"}), "%s", "Out of memory?");
+		gpk_necall(output.append(::gpk::vcs{"{}"}), "%s", "Out of memory?");
 		return 1;
 	}
 	if(idxExpand >= query.ExpansionKeys.size())
@@ -98,7 +98,7 @@ static	::gpk::error_t							queryGetDetail
 					}
 				}
 				if(false == bFound)
-					gpk_necall(output.append(::gpk::view_const_string{"{}"}), "%s", "?¿??");
+					gpk_necall(output.append(::gpk::vcs{"{}"}), "%s", "?¿??");
 				appendStart									= digitsToDetailView.end();
 				appendStop									= currentRecordView.end();
 				gpk_necall(output.append(appendStart, (uint32_t)(appendStop - appendStart)), "%s", "Out of memory?");
@@ -128,7 +128,7 @@ static	::gpk::error_t							queryGetDetail
 						}
 					}
 					if(false == bFound)
-						gpk_necall(output.append(::gpk::view_const_string{"{}"}), "%s", "?¿??");
+						gpk_necall(output.append(::gpk::vcs{"{}"}), "%s", "?¿??");
 					if(refCount - 1 != iRef)
 						gpk_necall(output.push_back(','), "%s", "Out of memory?");
 				}
@@ -142,7 +142,7 @@ static	::gpk::error_t							queryGetDetail
 	return 0;
 }
 
-static	::gpk::error_t							fillEmptyBlocks				(const ::gpk::vcc & emptyBlockData, const uint32_t emptyBlocks, bool appendComma, ::gpk::achar & output)	{
+static	::gpk::error_t	fillEmptyBlocks				(const ::gpk::vcc & emptyBlockData, const uint32_t emptyBlocks, bool appendComma, ::gpk::achar & output)	{
 	for(uint32_t iEmpty = 0; iEmpty < emptyBlocks; ++iEmpty) {
 		gpk_necall(output.append(emptyBlockData), "%s", "Out of memory?");
 		if(emptyBlocks - 1 != iEmpty)
@@ -153,7 +153,7 @@ static	::gpk::error_t							fillEmptyBlocks				(const ::gpk::vcc & emptyBlockDat
 	return 0;
 }
 
-static	::gpk::error_t							nextBlock					(const uint32_t iRangeInfo, const uint32_t lastRangeInfo, const ::gpk::view_array<const ::blt::SRangeBlockInfo>	& rangeInfo, const ::gpk::vcc & emptyBlockData, ::gpk::achar & output) {
+static	::gpk::error_t	nextBlock					(const uint32_t iRangeInfo, const uint32_t lastRangeInfo, const ::gpk::view_array<const ::blt::SRangeBlockInfo>	& rangeInfo, const ::gpk::vcc & emptyBlockData, ::gpk::achar & output) {
 	if(rangeInfo.size() -1 != iRangeInfo)
 		gpk_necall(output.push_back(','), "%s", "Out of memory?");
 
@@ -167,7 +167,7 @@ static	::gpk::error_t							nextBlock					(const uint32_t iRangeInfo, const uint
 	return 0;
 }
 
-static	::gpk::error_t							queryGetRange
+static	::gpk::error_t	queryGetRange
 	( ::gpk::SLoadCache						& loadCache
 	, const ::gpk::SExpressionReader		& expressionReader
 	, ::gpk::aobj<::blt::TNamedBlitterDB>	& databases
@@ -178,7 +178,7 @@ static	::gpk::error_t							queryGetRange
 	, const uint32_t						idxExpand
 	) {
 	if(0 == query.Range.Count) {
-		gpk_necall(output.append(::gpk::view_const_string{"[]"}), "%s", "Out of memory?");
+		gpk_necall(output.append(::gpk::vcs{"[]"}), "%s", "Out of memory?");
 		return 0;
 	}
 	::gpk::apod<::gpk::minmaxu32>				relativeIndices						= {};
@@ -186,7 +186,7 @@ static	::gpk::error_t							queryGetRange
 	::gpk::aobj<::blt::SRangeBlockInfo>				rangeInfo							= {};
 	::blt::TNamedBlitterDB									& databaseToRead					= databases[idxDatabase];
 	::gpk::achar								emptyBlockData						= {};
-	const ::gpk::view_const_string							empty_record						= "{},";
+	const ::gpk::vcs							empty_record						= "{},";
 	for(uint32_t iRecord = 0; iRecord < databaseToRead.Val.BlockSize; ++iRecord)
 		gpk_necall(emptyBlockData.append(empty_record), "%s", "Out of memory?");
 	if(emptyBlockData.size() > 0) // Remove last comma.
@@ -203,7 +203,7 @@ static	::gpk::error_t							queryGetRange
 		else {
 			if(emptyBlocks > 0) {
 				for(uint32_t iElem = recordsToAvoid; iElem < databaseToRead.Val.BlockSize; ++iElem)
-					gpk_necall(output.append(::gpk::view_const_string{"{},"}), "%s", "Out of memory?");
+					gpk_necall(output.append(::gpk::vcs{"{},"}), "%s", "Out of memory?");
 				gpk_necall(::fillEmptyBlocks(emptyBlockData, emptyBlocks - 1, lastRangeInfo != 0, output), "%s", "Out of memory?");
 			}
 		}
@@ -243,7 +243,7 @@ static	::gpk::error_t							queryGetRange
 				if(emptyBlocks > 1)
 					gpk_necall(::fillEmptyBlocks(emptyBlockData, emptyBlocks - 1, true, output), "%s", "Out of memory?");
 				for(uint32_t iElem = 0; iElem < recordsToAvoid; ++iElem)
-					gpk_necall(output.append(::gpk::view_const_string{"{},"}), "%s", "Out of memory?");
+					gpk_necall(output.append(::gpk::vcs{"{},"}), "%s", "Out of memory?");
 				gpk_necall(output.resize(output.size()-1), "%s", "Out of memory?");
 			}
 		}
@@ -372,7 +372,7 @@ int64_t											blt::queryProcess
 	, const ::gpk::vcc					& folder
 	, ::gpk::achar						& output
 	) {
-	if(query.Command == ::gpk::view_const_string{"get"}) {
+	if(query.Command == ::gpk::vcs{"get"}) {
 		for(uint32_t iDB = 0; iDB < databases.size(); ++iDB) {
 			if(query.Database == databases[iDB].Key)
 				return (0 <= query.Detail)
@@ -381,19 +381,19 @@ int64_t											blt::queryProcess
 					;
 		}
 	}
-	else if(query.Command == ::gpk::view_const_string{"model"}) {
+	else if(query.Command == ::gpk::vcs{"model"}) {
 		for(uint32_t iDB = 0; iDB < databases.size(); ++iDB) {
 			if(query.Database == databases[iDB].Key)
 				return ::blt::outputModel(output, databases[iDB].Val.Description);
 		}
 	}
-	else if(query.Command == ::gpk::view_const_string{"form"}) {
+	else if(query.Command == ::gpk::vcs{"form"}) {
 		for(uint32_t iDB = 0; iDB < databases.size(); ++iDB) {
 			if(query.Database == databases[iDB].Key)
 				return 0;
 		}
 	}
-	else if(query.Command == ::gpk::view_const_string{"push_back"}) {
+	else if(query.Command == ::gpk::vcs{"push_back"}) {
 		for(uint32_t iDB = 0; iDB < databases.size(); ++iDB) {
 			::blt::TNamedBlitterDB								& database			= databases[iDB];
 			if(query.Database != database.Key)
@@ -414,7 +414,7 @@ int64_t											blt::queryProcess
 			}
 		}
 	}
-	else if(query.Command == ::gpk::view_const_string{"pop_back"}) {
+	else if(query.Command == ::gpk::vcs{"pop_back"}) {
 		for(uint32_t iDB = 0; iDB < databases.size(); ++iDB) {
 			if(query.Database == databases[iDB].Key) {
 				return -1;	// Not implemented
@@ -423,7 +423,7 @@ int64_t											blt::queryProcess
 			}
 		}
 	}
-	else if(query.Command == ::gpk::view_const_string{"replace"}) {
+	else if(query.Command == ::gpk::vcs{"replace"}) {
 		for(uint32_t iDB = 0; iDB < databases.size(); ++iDB) {
 			if(query.Database == databases[iDB].Key) {
 				return -1;	// Not implemented

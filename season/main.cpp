@@ -26,7 +26,7 @@ struct SSplitParams {
 	bool									DeflatedOutput					= false;
 };
 
-::gpk::error_t							loadParams						(SSplitParams& params, int argc, char ** argv)		{
+::gpk::error_t			loadParams						(SSplitParams& params, int argc, char ** argv)		{
 	for(int32_t iArg = 5; iArg < argc; ++iArg)
 		info_printf("Unknown parameter: %s.", argv[iArg]);
 	ree_if(2 > argc, "Usage:\n\t%s [filename] [blockSize] [deflated output (1:0)] [deflated input (1:0)] ", argv[0]);
@@ -67,7 +67,7 @@ struct SWriteCache {
 	::gpk::SLoadCache						LoadCache						= {};
 };
 
-::gpk::error_t							writePart						(::SWriteCache & blockCache, const ::SSplitParams & params, const ::gpk::view_const_string dbFolderName, const ::gpk::vcu8 & partBytes, uint32_t iPart)		{
+::gpk::error_t			writePart						(::SWriteCache & blockCache, const ::SSplitParams & params, const ::gpk::view_const_string dbFolderName, const ::gpk::vcu8 & partBytes, uint32_t iPart)		{
 	::gpk::achar					& partFileName					= blockCache.PartFileName					;
 	::gpk::achar					& pathToWriteTo					= blockCache.PathToWriteTo					;
 	::gpk::clear(partFileName, pathToWriteTo, blockCache.LoadCache.Deflated, blockCache.LoadCache.Encrypted);

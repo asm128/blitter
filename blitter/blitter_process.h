@@ -12,7 +12,7 @@ namespace blt
 		uint32_t				BlockId					= 0;
 	};
 
-	::gpk::error_t									recordRange
+	::gpk::error_t			recordRange
 		( ::gpk::SLoadCache						& loadCache
 		, ::blt::TNamedBlitterDB				& database
 		, const ::gpk::rangeu64					& range
@@ -22,7 +22,7 @@ namespace blt
 		);
 
 
-	::gpk::error_t									recordLoad
+	::gpk::error_t			recordLoad
 		( ::gpk::SLoadCache			& loadCache
 		, ::blt::TNamedBlitterDB	& database
 		, const uint64_t			absoluteIndex
@@ -31,7 +31,7 @@ namespace blt
 		, const ::gpk::vcc			& folder
 		);
 
-	::gpk::error_t									recordGet
+	::gpk::error_t			recordGet
 		( ::gpk::SLoadCache			& loadCache
 		, ::blt::TNamedBlitterDB	& database
 		, const uint64_t			absoluteIndex
@@ -41,7 +41,7 @@ namespace blt
 		, const ::gpk::vcc			& folder
 		);
 
-	static inline	::gpk::error_t					recordGet
+	static inline	::gpk::error_t				recordGet
 		( ::gpk::SLoadCache				& loadCache
 		, ::blt::TNamedBlitterDB		& database
 		, const uint64_t				absoluteIndex

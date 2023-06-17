@@ -3,7 +3,7 @@
 //#include "blitter.h"
 //#include "blitter_process.h"
 //
-//::gpk::error_t									outputComposeFormById		(::gpk::array_pod<char_t> & output, ::blt::SBlitter & instance, uint32_t iTable, uint64_t idDetail, const ::gpk::vcc uriAction)				{
+//::gpk::error_t			outputComposeFormById		(::gpk::array_pod<char_t> & output, ::blt::SBlitter & instance, uint32_t iTable, uint64_t idDetail, const ::gpk::vcc uriAction)				{
 //	::blt::TNamedBlitterDB								& table							= instance.Databases[iTable];
 //	const ::blt::STableDescription						& tableDesc						= table.Val.Description;
 //	::gpk::array_obj<::gpk::array_pod<char_t>>			valuesFromDB					= {};
@@ -138,7 +138,7 @@
 //	return 0;
 //}
 //
-//::gpk::error_t									outputComposeForm			(::gpk::array_pod<char_t> & output, ::blt::SBlitter & instance, uint32_t iTable, const ::gpk::vcc uriAction)				{
+//::gpk::error_t			outputComposeForm			(::gpk::array_pod<char_t> & output, ::blt::SBlitter & instance, uint32_t iTable, const ::gpk::vcc uriAction)				{
 //	const ::blt::STableDescription						& tableDesc						= instance.Databases[iTable].Val.Description;
 //	output											= ::gpk::view_const_string{"Content-type: text/html\r\n\r\n"};
 //	::gpk::array_pod<byte_t>							jsScriptFile					= {};

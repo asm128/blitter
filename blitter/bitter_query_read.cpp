@@ -1,6 +1,6 @@
 #include "blitter_process.h"
 
-::gpk::error_t									blt::recordLoad
+::gpk::error_t			blt::recordLoad
 	( ::gpk::SLoadCache					& loadCache
 	, ::blt::TNamedBlitterDB			& database
 	, const uint64_t					absoluteIndex
@@ -20,7 +20,7 @@
 	return 0;
 }
 
-::gpk::error_t									blt::recordGet
+::gpk::error_t			blt::recordGet
 	( ::gpk::SLoadCache					& loadCache
 	, ::blt::TNamedBlitterDB			& database
 	, const uint64_t					absoluteIndex
