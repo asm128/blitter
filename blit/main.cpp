@@ -6,9 +6,9 @@
 
 GPK_CGI_JSON_APP_IMPL();
 
-::gpk::error_t									jsonFail						(::gpk::array_pod<char_t> & output, ::gpk::view_const_string textToLog, ::gpk::view_const_string status)	{
+::gpk::error_t									jsonFail						(::gpk::achar & output, ::gpk::vcs textToLog, ::gpk::vcs status)	{
 	error_printf("%s", textToLog.begin());
-	output											= ::gpk::view_const_string{"Status: "};
+	output											= ::gpk::vcs{"Status: "};
 	gpk_necall(output.append(status)						, "%s", "Failed to generate output message.");
 	gpk_necall(output.append_string("\r\nContent-Type: application/json\r\n\r\n"), "%s", "Failed to generate output message.");
 	gpk_necall(output.append_string("{ \"status\":")		, "%s", "Failed to generate output message.");
@@ -19,17 +19,17 @@ GPK_CGI_JSON_APP_IMPL();
 	return 0;
 }
 
-::gpk::error_t									gpk_cgi_generate_output			(::gpk::SCGIRuntimeValues & runtimeValues, ::gpk::array_pod<char_t> & output)	{
+::gpk::error_t									gpk_cgi_generate_output			(::gpk::SCGIRuntimeValues & runtimeValues, ::gpk::achar & output)	{
 	::gpk::SHTTPAPIRequest								requestReceived					= {};
 	bool												isCGIEnviron					= ::gpk::httpRequestInit(requestReceived, runtimeValues, true);
 	::gpk::array_obj<::gpk::TKeyValConstString>			environViews;
 	gpk_necall(::gpk::environmentBlockViews(runtimeValues.EntryPointArgs.EnvironmentBlock, environViews), "%s", "If this breaks, we better know ASAP.");
 	if (isCGIEnviron) {
-		gpk_necall(output.append(::gpk::view_const_string{"Content-type: application/json\r\n"}), "%s", "Out of memory?");
-		gpk_necall(output.append(::gpk::view_const_string{"\r\n"})								, "%s", "Out of memory?");
+		gpk_necs(output.append_string("Content-type: application/json\r\n"));
+		gpk_necs(output.append_string("\r\n"));
 	}
 
-	const ::gpk::view_const_string						configFileName					= "itwapi.json";
+	const ::gpk::vcs						configFileName					= "itwapi.json";
 	::blt::SBlitter										app								= {};
 	gpk_necall(::blt::requestProcess(app.ExpressionReader, app.Query, requestReceived, app.ExpansionKeyStorage), "%s", "Failed to process request.");
 	gpk_necall(::blt::loadConfig(app, "./blitter.json"), "%s", "Failed to load blitter configuration.");

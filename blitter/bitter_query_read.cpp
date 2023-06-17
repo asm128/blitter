@@ -6,7 +6,7 @@
 	, const uint64_t					absoluteIndex
 	, uint32_t							& relativeIndex
 	, uint32_t							& blockIndex
-	, const ::gpk::view_const_char		& folder
+	, const ::gpk::vcc		& folder
 	) {
 	const uint32_t										indexBlock								= (0 == database.Val.BlockSize) ? (uint32_t)-1	: (uint32_t)(absoluteIndex / database.Val.BlockSize);
 	const int32_t										iBlockElem								= (0 == database.Val.BlockSize)
@@ -24,10 +24,10 @@
 	( ::gpk::SLoadCache					& loadCache
 	, ::blt::TNamedBlitterDB			& database
 	, const uint64_t					absoluteIndex
-	, ::gpk::view_const_char			& output_record
+	, ::gpk::vcc			& output_record
 	, uint32_t							& relativeIndex
 	, uint32_t							& blockIndex
-	, const ::gpk::view_const_char		& folder
+	, const ::gpk::vcc		& folder
 	) {
 	gpk_necall(::blt::recordLoad(loadCache, database, absoluteIndex, relativeIndex, blockIndex, folder), "Failed to load record indices.");
 
@@ -40,38 +40,38 @@
 	return 0;
 }
 
-::gpk::error_t									recordRangeBlock
-	( const ::blt::TNamedBlitterDB					& database
-	, const ::gpk::SRange<uint64_t>					& range
-	, const uint32_t								idBlock
-	, const uint32_t								iNewBlock
-	, ::gpk::array_obj<::blt::SRangeBlockInfo>		& output_records
+::gpk::error_t			recordRangeBlock
+	( const ::blt::TNamedBlitterDB				& database
+	, const ::gpk::rangeu64						& range
+	, const uint32_t							idBlock
+	, const uint32_t							iNewBlock
+	, ::gpk::aobj<::blt::SRangeBlockInfo>	& output_records
 	) {
-	const ::gpk::SJSONReader							& readerBlock		= database.Val.Blocks[iNewBlock]->Reader;
+	const ::gpk::SJSONReader	& readerBlock		= database.Val.Blocks[iNewBlock]->Reader;
 	ree_if(0 == readerBlock.Tree.size(), "%s", "Invalid block data.");
-	const ::gpk::SJSONNode								& jsonRoot			= *readerBlock.Tree[0];
+	const ::gpk::SJSONNode		& jsonRoot			= *readerBlock.Tree[0];
 	ree_if(::gpk::JSON_TYPE_ARRAY != jsonRoot.Token->Type, "Invalid json type: %s", ::gpk::get_value_label(jsonRoot.Token->Type).begin());
 
-	const uint64_t										offsetRecord		= database.Val.Offsets[iNewBlock];
-	::blt::SRangeBlockInfo								rangeInfo			= {};
+	const uint64_t				offsetRecord		= database.Val.Offsets[iNewBlock];
+	::blt::SRangeBlockInfo		rangeInfo			= {};
 	// Actuallly I believe we should handle this differently than for single-file database access, but it is possible that I already thought about this before.
-	rangeInfo.RelativeIndices.Min					= ::gpk::max(0, (int32_t)(range.Offset - offsetRecord));
-	rangeInfo.RelativeIndices.Max					= ::gpk::min(::gpk::jsonArraySize(jsonRoot) - 1U, ::gpk::min(database.Val.BlockSize - 1, (uint32_t)((range.Offset + range.Count) - offsetRecord - 1)));
+	rangeInfo.RelativeIndices.Min	= ::gpk::max(0, (int32_t)(range.Offset - offsetRecord));
+	rangeInfo.RelativeIndices.Max	= ::gpk::min(::gpk::jsonArraySize(jsonRoot) - 1U, ::gpk::min(database.Val.BlockSize - 1, (uint32_t)((range.Offset + range.Count) - offsetRecord - 1)));
 	if(rangeInfo.RelativeIndices.Max < rangeInfo.RelativeIndices.Min) {
-		rangeInfo.OutputRecords							= {};
+		rangeInfo.OutputRecords	= {};
 		warning_printf("Invalid range: {Offset: %i, Count: %i}", range.Offset, range.Count);
 		return 0;
 	}
 
 	rangeInfo.BlockIndex							= iNewBlock;
 	rangeInfo.BlockId								= idBlock;
-	const ::gpk::SMinMax<int32_t>						blockNodeIndices	=
+	const ::gpk::minmaxi32					blockNodeIndices	=
 		{ ::gpk::jsonArrayValueGet(jsonRoot, rangeInfo.RelativeIndices.Min)
 		, ::gpk::jsonArrayValueGet(jsonRoot, rangeInfo.RelativeIndices.Max)
 		};
-	const ::gpk::view_const_char						viewRecordFirst				= readerBlock.View[(((uint32_t)blockNodeIndices.Min) < readerBlock.View.size()) ? blockNodeIndices.Min : 0];
-	const ::gpk::view_const_char						viewRecordLast				= readerBlock.View[blockNodeIndices.Max];
-	const uint32_t										charCount	= (uint32_t)
+	const ::gpk::vcc						viewRecordFirst				= readerBlock.View[(((uint32_t)blockNodeIndices.Min) < readerBlock.View.size()) ? blockNodeIndices.Min : 0];
+	const ::gpk::vcc						viewRecordLast				= readerBlock.View[blockNodeIndices.Max];
+	const uint32_t							charCount	= (uint32_t)
 		( viewRecordLast.end()
 		- viewRecordFirst.begin()
 		);
@@ -83,13 +83,13 @@
 	return 0;
 }
 
-::gpk::error_t									blt::recordRange
-	( ::gpk::SLoadCache								& loadCache
-	, ::blt::TNamedBlitterDB						& database
-	, const ::gpk::SRange<uint64_t>					& range
-	, const ::gpk::view_const_char					& folder
-	, ::gpk::array_obj<::blt::SRangeBlockInfo>		& output_records
-	, ::gpk::SRange<uint32_t>						& blockRange
+::gpk::error_t			blt::recordRange
+	( ::gpk::SLoadCache						& loadCache
+	, ::blt::TNamedBlitterDB				& database
+	, const ::gpk::rangeu64					& range
+	, const ::gpk::vcc						& folder
+	, ::gpk::aobj<::blt::SRangeBlockInfo>	& output_records
+	, ::gpk::rangeu32						& blockRange
 	) {
 	const uint64_t										maxRecord			= ((range.Count == ::blt::MAX_TABLE_RECORD_COUNT) ? range.Count : range.Offset + range.Count);
 	uint32_t											blockStart			= (0 == database.Val.BlockSize) ? 0				: (uint32_t)range.Offset / database.Val.BlockSize;

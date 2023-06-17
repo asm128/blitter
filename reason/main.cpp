@@ -3,7 +3,7 @@
 #define GPK_WARNING_PRINTF_ENABLED
 #define GPK_INFO_PRINTF_ENABLED
 
-#include "gpk_storage.h"
+#include "gpk_file.h"
 #include "gpk_json.h"
 #include "gpk_parse.h"
 #include "gpk_deflate.h"
@@ -11,6 +11,7 @@
 #include "gpk_noise.h"
 
 #include "blitter.h"
+#include "gpk_path.h"
 
 static constexpr const uint32_t			DEFAULT_BLOCK_SIZE				= 1024;
 
@@ -53,28 +54,28 @@ struct SSplitParams {
 #define SEASON_ENABLE_VERIFICATION
 
 struct SWriteCache {
-	::gpk::array_pod<char_t>				PartFileName					= {};
-	::gpk::array_pod<char_t>				PathToWriteTo					= {};
+	::gpk::achar				PartFileName					= {};
+	::gpk::achar				PathToWriteTo					= {};
 	::gpk::SLoadCache						LoadCache						= {};
 #if defined SEASON_ENABLE_VERIFICATION
-	::gpk::array_pod<char_t>				Verify							= {};
+	::gpk::achar				Verify							= {};
 #endif
 };
 
-::gpk::error_t							writePart						(::SWriteCache & blockCache, const ::SSplitParams & params, ::gpk::array_pod<char_t> & partBytes)		{
-	::gpk::array_pod<char_t>					& partFileName					= blockCache.PartFileName					;
-	::gpk::array_pod<char_t>					& pathToWriteTo					= blockCache.PathToWriteTo					;
+::gpk::error_t							writePart						(::SWriteCache & blockCache, const ::SSplitParams & params, const ::gpk::vcu8 & partBytes)		{
+	::gpk::achar					& partFileName					= blockCache.PartFileName					;
+	::gpk::achar					& pathToWriteTo					= blockCache.PathToWriteTo					;
 	::gpk::clear(partFileName, pathToWriteTo, blockCache.LoadCache.Deflated, blockCache.LoadCache.Encrypted);
 	gpk_necall(::blt::tableFileName(partFileName, params.DeflatedOutput ? ::blt::DATABASE_HOST_DEFLATE : ::blt::DATABASE_HOST_LOCAL, params.EncryptionKey.size() > 0, params.DBName), "%s", "??");
-	gpk_necall(pathToWriteTo.append(partFileName), "%s", "Out of memory?");
-	return ::gpk::fileFromMemorySecure(blockCache.LoadCache, partBytes, pathToWriteTo, params.EncryptionKey, params.DeflatedOutput);
+	gpk_necs(pathToWriteTo.append(partFileName));
+	return ::gpk::fileFromMemorySecure(blockCache.LoadCache, pathToWriteTo, params.EncryptionKey.cu8(), params.DeflatedOutput, partBytes);
 }
 
 // Splits a file.json into file.#blocksize.db/file.##.json parts.
 int										main							(int argc, char ** argv)		{
 	::SSplitParams								params							= {};
 	gpk_necall(::loadParams(params, argc, argv), "%s", "");
-	::gpk::array_pod<char_t>					bytesToSave						= {};
+	::gpk::achar					bytesToSave						= {};
 	{
 		::gpk::SJSONFile							jsonFileToSplit					= {};
 		gpk_necall(::gpk::jsonFileRead(jsonFileToSplit, params.FileNameSrc), "Failed to load file: %s.", params.FileNameSrc.begin());
@@ -85,6 +86,6 @@ int										main							(int argc, char ** argv)		{
 	}
 
 	::SWriteCache								blockCache						= {};
-	gpk_necall(::writePart(blockCache, params, bytesToSave), "%s", "Unknown error!");
+	gpk_necs(::writePart(blockCache, params, bytesToSave.cu8()));
 	return 0;
 }

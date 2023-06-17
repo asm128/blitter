@@ -6,47 +6,47 @@
 namespace blt
 {
 	struct SRangeBlockInfo {
-		::gpk::view_const_char							OutputRecords			= {};
-		::gpk::SMinMax<uint32_t>						RelativeIndices			= {};
-		uint32_t										BlockIndex				= 0;
-		uint32_t										BlockId					= 0;
+		::gpk::vcc				OutputRecords			= {};
+		::gpk::minmaxu32		RelativeIndices			= {};
+		uint32_t				BlockIndex				= 0;
+		uint32_t				BlockId					= 0;
 	};
 
 	::gpk::error_t									recordRange
-		( ::gpk::SLoadCache								& loadCache
-		, ::blt::TNamedBlitterDB						& database
-		, const ::gpk::SRange<uint64_t>					& range
-		, const ::gpk::view_const_char					& folder
-		, ::gpk::array_obj<::blt::SRangeBlockInfo>		& output_records
-		, ::gpk::SRange<uint32_t>						& blockRange
+		( ::gpk::SLoadCache						& loadCache
+		, ::blt::TNamedBlitterDB				& database
+		, const ::gpk::rangeu64					& range
+		, const ::gpk::vcc						& folder
+		, ::gpk::aobj<::blt::SRangeBlockInfo>	& output_records
+		, ::gpk::rangeu32						& blockRange
 		);
 
 
 	::gpk::error_t									recordLoad
-		( ::gpk::SLoadCache				& loadCache
-		, ::blt::TNamedBlitterDB		& database
-		, const uint64_t				absoluteIndex
-		, uint32_t						& relativeIndex
-		, uint32_t						& blockIndex
-		, const ::gpk::view_const_char	& folder
+		( ::gpk::SLoadCache			& loadCache
+		, ::blt::TNamedBlitterDB	& database
+		, const uint64_t			absoluteIndex
+		, uint32_t					& relativeIndex
+		, uint32_t					& blockIndex
+		, const ::gpk::vcc			& folder
 		);
 
 	::gpk::error_t									recordGet
-		( ::gpk::SLoadCache				& loadCache
-		, ::blt::TNamedBlitterDB		& database
-		, const uint64_t				absoluteIndex
-		, ::gpk::view_const_char		& output_record
-		, uint32_t						& relativeIndex
-		, uint32_t						& blockIndex
-		, const ::gpk::view_const_char	& folder
+		( ::gpk::SLoadCache			& loadCache
+		, ::blt::TNamedBlitterDB	& database
+		, const uint64_t			absoluteIndex
+		, ::gpk::vcc				& output_record
+		, uint32_t					& relativeIndex
+		, uint32_t					& blockIndex
+		, const ::gpk::vcc			& folder
 		);
 
 	static inline	::gpk::error_t					recordGet
 		( ::gpk::SLoadCache				& loadCache
 		, ::blt::TNamedBlitterDB		& database
 		, const uint64_t				absoluteIndex
-		, ::gpk::view_const_char		& output_record
-		, const ::gpk::view_const_char	& folder
+		, ::gpk::vcc					& output_record
+		, const ::gpk::vcc				& folder
 	) {
 		uint32_t											indexRelative					= (uint32_t)-1;
 		uint32_t											indexBlock						= (uint32_t)-1;

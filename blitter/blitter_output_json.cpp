@@ -1,6 +1,6 @@
 #include "blitter_output.h"
 
-::gpk::error_t									blt::outputModel			(::gpk::array_pod<char_t> & output, const ::blt::STableDescription & tableDesc)				{
+::gpk::error_t			blt::outputModel			(::gpk::achar & output, const ::blt::STableDescription & tableDesc)				{
 	gpk_necall(output.push_back('{'), "%s", "Out of memory?");
 	for(uint32_t iField = 0; iField < tableDesc.Fields.size(); ++iField) {
 		::gpk::append_quoted(output, tableDesc.Fields[iField].Field);

@@ -14,4 +14,4 @@ copy ..\..\x64.Release\season.exe ..\..\blitdb
 copy ..\..\x64.Release\reason.exe ..\..\blitdb
 
 cd ..\..\blitdb
-all.bat
+echo all.bat
