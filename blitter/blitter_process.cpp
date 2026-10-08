@@ -6,9 +6,9 @@
 #include "gpk_bit.h"
 #include "gpk_chrono.h"
 
-::gpk::error_t			blt::blockWrite							(::blt::SWriteCache & writeCache, const ::gpk::vcc & dbFolderName, const ::gpk::vcc & dbName, const ::gpk::vcc & encryptionKey, ::blt::DATABASE_HOST hostType, const ::gpk::vcu8 & partBytes, uint32_t iPart)		{
-	::gpk::achar							partFileName							= writeCache.PartFileName;
-	::gpk::achar							pathToWriteTo							= writeCache.PathToWriteTo;
+::gpk::error_t			blt::blockWrite							(::blt::SWriteCache & writeCache, ::gpk::vcst_t dbFolderName, ::gpk::vcst_t dbName, ::gpk::vcst_t encryptionKey, ::blt::DATABASE_HOST hostType, const ::gpk::vcu0_t & partBytes, uint32_t iPart)		{
+	::gpk::string							partFileName							= writeCache.PartFileName;
+	::gpk::string							pathToWriteTo							= writeCache.PathToWriteTo;
 	::gpk::clear(partFileName, pathToWriteTo, writeCache.LoadCache.Deflated, writeCache.LoadCache.Encrypted);
 	pathToWriteTo									= dbFolderName;
 	if(pathToWriteTo.size() && pathToWriteTo[pathToWriteTo.size() - 1] != '/')
@@ -18,11 +18,11 @@
 	return ::gpk::fileFromMemorySecure(writeCache.LoadCache, pathToWriteTo, encryptionKey.cu8(), ::gpk::bit_true(hostType, ::blt::DATABASE_HOST_DEFLATE), partBytes.cu8());
 }
 
-::gpk::error_t			databaseFlush							(::blt::SWriteCache & cache, ::blt::TNamedBlitterDB & db, ::gpk::vcc folder) {
+::gpk::error_t			databaseFlush							(::blt::SWriteCache & cache, ::blt::TNamedBlitterDB & db, ::gpk::vcst_t folder) {
 	::gpk::view_bit<const uint32_t>						dirty									= {db.Val.BlockDirty.begin(), db.Val.Blocks.size()};
 	for(uint32_t iBlock = 0; iBlock < db.Val.Blocks.size(); ++iBlock) {
 		if(dirty[iBlock]) {
-			::gpk::achar						folderName								= {};
+			::gpk::string						folderName								= {};
 			gpk_necall(::blt::tableFolderInit(folderName, folder, db.Key, db.Val.BlockSize), "Failed to initialize folder for table '%s'. Not enough permissions?", ::gpk::toString(db.Key).begin());
 			gpk_necs(::blt::blockWrite(cache, folderName, db.Key, db.Val.EncryptionKey.cc(), db.Val.HostType, db.Val.Blocks[iBlock]->Bytes.cu8(), db.Val.BlockIndices[iBlock]));
 		}
@@ -46,27 +46,28 @@ static	::gpk::error_t	queryGetDetail
 	, ::gpk::array_obj<::blt::TNamedBlitterDB>		& databases
 	, const uint32_t								idxDatabase
 	, const ::blt::SBlitterQuery					& query
-	, ::gpk::achar						& output
-	, const ::gpk::vcc					& folder
+	, ::gpk::string						& output
+	, const ::gpk::vcst_t					& folder
 	, const uint32_t								idxExpand
 	) {
 	::gpk::vcs							outputRecord						= {};
 	uint32_t											nodeIndex							= (uint32_t)-1;
 	uint32_t											blockIndex							= (uint32_t)-1;
 	::blt::TNamedBlitterDB								& databaseToRead					= databases[idxDatabase];
-	if errored(::blt::recordGet(loadCache, databaseToRead, query.Detail, outputRecord, nodeIndex, blockIndex, folder)) {
+	if(::gpk::failed(::blt::recordGet(loadCache, databaseToRead, query.Detail, outputRecord, nodeIndex, blockIndex, folder))) {
 		error_printf("Failed to load record detail. Offset: %llu. Length: %llu.", query.Range.Offset, query.Range.Count);
-		gpk_necall(output.append(::gpk::vcs{"{}"}), "%s", "Out of memory?");
+		if_fail_fe(output.append(::gpk::vcs{"{}"}));
 		return 1;
 	}
-	if(idxExpand >= query.ExpansionKeys.size())
-		gpk_necall(output.append(outputRecord), "%s", "Out of memory?");
+	if(idxExpand >= query.ExpansionKeys.size()) {
+		if_fail_fe(output.append(outputRecord));
+	}
 	else {
 		const ::gpk::SJSONFile								& currentDBBlock					= *databaseToRead.Val.Blocks[blockIndex];
 		const int32_t										indexRecordNode						= ::gpk::jsonArrayValueGet(*currentDBBlock.Reader.Tree[0], nodeIndex);
-		const ::gpk::vcc						fieldToExpand						= query.ExpansionKeys[idxExpand];
+		const ::gpk::vcst_t						fieldToExpand						= query.ExpansionKeys[idxExpand];
 		const int32_t										indexValueNode						= ::gpk::jsonObjectValueGet(currentDBBlock.Reader, (uint32_t)indexRecordNode, {fieldToExpand.begin(), fieldToExpand.size()});
-		const ::gpk::vcc						currentRecordView					= currentDBBlock.Reader.View[indexRecordNode];
+		const ::gpk::vcst_t						currentRecordView					= currentDBBlock.Reader.View[indexRecordNode];
 		if(0 > indexValueNode) {
 			info_printf("Cannot expand field. Field not found: %s.", ::gpk::toString(fieldToExpand).begin());
 			gpk_necall(output.append(currentRecordView), "%s", "Out of memory?");
@@ -79,7 +80,7 @@ static	::gpk::error_t	queryGetDetail
 			}
 			else if(::gpk::JSON_TYPE_INTEGER == refNodeTYpe) {
 				int64_t											nextTableRecordIndex				= -1LL;
-				const ::gpk::vcc					digitsToDetailView					= currentDBBlock.Reader.View[indexValueNode];
+				const ::gpk::vcst_t					digitsToDetailView					= currentDBBlock.Reader.View[indexValueNode];
 				gpk_necall(::gpk::parseIntegerDecimal(digitsToDetailView, nextTableRecordIndex), "%s", "Out of memory?");
 
 				const char										* appendStart						= currentRecordView.begin();
@@ -88,7 +89,7 @@ static	::gpk::error_t	queryGetDetail
 				bool											bFound								= false;
 				for(uint32_t iDB = 0; iDB < databases.size(); ++iDB) {
 					::blt::TNamedBlitterDB							& nextTable							= databases[iDB];
-					if(nextTable.Key == fieldToExpand || 0 <= ::gpk::find(fieldToExpand, ::gpk::view_array<const ::gpk::vcc>{nextTable.Val.Bindings})) {
+					if(nextTable.Key == fieldToExpand || 0 <= ::gpk::find(fieldToExpand, ::gpk::view_array<const ::gpk::vcst_t>{nextTable.Val.Bindings})) {
 						bFound										= true;
 						::blt::SBlitterQuery							nextQuery							= query;
 						nextQuery.Database							= nextTable.Key;
@@ -105,7 +106,7 @@ static	::gpk::error_t	queryGetDetail
 			}
 			else {
 				const char					* appendStart						= currentRecordView.begin();
-				const ::gpk::vcc			arrayToDetailView					= currentDBBlock.Reader.View[indexValueNode];
+				const ::gpk::vcst_t			arrayToDetailView					= currentDBBlock.Reader.View[indexValueNode];
 				const char					* appendStop						= arrayToDetailView.begin();
 				gpk_necall(output.append(appendStart, (uint32_t)(appendStop - appendStart)), "%s", "Out of memory?");
 				gpk_necall(output.push_back('['), "%s", "Out of memory?");
@@ -114,11 +115,11 @@ static	::gpk::error_t	queryGetDetail
 				for(uint32_t iRef = 0, refCount = ::gpk::jsonArraySize(*currentDBBlock.Reader.Tree[indexValueNode]); iRef < refCount; ++iRef) {
 					uint64_t					nextTableRecordIndex					= (uint64_t)-1LL;
 					const ::gpk::error_t		indexArrayElement						= ::gpk::jsonArrayValueGet(arrayNode, iRef);
-					const ::gpk::vcc			digitsToDetailView						= currentDBBlock.Reader.View[indexArrayElement];
+					const ::gpk::vcst_t			digitsToDetailView						= currentDBBlock.Reader.View[indexArrayElement];
 					gpk_necall(::gpk::parseIntegerDecimal(digitsToDetailView, nextTableRecordIndex), "%s", "Out of memory?");
 					for(uint32_t iDB = 0; iDB < databases.size(); ++iDB) {
 						::blt::TNamedBlitterDB							& nextTable							= databases[iDB];
-						if(nextTable.Key == fieldToExpand || 0 <= ::gpk::find(fieldToExpand, ::gpk::view_array<const ::gpk::vcc>{nextTable.Val.Bindings})) {
+						if(nextTable.Key == fieldToExpand || 0 <= ::gpk::find(fieldToExpand, ::gpk::view_array<const ::gpk::vcst_t>{nextTable.Val.Bindings})) {
 							bFound										= true;
 							::blt::SBlitterQuery							nextQuery							= query;
 							nextQuery.Database							= nextTable.Key;
@@ -142,7 +143,7 @@ static	::gpk::error_t	queryGetDetail
 	return 0;
 }
 
-static	::gpk::error_t	fillEmptyBlocks				(const ::gpk::vcc & emptyBlockData, const uint32_t emptyBlocks, bool appendComma, ::gpk::achar & output)	{
+static	::gpk::error_t	fillEmptyBlocks				(::gpk::vcst_t emptyBlockData, const uint32_t emptyBlocks, bool appendComma, ::gpk::string & output)	{
 	for(uint32_t iEmpty = 0; iEmpty < emptyBlocks; ++iEmpty) {
 		gpk_necall(output.append(emptyBlockData), "%s", "Out of memory?");
 		if(emptyBlocks - 1 != iEmpty)
@@ -153,7 +154,7 @@ static	::gpk::error_t	fillEmptyBlocks				(const ::gpk::vcc & emptyBlockData, con
 	return 0;
 }
 
-static	::gpk::error_t	nextBlock					(const uint32_t iRangeInfo, const uint32_t lastRangeInfo, const ::gpk::view_array<const ::blt::SRangeBlockInfo>	& rangeInfo, const ::gpk::vcc & emptyBlockData, ::gpk::achar & output) {
+static	::gpk::error_t	nextBlock					(const uint32_t iRangeInfo, const uint32_t lastRangeInfo, const ::gpk::view_array<const ::blt::SRangeBlockInfo>	& rangeInfo, ::gpk::vcst_t emptyBlockData, ::gpk::string & output) {
 	if(rangeInfo.size() -1 != iRangeInfo)
 		gpk_necall(output.push_back(','), "%s", "Out of memory?");
 
@@ -173,19 +174,19 @@ static	::gpk::error_t	queryGetRange
 	, ::gpk::aobj<::blt::TNamedBlitterDB>	& databases
 	, const uint32_t						idxDatabase
 	, const ::blt::SBlitterQuery			& query
-	, ::gpk::achar							& output
-	, const ::gpk::vcc						& folder
+	, ::gpk::string							& output
+	, const ::gpk::vcst_t						& folder
 	, const uint32_t						idxExpand
 	) {
 	if(0 == query.Range.Count) {
 		gpk_necall(output.append(::gpk::vcs{"[]"}), "%s", "Out of memory?");
 		return 0;
 	}
-	::gpk::apod<::gpk::minmaxu32>				relativeIndices						= {};
-	::gpk::rangeu32								blockRange							= {};
+	::gpk::apod<::gpk::minmaxu2_t>				relativeIndices						= {};
+	::gpk::rangeu2_t								blockRange							= {};
 	::gpk::aobj<::blt::SRangeBlockInfo>				rangeInfo							= {};
 	::blt::TNamedBlitterDB									& databaseToRead					= databases[idxDatabase];
-	::gpk::achar								emptyBlockData						= {};
+	::gpk::string								emptyBlockData						= {};
 	const ::gpk::vcs							empty_record						= "{},";
 	for(uint32_t iRecord = 0; iRecord < databaseToRead.Val.BlockSize; ++iRecord)
 		gpk_necall(emptyBlockData.append(empty_record), "%s", "Out of memory?");
@@ -211,7 +212,7 @@ static	::gpk::error_t	queryGetRange
 
 	if(idxExpand >= query.ExpansionKeys.size()) {
 		for(uint32_t iView = 0; iView < rangeInfo.size(); ++iView) {
-			const ::gpk::vcc							rangeView							= rangeInfo[iView].OutputRecords;
+			const ::gpk::vcst_t							rangeView							= rangeInfo[iView].OutputRecords;
 			gpk_necall(output.append(rangeView), "%s", "Out of memory?");
 			gpk_necall(::nextBlock(iView, lastRangeInfo, rangeInfo, emptyBlockData, output), "%s", "??");
 		}
@@ -220,7 +221,7 @@ static	::gpk::error_t	queryGetRange
 		::blt::SBlitterQuery			elemQuery							= query;
 		for(uint32_t iView = 0; iView < rangeInfo.size(); ++iView) {
 			const ::blt::SRangeBlockInfo	& blockInfo							= rangeInfo[iView];
-			const ::gpk::minmaxu32			rangeToExpand						= blockInfo.RelativeIndices;
+			const ::gpk::minmaxu2_t			rangeToExpand						= blockInfo.RelativeIndices;
 			for(uint32_t iRecord = rangeToExpand.Min; iRecord < rangeToExpand.Max + 1; ++iRecord) {
 				elemQuery.Detail								= iRecord + blockInfo.BlockId * (int64_t)databaseToRead.Val.BlockSize;
 				gpk_necall(::queryGetDetail(loadCache, expressionReader, databases, idxDatabase, elemQuery, output, folder, idxExpand), "%s", "??");
@@ -256,7 +257,7 @@ static	::gpk::error_t	queryGetRange
 static	int64_t			pushNewBlock
 	( ::gpk::SLoadCache			& loadCache
 	, ::blt::TNamedBlitterDB	& database
-	, const ::gpk::vcc			& folder
+	, const ::gpk::vcst_t			& folder
 	, const ::gpk::SJSONReader	& recordToAdd
 	, const int32_t				idMaxBlockOnDisk
 	) {
@@ -266,7 +267,7 @@ static	int64_t			pushNewBlock
 		newBlock->Bytes.push_back('[');
 		loadCache.Deflated.clear();
 		ree_if(0 == recordToAdd.Tree.size(), "Invalid json record! %s.", "Forgot to build the reader from the record?")
-		gpk_necall(::gpk::jsonWrite(recordToAdd[0], recordToAdd.View, *(::gpk::achar*)&loadCache.Deflated), "Failed to write json record! %s", "Invalid format?");
+		gpk_necall(::gpk::jsonWrite(recordToAdd[0], recordToAdd.View, *(::gpk::string*)&loadCache.Deflated), "Failed to write json record! %s", "Invalid format?");
 		newBlock->Bytes.append(loadCache.Deflated.cc());
 		newBlock->Bytes.push_back(']');
 		gpk_necall(::gpk::jsonParse(newBlock->Reader, newBlock->Bytes), "%s", "Failed to parse new block.");
@@ -295,7 +296,7 @@ static	int64_t			pushNewBlock
 		newBlock.Bytes.push_back('[');
 		loadCache.Deflated.clear();
 		ree_if(0 == recordToAdd.Tree.size(), "Invalid json record! %s.", "Forgot to build the reader from the record?")
-		gpk_necall(::gpk::jsonWrite(recordToAdd[0], recordToAdd.View, *(::gpk::achar*)&loadCache.Deflated), "Failed to write json record! %s", "Invalid format?");
+		gpk_necall(::gpk::jsonWrite(recordToAdd[0], recordToAdd.View, *(::gpk::string*)&loadCache.Deflated), "Failed to write json record! %s", "Invalid format?");
 		newBlock.Bytes.append(loadCache.Deflated.cc());
 		newBlock.Bytes.push_back(']');
 		gpk_necall(::gpk::jsonParse(newBlock.Reader, newBlock.Bytes), "%s", "Failed to parse new block.");
@@ -317,7 +318,7 @@ static	int64_t								appendRecord
 	) {
 	loadCache.Deflated.clear();
 	loadCache.Deflated.push_back(',');
-	gpk_necall(::gpk::jsonWrite(recordToAdd.Tree[0], recordToAdd.View, *(::gpk::achar*)&loadCache.Deflated), "Failed to write json record! %s", "Invalid format?");
+	gpk_necall(::gpk::jsonWrite(recordToAdd.Tree[0], recordToAdd.View, *(::gpk::string*)&loadCache.Deflated), "Failed to write json record! %s", "Invalid format?");
 	::gpk::SJSONFile									& block				= *database.Blocks[indexBlock];
 	const uint32_t										insertPos			= block.Bytes.size() - 1;
 	const uint32_t										indexOfToken		= block.Reader.Token.size();
@@ -339,7 +340,7 @@ static	int64_t								appendRecord
 	block.Reader.View.resize(block.Reader.Token.size());
 	for(uint32_t iView = 0; iView < block.Reader.Token.size(); ++iView) {
 		::gpk::SJSONToken												& currentElement									= block.Reader.Token[iView];
-		block.Reader.View[iView]									= ::gpk::vcc{&block.Bytes[currentElement.Span.Begin], currentElement.Span.End - currentElement.Span.Begin};
+		block.Reader.View[iView]									= ::gpk::vcst_t{&block.Bytes[currentElement.Span.Begin], currentElement.Span.End - currentElement.Span.Begin};
 	}
 	block.Reader.Tree.resize(block.Reader.Token.size());
 	for(uint32_t iToken = indexOfToken; iToken < block.Reader.Token.size(); ++iToken) {
@@ -369,8 +370,8 @@ int64_t											blt::queryProcess
 	, ::gpk::array_obj<::blt::TNamedBlitterDB>		& databases
 	, const ::gpk::SExpressionReader				& expressionReader
 	, const ::blt::SBlitterQuery					& query
-	, const ::gpk::vcc					& folder
-	, ::gpk::achar						& output
+	, const ::gpk::vcst_t					& folder
+	, ::gpk::string						& output
 	) {
 	if(query.Command == ::gpk::vcs{"get"}) {
 		for(uint32_t iDB = 0; iDB < databases.size(); ++iDB) {

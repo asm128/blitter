@@ -3,11 +3,11 @@
 //#include "blitter.h"
 //#include "blitter_process.h"
 //
-//::gpk::error_t			outputComposeFormById		(::gpk::array_pod<char_t> & output, ::blt::SBlitter & instance, uint32_t iTable, uint64_t idDetail, const ::gpk::vcc uriAction)				{
+//::gpk::error_t			outputComposeFormById		(::gpk::array_pod<char_t> & output, ::blt::SBlitter & instance, uint32_t iTable, uint64_t idDetail, const ::gpk::vcst_t uriAction)				{
 //	::blt::TNamedBlitterDB								& table							= instance.Databases[iTable];
 //	const ::blt::STableDescription						& tableDesc						= table.Val.Description;
 //	::gpk::array_obj<::gpk::array_pod<char_t>>			valuesFromDB					= {};
-//	::gpk::vcc								outputRecord					= {};
+//	::gpk::vcst_t								outputRecord					= {};
 //	::blt::recordGet(instance.LoadCache, table, idDetail, outputRecord, instance.Folder);
 //	output											= ::gpk::view_const_string{"Content-type: text/html\r\n\r\n"};
 //	::gpk::array_obj<::gpk::SHTTPResponse>				responseFromAPIs				= {};
@@ -29,7 +29,7 @@
 //	// -- Generate input fields
 //	gpk_necall(output.append_string("<table>"), "%s", "Out of memory?");
 //	for(uint32_t iField = 0; iField < tableDesc.Fields.size(); ++iField) {
-//		const ::gpk::vcc						fieldName					= tableDesc.Fields[iField].Field;
+//		const ::gpk::vcst_t						fieldName					= tableDesc.Fields[iField].Field;
 //		output.append_string("\n<tr><td>");
 //		output.append(fieldName);
 //		output.append_string("\n</td>");
@@ -67,7 +67,7 @@
 //					if(0 > indexOfNameValueNode || 0 > indexOfIdNode)
 //						continue;
 //					output.append_string("<option value=\"");
-//					const ::gpk::vcc				idCurrentItem					= fieldReader.View[indexOfIdNode];
+//					const ::gpk::vcst_t				idCurrentItem					= fieldReader.View[indexOfIdNode];
 //					output.append(idCurrentItem);
 //					output.append_string("\" ");
 //					if(idCurrentItem == valuesFromDB[iField])
@@ -114,7 +114,7 @@
 //						if(0 > indexOfNameValueNode || 0 > indexOfIdNode)
 //							continue;
 //						output.append_string("<option value=\"");
-//						const ::gpk::vcc				idCurrentItem					= fieldReader.View[indexOfIdNode];
+//						const ::gpk::vcst_t				idCurrentItem					= fieldReader.View[indexOfIdNode];
 //						output.append(idCurrentItem);
 //						output.append_string("\" ");
 //						if(idCurrentItem == valuesFromDB[iField])
@@ -138,7 +138,7 @@
 //	return 0;
 //}
 //
-//::gpk::error_t			outputComposeForm			(::gpk::array_pod<char_t> & output, ::blt::SBlitter & instance, uint32_t iTable, const ::gpk::vcc uriAction)				{
+//::gpk::error_t			outputComposeForm			(::gpk::array_pod<char_t> & output, ::blt::SBlitter & instance, uint32_t iTable, const ::gpk::vcst_t uriAction)				{
 //	const ::blt::STableDescription						& tableDesc						= instance.Databases[iTable].Val.Description;
 //	output											= ::gpk::view_const_string{"Content-type: text/html\r\n\r\n"};
 //	::gpk::array_pod<byte_t>							jsScriptFile					= {};
@@ -159,7 +159,7 @@
 //	::gpk::array_obj<::gpk::SJSONReader>				jsonFromAPIs					= {};
 //	::blt::retrieve_all_apis(responseFromAPIs, jsonFromAPIs, instance.APIs, tableDesc.FieldMaps);
 //	for(uint32_t iField = 0; iField < tableDesc.Fields.size(); ++iField) {
-//		const ::gpk::vcc						fieldName					= tableDesc.Fields[iField].Field;
+//		const ::gpk::vcst_t						fieldName					= tableDesc.Fields[iField].Field;
 //		output.append_string("\n<tr><td>");
 //		output.append(fieldName);
 //		output.append_string("\n</td>");
@@ -195,7 +195,7 @@
 //						int32_t										indexOfItemNode					= ::gpk::jsonArrayValueGet(fieldReader, 0, iRecord);
 //						if(0 > indexOfItemNode)
 //							continue;
-//						::gpk::vcc						viewOfItem						= fieldReader.View[indexOfItemNode];
+//						::gpk::vcst_t						viewOfItem						= fieldReader.View[indexOfItemNode];
 //						int32_t										indexOfNameValueNode			= ::gpk::jsonObjectValueGet(fieldReader, indexOfItemNode, ::gpk::view_const_string{"name"	});
 //						int32_t										indexOfIdNode					= ::gpk::jsonObjectValueGet(fieldReader, indexOfItemNode, ::gpk::view_const_string{"id"		});
 //						if(0 > indexOfNameValueNode || 0 > indexOfIdNode)
@@ -237,7 +237,7 @@
 //							int32_t										indexOfItemNode					= ::gpk::jsonArrayValueGet(fieldReader, 0, iRecord);
 //							if(0 > indexOfItemNode)
 //								continue;
-//							::gpk::vcc						viewOfItem						= fieldReader.View[indexOfItemNode];
+//							::gpk::vcst_t						viewOfItem						= fieldReader.View[indexOfItemNode];
 //							int32_t										indexOfNameValueNode			= ::gpk::jsonObjectValueGet(fieldReader, indexOfItemNode, ::gpk::view_const_string{"name"	});
 //							int32_t										indexOfIdNode					= ::gpk::jsonObjectValueGet(fieldReader, indexOfItemNode, ::gpk::view_const_string{"id"		});
 //							if(0 > indexOfNameValueNode || 0 > indexOfIdNode)

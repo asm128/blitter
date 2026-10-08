@@ -6,45 +6,45 @@
 	, const uint64_t					absoluteIndex
 	, uint32_t							& relativeIndex
 	, uint32_t							& blockIndex
-	, const ::gpk::vcc		& folder
+	, const ::gpk::vcst_t		& folder
 	) {
-	const uint32_t										indexBlock								= (0 == database.Val.BlockSize) ? (uint32_t)-1	: (uint32_t)(absoluteIndex / database.Val.BlockSize);
-	const int32_t										iBlockElem								= (0 == database.Val.BlockSize)
+	const uint32_t				indexBlock								= (0 == database.Val.BlockSize) ? (uint32_t)-1	: (uint32_t)(absoluteIndex / database.Val.BlockSize);
+	const int32_t				iBlockElem								= (0 == database.Val.BlockSize)
 		? ::blt::tableFileLoad(loadCache, database, folder)
 		: ::blt::blockFileLoad(loadCache, database, folder, indexBlock)
 		;
 	gpk_necall(iBlockElem, "Failed to load database file: %s.", "??");
-	const uint64_t										offsetRecord							= database.Val.Offsets[iBlockElem];
-	relativeIndex									= ::gpk::max(0U, (uint32_t)(absoluteIndex - offsetRecord));
-	blockIndex										= iBlockElem;
+	const uint64_t				offsetRecord							= database.Val.Offsets[iBlockElem];
+	relativeIndex			= ::gpk::max(0U, (uint32_t)(absoluteIndex - offsetRecord));
+	blockIndex				= iBlockElem;
 	return 0;
 }
 
 ::gpk::error_t			blt::recordGet
-	( ::gpk::SLoadCache					& loadCache
-	, ::blt::TNamedBlitterDB			& database
-	, const uint64_t					absoluteIndex
-	, ::gpk::vcc			& output_record
-	, uint32_t							& relativeIndex
-	, uint32_t							& blockIndex
-	, const ::gpk::vcc		& folder
+	( ::gpk::SLoadCache			& loadCache
+	, ::blt::TNamedBlitterDB	& database
+	, const uint64_t			absoluteIndex
+	, ::gpk::vcst_t				& output_record
+	, uint32_t					& relativeIndex
+	, uint32_t					& blockIndex
+	, const ::gpk::vcst_t		& folder
 	) {
 	gpk_necall(::blt::recordLoad(loadCache, database, absoluteIndex, relativeIndex, blockIndex, folder), "Failed to load record indices.");
 
-	const ::gpk::SJSONReader							& readerBlock							= database.Val.Blocks[blockIndex]->Reader;
+	const ::gpk::SJSONReader	& readerBlock							= database.Val.Blocks[blockIndex]->Reader;
 	ree_if(0 == readerBlock.Tree.size(), "%s", "Invalid block data.");
-	const ::gpk::SJSONNode								& jsonRoot								= *readerBlock.Tree[0];
+	const ::gpk::SJSONNode		& jsonRoot								= *readerBlock.Tree[0];
 	ree_if(::gpk::JSON_TYPE_ARRAY != jsonRoot.Token->Type, "Invalid json type: %s", ::gpk::get_value_label(jsonRoot.Token->Type).begin());
 	ree_if(relativeIndex >= (uint32_t)::gpk::jsonArraySize(*readerBlock[0]), "Index out of range: %i. Array size: %u.", relativeIndex, ::gpk::jsonArraySize(*readerBlock[0]));
-	output_record									= readerBlock.View[::gpk::jsonArrayValueGet(*readerBlock[0], relativeIndex)];
+	output_record			= readerBlock.View[::gpk::jsonArrayValueGet(*readerBlock[0], relativeIndex)];
 	return 0;
 }
 
 ::gpk::error_t			recordRangeBlock
-	( const ::blt::TNamedBlitterDB				& database
-	, const ::gpk::rangeu64						& range
-	, const uint32_t							idBlock
-	, const uint32_t							iNewBlock
+	( const ::blt::TNamedBlitterDB			& database
+	, const ::gpk::rangeu3_t				& range
+	, const uint32_t						idBlock
+	, const uint32_t						iNewBlock
 	, ::gpk::aobj<::blt::SRangeBlockInfo>	& output_records
 	) {
 	const ::gpk::SJSONReader	& readerBlock		= database.Val.Blocks[iNewBlock]->Reader;
@@ -63,15 +63,15 @@
 		return 0;
 	}
 
-	rangeInfo.BlockIndex							= iNewBlock;
-	rangeInfo.BlockId								= idBlock;
-	const ::gpk::minmaxi32					blockNodeIndices	=
+	rangeInfo.BlockIndex	= iNewBlock;
+	rangeInfo.BlockId		= idBlock;
+	const ::gpk::minmaxs2_t		blockNodeIndices	=
 		{ ::gpk::jsonArrayValueGet(jsonRoot, rangeInfo.RelativeIndices.Min)
 		, ::gpk::jsonArrayValueGet(jsonRoot, rangeInfo.RelativeIndices.Max)
 		};
-	const ::gpk::vcc						viewRecordFirst				= readerBlock.View[(((uint32_t)blockNodeIndices.Min) < readerBlock.View.size()) ? blockNodeIndices.Min : 0];
-	const ::gpk::vcc						viewRecordLast				= readerBlock.View[blockNodeIndices.Max];
-	const uint32_t							charCount	= (uint32_t)
+	const ::gpk::vcst_t			viewRecordFirst				= readerBlock.View[(((uint32_t)blockNodeIndices.Min) < readerBlock.View.size()) ? blockNodeIndices.Min : 0];
+	const ::gpk::vcst_t			viewRecordLast				= readerBlock.View[blockNodeIndices.Max];
+	const uint32_t				charCount	= (uint32_t)
 		( viewRecordLast.end()
 		- viewRecordFirst.begin()
 		);
@@ -86,14 +86,14 @@
 ::gpk::error_t			blt::recordRange
 	( ::gpk::SLoadCache						& loadCache
 	, ::blt::TNamedBlitterDB				& database
-	, const ::gpk::rangeu64					& range
-	, const ::gpk::vcc						& folder
+	, const ::gpk::rangeu3_t					& range
+	, const ::gpk::vcst_t						& folder
 	, ::gpk::aobj<::blt::SRangeBlockInfo>	& output_records
-	, ::gpk::rangeu32						& blockRange
+	, ::gpk::rangeu2_t						& blockRange
 	) {
-	const uint64_t										maxRecord			= ((range.Count == ::blt::MAX_TABLE_RECORD_COUNT) ? range.Count : range.Offset + range.Count);
-	uint32_t											blockStart			= (0 == database.Val.BlockSize) ? 0				: (uint32_t)range.Offset / database.Val.BlockSize;
-	uint32_t											blockStop			= (0 == database.Val.BlockSize) ? (uint32_t)-1	: (uint32_t)(maxRecord / database.Val.BlockSize);
+	const uint64_t				maxRecord			= ((range.Count == ::blt::MAX_TABLE_RECORD_COUNT) ? range.Count : range.Offset + range.Count);
+	uint32_t					blockStart			= (0 == database.Val.BlockSize) ? 0				: (uint32_t)range.Offset / database.Val.BlockSize;
+	uint32_t					blockStop			= (0 == database.Val.BlockSize) ? (uint32_t)-1	: (uint32_t)(maxRecord / database.Val.BlockSize);
 	if(0 < database.Val.BlockSize) {
 		if(0 == database.Val.BlocksOnDisk.size()) {
 			blockStart										= 0;
@@ -109,20 +109,20 @@
 	blockRange										= {blockStart, blockStop - blockStart + 1};
 
 	if(0 == database.Val.BlockSize) {
-		int32_t												iNewBlock			= ::blt::tableFileLoad(loadCache, database, folder);
+		int32_t						iNewBlock			= ::blt::tableFileLoad(loadCache, database, folder);
 		gpk_necall(iNewBlock, "%s", "Missing table found.");	// We need to improve this in order to support missing blocks.
 		gpk_necall(::recordRangeBlock(database, range, 0, iNewBlock, output_records), "Error accessing range for block: %u.", 0);
 	}
 	else {
-		::gpk::array_pod<uint32_t>							blocksToProcess		= {};
+		::gpk::au2_t				blocksToProcess		= {};
 		for(uint32_t iBlockOnDisk = 0; iBlockOnDisk < database.Val.BlocksOnDisk.size(); ++iBlockOnDisk) {
-			const uint32_t										blockOnDisk			= database.Val.BlocksOnDisk[iBlockOnDisk];
+			const uint32_t				blockOnDisk			= database.Val.BlocksOnDisk[iBlockOnDisk];
 			if(::gpk::in_range(blockOnDisk, blockRange.Offset, blockRange.Offset + blockRange.Count))
 				gpk_necall(blocksToProcess.push_back(blockOnDisk), "%s.", "Out of memory?");
 		}
 		for(uint32_t iBlock = 0; iBlock < blocksToProcess.size(); ++iBlock) {
-			const uint32_t										idBlockToLoad		= blocksToProcess[iBlock];
-			int32_t												iNewBlock			= ::blt::blockFileLoad(loadCache, database, folder, idBlockToLoad);
+			const uint32_t				idBlockToLoad		= blocksToProcess[iBlock];
+			int32_t						iNewBlock			= ::blt::blockFileLoad(loadCache, database, folder, idBlockToLoad);
 			gpk_necall(iNewBlock, "Missing block found: %u. This shouldn't happen because we already filtered which blocks are on disk, so either the block is corrupted and it has to be restored before the query executes.", idBlockToLoad);	// We need to improve this in order to support missing blocks.
 			gpk_necall(::recordRangeBlock(database, range, idBlockToLoad, iNewBlock, output_records), "Error accessing range for block: %u.", idBlockToLoad);
 		}

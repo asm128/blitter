@@ -54,17 +54,17 @@ struct SSplitParams {
 #define SEASON_ENABLE_VERIFICATION
 
 struct SWriteCache {
-	::gpk::achar				PartFileName					= {};
-	::gpk::achar				PathToWriteTo					= {};
-	::gpk::SLoadCache						LoadCache						= {};
+	::gpk::string				PartFileName					= {};
+	::gpk::string				PathToWriteTo					= {};
+	::gpk::SLoadCache			LoadCache						= {};
 #if defined SEASON_ENABLE_VERIFICATION
-	::gpk::achar				Verify							= {};
+	::gpk::string				Verify							= {};
 #endif
 };
 
-::gpk::error_t			writePart						(::SWriteCache & blockCache, const ::SSplitParams & params, const ::gpk::vcu8 & partBytes)		{
-	::gpk::achar					& partFileName					= blockCache.PartFileName					;
-	::gpk::achar					& pathToWriteTo					= blockCache.PathToWriteTo					;
+::gpk::error_t			writePart						(::SWriteCache & blockCache, const ::SSplitParams & params, const ::gpk::vcu0_t & partBytes)		{
+	::gpk::string					& partFileName					= blockCache.PartFileName					;
+	::gpk::string					& pathToWriteTo					= blockCache.PathToWriteTo					;
 	::gpk::clear(partFileName, pathToWriteTo, blockCache.LoadCache.Deflated, blockCache.LoadCache.Encrypted);
 	gpk_necall(::blt::tableFileName(partFileName, params.DeflatedOutput ? ::blt::DATABASE_HOST_DEFLATE : ::blt::DATABASE_HOST_LOCAL, params.EncryptionKey.size() > 0, params.DBName), "%s", "??");
 	gpk_necs(pathToWriteTo.append(partFileName));
@@ -75,7 +75,7 @@ struct SWriteCache {
 int										main							(int argc, char ** argv)		{
 	::SSplitParams								params							= {};
 	gpk_necall(::loadParams(params, argc, argv), "%s", "");
-	::gpk::achar					bytesToSave						= {};
+	::gpk::string					bytesToSave						= {};
 	{
 		::gpk::SJSONFile							jsonFileToSplit					= {};
 		gpk_necall(::gpk::jsonFileRead(jsonFileToSplit, params.FileNameSrc), "Failed to load file: %s.", params.FileNameSrc.begin());

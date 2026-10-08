@@ -14,6 +14,7 @@
     <LocalDebuggerWorkingDirectory>$(OutDir)</LocalDebuggerWorkingDirectory>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
     <LocalDebuggerCommandArguments>user.json 50 1 MjAwOS0yMDE5IChjKSBUaGUgRHJhZ29u</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArgumentsHistory>user.json 50 1 MjAwOS0yMDE5IChjKSBUaGUgRHJhZ29u|</LocalDebuggerCommandArgumentsHistory>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LocalDebuggerWorkingDirectory>$(OutDir)</LocalDebuggerWorkingDirectory>

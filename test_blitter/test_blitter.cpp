@@ -8,13 +8,13 @@
 #include "gpk_timer.h"
 #include "gpk_process.h"
 
-int												testQuery						(::blt::SBlitter & app, ::gpk::achar & output, ::gpk::vcs command, ::gpk::vcs database, int64_t detail, ::gpk::vcs path, ::gpk::rangeu64 range, ::gpk::vcs expand)		{
+int												testQuery						(::blt::SBlitter & app, ::gpk::string & output, ::gpk::vcs command, ::gpk::vcs database, int64_t detail, ::gpk::vcs path, ::gpk::rangeu3_t range, ::gpk::vcs expand)		{
 	output.clear();
 	app.Query.Command								= command;
 	app.Query.Database								= database;
 	app.Query.Detail								= detail;
 	app.ExpansionKeyStorage.clear();
-	gpk_necall(::gpk::split(::gpk::vcc{expand}, '.', app.ExpansionKeyStorage), "%s", "Out of memory?");
+	gpk_necall(::gpk::split(::gpk::vcst_t{expand}, '.', app.ExpansionKeyStorage), "%s", "Out of memory?");
 	app.Query.ExpansionKeys							= app.ExpansionKeyStorage;
 	app.Query.Path									= path;
 	app.Query.Range									= range;
@@ -38,7 +38,7 @@ int												testQuery						(::blt::SBlitter & app, ::gpk::achar & output, ::g
 	return 0;
 }
 
-int												testPush						(::blt::SBlitter & app, ::gpk::achar & output, ::gpk::vcs command, ::gpk::vcs database, ::gpk::vcs record)		{
+int												testPush						(::blt::SBlitter & app, ::gpk::string & output, ::gpk::vcs command, ::gpk::vcs database, ::gpk::vcs record)		{
 	output.clear();
 	app.Query.Command								= command;
 	app.Query.Database								= database;
@@ -61,7 +61,7 @@ int												main							()		{
 	::blt::SBlitter										app								= {};
 	::gpk::vcs											configFile						= "./blitter.json";
 	gpk_necall(::blt::loadConfig(app, configFile), "%s", "Failed to load blitter configuration.");
-	::gpk::achar							output							= {};
+	::gpk::string							output							= {};
 	//::testQuery(app, output, ::gpk::vcs{"get"}, ::gpk::vcs{"user"		}, -1	, "", {10	, 20}, ::gpk::vcs{"referral.referral"		});
 	//::testQuery(app, output, ::gpk::vcs{"get"}, ::gpk::vcs{"user"		}, 0	, "", {10	, 20}, ::gpk::vcs{"website"					});
 	//::testQuery(app, output, ::gpk::vcs{"get"}, ::gpk::vcs{"user"		}, 10	, "", {10	, 20}, ::gpk::vcs{"referral.referral"		});
