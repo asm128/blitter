@@ -13,8 +13,8 @@
 	pathToWriteTo									= dbFolderName;
 	if(pathToWriteTo.size() && pathToWriteTo[pathToWriteTo.size() - 1] != '/')
 		pathToWriteTo.push_back('/');
-	llc_necall(::blt::blockFileName(partFileName, dbName, encryptionKey.size() > 0, hostType, iPart), "%s", "??");
-	llc_necall(pathToWriteTo.append(partFileName), "%s", "Out of memory?");
+	if_fail_fef(::blt::blockFileName(partFileName, dbName, encryptionKey.size() > 0, hostType, iPart), "%s", "??");
+	if_fail_fef(pathToWriteTo.append(partFileName), "%s", "Out of memory?");
 	return ::llc::fileFromMemorySecure(writeCache.LoadCache, pathToWriteTo, encryptionKey.cu8(), ::llc::bit_true(hostType, ::blt::DATABASE_HOST_DEFLATE), partBytes.cu8());
 }
 
@@ -23,8 +23,8 @@
 	for(uint32_t iBlock = 0; iBlock < db.Val.Blocks.size(); ++iBlock) {
 		if(dirty[iBlock]) {
 			::llc::string						folderName								= {};
-			llc_necall(::blt::tableFolderInit(folderName, folder, db.Key, db.Val.BlockSize), "Failed to initialize folder for table '%.*s'. Not enough permissions?", LLC_VIEW_ARGS(db.Key));
-			llc_necs(::blt::blockWrite(cache, folderName, db.Key, db.Val.EncryptionKey.cc(), db.Val.HostType, db.Val.Blocks[iBlock]->Bytes.cu8(), db.Val.BlockIndices[iBlock]));
+			if_fail_fef(::blt::tableFolderInit(folderName, folder, db.Key, db.Val.BlockSize), "Failed to initialize folder for table '%.*s'. Not enough permissions?", LLC_VIEW_ARGS(db.Key));
+			if_fail_fe(::blt::blockWrite(cache, folderName, db.Key, db.Val.EncryptionKey.cc(), db.Val.HostType, db.Val.Blocks[iBlock]->Bytes.cu8(), db.Val.BlockIndices[iBlock]));
 		}
 	}
 	memset(db.Val.BlockDirty.begin(), 0, sizeof(uint32_t) * db.Val.BlockDirty.size());
@@ -35,7 +35,7 @@
 	::blt::SWriteCache									cache									= {appState.LoadCache};
 	for(uint32_t iDatabase = 0; iDatabase < appState.Databases.size(); ++iDatabase) {
 		::blt::TNamedBlitterDB								& db									= appState.Databases[iDatabase];
-		llc_necall(::databaseFlush(cache, db, appState.Folder), "Failed to flush database '%.*s'.", LLC_VIEW_ARGS(db.Key));
+		if_fail_fef(::databaseFlush(cache, db, appState.Folder), "Failed to flush database '%.*s'.", LLC_VIEW_ARGS(db.Key));
 	}
 	return 0;
 }
@@ -70,22 +70,22 @@ static	::llc::error_t	queryGetDetail
 		const ::llc::vcst_t						currentRecordView					= currentDBBlock.Reader.View[indexRecordNode];
 		if(0 > indexValueNode) {
 			info_printf("Cannot expand field. Field not found: %.*s.", LLC_VIEW_ARGS(fieldToExpand));
-			llc_necall(output.append(currentRecordView), "%s", "Out of memory?");
+			if_fail_fef(output.append(currentRecordView), "%s", "Out of memory?");
 		}
 		else {
 			const ::llc::JSON_TYPE							refNodeTYpe								= currentDBBlock.Reader.Token[indexValueNode].Type;
 			if(::llc::JSON_TYPE_INTEGER != refNodeTYpe && ::llc::JSON_TYPE_ARRAY != refNodeTYpe) {
 				info_printf("Invalid value type: %s.", ::llc::get_value_label(refNodeTYpe).begin());
-				llc_necall(output.append(currentRecordView), "%s", "Out of memory?");
+				if_fail_fef(output.append(currentRecordView), "%s", "Out of memory?");
 			}
 			else if(::llc::JSON_TYPE_INTEGER == refNodeTYpe) {
 				int64_t											nextTableRecordIndex				= -1LL;
 				const ::llc::vcst_t					digitsToDetailView					= currentDBBlock.Reader.View[indexValueNode];
-				llc_necall(::llc::parseIntegerDecimal(digitsToDetailView, nextTableRecordIndex), "%s", "Out of memory?");
+				if_fail_fef(::llc::parseIntegerDecimal(digitsToDetailView, nextTableRecordIndex), "%s", "Out of memory?");
 
 				const char										* appendStart						= currentRecordView.begin();
 				const char										* appendStop						= digitsToDetailView.begin();
-				llc_necall(output.append(appendStart, (uint32_t)(appendStop - appendStart)), "%s", "Out of memory?");
+				if_fail_fef(output.append(appendStart, (uint32_t)(appendStop - appendStart)), "%s", "Out of memory?");
 				bool											bFound								= false;
 				for(uint32_t iDB = 0; iDB < databases.size(); ++iDB) {
 					::blt::TNamedBlitterDB							& nextTable							= databases[iDB];
@@ -99,24 +99,24 @@ static	::llc::error_t	queryGetDetail
 					}
 				}
 				if(false == bFound)
-					llc_necall(output.append(::llc::vcs{"{}"}), "%s", "?�??");
+					if_fail_fef(output.append(::llc::vcs{"{}"}), "%s", "?�??");
 				appendStart									= digitsToDetailView.end();
 				appendStop									= currentRecordView.end();
-				llc_necall(output.append(appendStart, (uint32_t)(appendStop - appendStart)), "%s", "Out of memory?");
+				if_fail_fef(output.append(appendStart, (uint32_t)(appendStop - appendStart)), "%s", "Out of memory?");
 			}
 			else {
 				const char					* appendStart						= currentRecordView.begin();
 				const ::llc::vcst_t			arrayToDetailView					= currentDBBlock.Reader.View[indexValueNode];
 				const char					* appendStop						= arrayToDetailView.begin();
-				llc_necall(output.append(appendStart, (uint32_t)(appendStop - appendStart)), "%s", "Out of memory?");
-				llc_necall(output.push_back('['), "%s", "Out of memory?");
+				if_fail_fef(output.append(appendStart, (uint32_t)(appendStop - appendStart)), "%s", "Out of memory?");
+				if_fail_fef(output.push_back('['), "%s", "Out of memory?");
 				const ::llc::SJSONNode		& arrayNode							= *currentDBBlock.Reader.Tree[indexValueNode];
 				bool						bFound								= false;
 				for(uint32_t iRef = 0, refCount = ::llc::jsonArraySize(*currentDBBlock.Reader.Tree[indexValueNode]); iRef < refCount; ++iRef) {
 					uint64_t					nextTableRecordIndex					= (uint64_t)-1LL;
 					const ::llc::error_t		indexArrayElement						= ::llc::jsonArrayValueGet(arrayNode, iRef);
 					const ::llc::vcst_t			digitsToDetailView						= currentDBBlock.Reader.View[indexArrayElement];
-					llc_necall(::llc::parseIntegerDecimal(digitsToDetailView, nextTableRecordIndex), "%s", "Out of memory?");
+					if_fail_fef(::llc::parseIntegerDecimal(digitsToDetailView, nextTableRecordIndex), "%s", "Out of memory?");
 					for(uint32_t iDB = 0; iDB < databases.size(); ++iDB) {
 						::blt::TNamedBlitterDB							& nextTable							= databases[iDB];
 						if(nextTable.Key == fieldToExpand || 0 <= ::llc::find(fieldToExpand, ::llc::view_array<const ::llc::vcst_t>{nextTable.Val.Bindings})) {
@@ -129,14 +129,14 @@ static	::llc::error_t	queryGetDetail
 						}
 					}
 					if(false == bFound)
-						llc_necall(output.append(::llc::vcs{"{}"}), "%s", "?�??");
+						if_fail_fef(output.append(::llc::vcs{"{}"}), "%s", "?�??");
 					if(refCount - 1 != iRef)
-						llc_necall(output.push_back(','), "%s", "Out of memory?");
+						if_fail_fef(output.push_back(','), "%s", "Out of memory?");
 				}
 				appendStart									= arrayToDetailView.end();
 				appendStop									= currentRecordView.end();
-				llc_necall(output.push_back(']'), "%s", "Out of memory?");
-				llc_necall(output.append(appendStart, (uint32_t)(appendStop - appendStart)), "%s", "Out of memory?");
+				if_fail_fef(output.push_back(']'), "%s", "Out of memory?");
+				if_fail_fef(output.append(appendStart, (uint32_t)(appendStop - appendStart)), "%s", "Out of memory?");
 			}
 		}
 	}
@@ -145,24 +145,24 @@ static	::llc::error_t	queryGetDetail
 
 static	::llc::error_t	fillEmptyBlocks				(::llc::vcst_t emptyBlockData, const uint32_t emptyBlocks, bool appendComma, ::llc::string & output)	{
 	for(uint32_t iEmpty = 0; iEmpty < emptyBlocks; ++iEmpty) {
-		llc_necall(output.append(emptyBlockData), "%s", "Out of memory?");
+		if_fail_fef(output.append(emptyBlockData), "%s", "Out of memory?");
 		if(emptyBlocks - 1 != iEmpty)
-			llc_necall(output.push_back(','), "%s", "Out of memory?");
+			if_fail_fef(output.push_back(','), "%s", "Out of memory?");
 	}
 	if(appendComma && emptyBlocks)
-		llc_necall(output.push_back(','), "%s", "Out of memory?");
+		if_fail_fef(output.push_back(','), "%s", "Out of memory?");
 	return 0;
 }
 
 static	::llc::error_t	nextBlock					(const uint32_t iRangeInfo, const uint32_t lastRangeInfo, const ::llc::view_array<const ::blt::SRangeBlockInfo>	& rangeInfo, ::llc::vcst_t emptyBlockData, ::llc::string & output) {
 	if(rangeInfo.size() -1 != iRangeInfo)
-		llc_necall(output.push_back(','), "%s", "Out of memory?");
+		if_fail_fef(output.push_back(','), "%s", "Out of memory?");
 
 	if(iRangeInfo < lastRangeInfo) {	// Fill inner empty blocks
 		const uint32_t										emptyBlocks							= rangeInfo[iRangeInfo + 1].BlockId - rangeInfo[iRangeInfo].BlockId;
 		if(emptyBlocks > 1) {
 			info_printf("Empty blocks between: %u and %u.", rangeInfo[iRangeInfo].BlockId, rangeInfo[iRangeInfo + 1].BlockId);
-			llc_necall(::fillEmptyBlocks(emptyBlockData, emptyBlocks - 1, lastRangeInfo != iRangeInfo, output), "%s", "Out of memory?");
+			if_fail_fef(::fillEmptyBlocks(emptyBlockData, emptyBlocks - 1, lastRangeInfo != iRangeInfo, output), "%s", "Out of memory?");
 		}
 	}
 	return 0;
@@ -179,7 +179,7 @@ static	::llc::error_t	queryGetRange
 	, const uint32_t						idxExpand
 	) {
 	if(0 == query.Range.Count) {
-		llc_necall(output.append(::llc::vcs{"[]"}), "%s", "Out of memory?");
+		if_fail_fef(output.append(::llc::vcs{"[]"}), "%s", "Out of memory?");
 		return 0;
 	}
 	::llc::apod<::llc::minmaxu2_t>				relativeIndices						= {};
@@ -189,23 +189,24 @@ static	::llc::error_t	queryGetRange
 	::llc::string								emptyBlockData						= {};
 	const ::llc::vcs							empty_record						= "{},";
 	for(uint32_t iRecord = 0; iRecord < databaseToRead.Val.BlockSize; ++iRecord)
-		llc_necall(emptyBlockData.append(empty_record), "%s", "Out of memory?");
+		if_fail_fef(emptyBlockData.append(empty_record), "%s", "Out of memory?");
 	if(emptyBlockData.size() > 0) // Remove last comma.
-		llc_necall(emptyBlockData.resize(emptyBlockData.size() - 1), "%s", "Out of memory?");
+		if_fail_fef(emptyBlockData.resize(emptyBlockData.size() - 1), "%s", "Out of memory?");
 
-	llc_necall(::blt::recordRange(loadCache, databaseToRead, query.Range, folder, rangeInfo, blockRange), "Failed to load record range. Offset: %llu. Length: %llu.", query.Range.Offset, query.Range.Count);
+	if_fail_fef(::blt::recordRange(loadCache, databaseToRead, query.Range, folder, rangeInfo, blockRange), "Failed to load record range. Offset: %llu. Length: %llu.", query.Range.Offset, query.Range.Count);
 	const uint32_t											lastRangeInfo						= rangeInfo.size() - 1;
-	llc_necall(output.push_back('['), "%s", "Out of memory?");
+	if_fail_fef(output.push_back('['), "%s", "Out of memory?");
 	if((0 < databaseToRead.Val.BlockSize) && rangeInfo.size()) {	// Fill leading records if the blocks don't exist.
 		const uint32_t											recordsToAvoid						= (query.Range.Offset % databaseToRead.Val.BlockSize);
 		const uint32_t											emptyBlocks							= rangeInfo[0].BlockId - blockRange.Offset;
-		if(0 == recordsToAvoid)
-			llc_necall(::fillEmptyBlocks(emptyBlockData, emptyBlocks, lastRangeInfo != 0, output), "%s", "Out of memory?");
+		if(0 == recordsToAvoid) {
+			if_fail_fef(::fillEmptyBlocks(emptyBlockData, emptyBlocks, lastRangeInfo != 0, output), "%s", "Out of memory?");
+		}
 		else {
 			if(emptyBlocks > 0) {
 				for(uint32_t iElem = recordsToAvoid; iElem < databaseToRead.Val.BlockSize; ++iElem)
-					llc_necall(output.append(::llc::vcs{"{},"}), "%s", "Out of memory?");
-				llc_necall(::fillEmptyBlocks(emptyBlockData, emptyBlocks - 1, lastRangeInfo != 0, output), "%s", "Out of memory?");
+					if_fail_fef(output.append(::llc::vcs{"{},"}), "%s", "Out of memory?");
+				if_fail_fef(::fillEmptyBlocks(emptyBlockData, emptyBlocks - 1, lastRangeInfo != 0, output), "%s", "Out of memory?");
 			}
 		}
 	}
@@ -213,8 +214,8 @@ static	::llc::error_t	queryGetRange
 	if(idxExpand >= query.ExpansionKeys.size()) {
 		for(uint32_t iView = 0; iView < rangeInfo.size(); ++iView) {
 			const ::llc::vcst_t							rangeView							= rangeInfo[iView].OutputRecords;
-			llc_necall(output.append(rangeView), "%s", "Out of memory?");
-			llc_necall(::nextBlock(iView, lastRangeInfo, rangeInfo, emptyBlockData, output), "%s", "??");
+			if_fail_fef(output.append(rangeView), "%s", "Out of memory?");
+			if_fail_fef(::nextBlock(iView, lastRangeInfo, rangeInfo, emptyBlockData, output), "%s", "??");
 		}
 	}
 	else {
@@ -224,11 +225,11 @@ static	::llc::error_t	queryGetRange
 			const ::llc::minmaxu2_t			rangeToExpand						= blockInfo.RelativeIndices;
 			for(uint32_t iRecord = rangeToExpand.Min; iRecord < rangeToExpand.Max + 1; ++iRecord) {
 				elemQuery.Detail								= iRecord + blockInfo.BlockId * (int64_t)databaseToRead.Val.BlockSize;
-				llc_necall(::queryGetDetail(loadCache, expressionReader, databases, idxDatabase, elemQuery, output, folder, idxExpand), "%s", "??");
+				if_fail_fef(::queryGetDetail(loadCache, expressionReader, databases, idxDatabase, elemQuery, output, folder, idxExpand), "%s", "??");
 				if(rangeToExpand.Max != iRecord)
-					llc_necall(output.push_back(','), "%s", "Out of memory?");
+					if_fail_fef(output.push_back(','), "%s", "Out of memory?");
 			}
-			llc_necall(::nextBlock(iView, lastRangeInfo, rangeInfo, emptyBlockData, output), "%s", "??");
+			if_fail_fef(::nextBlock(iView, lastRangeInfo, rangeInfo, emptyBlockData, output), "%s", "??");
 		}
 	}
 
@@ -237,20 +238,21 @@ static	::llc::error_t	queryGetRange
 		const uint32_t										lastBlockId							= rangeInfo.size() ? rangeInfo[rangeInfo.size() - 1].BlockId : 0;
 		const uint32_t										emptyBlocks							= (blockRange.Offset + blockRange.Count - 1) - lastBlockId;
 		if(emptyBlocks > 0) {
-			if(0 == recordsToAvoid)
-				llc_necall(::fillEmptyBlocks(emptyBlockData, emptyBlocks - 1, false, output), "%s", "Out of memory?");
+			if(0 == recordsToAvoid) {
+				if_fail_fef(::fillEmptyBlocks(emptyBlockData, emptyBlocks - 1, false, output), "%s", "Out of memory?");
+			}
 			else {
-				llc_necall(output.push_back(','), "%s", "Out of memory?");
+				if_fail_fef(output.push_back(','), "%s", "Out of memory?");
 				if(emptyBlocks > 1)
-					llc_necall(::fillEmptyBlocks(emptyBlockData, emptyBlocks - 1, true, output), "%s", "Out of memory?");
+					if_fail_fef(::fillEmptyBlocks(emptyBlockData, emptyBlocks - 1, true, output), "%s", "Out of memory?");
 				for(uint32_t iElem = 0; iElem < recordsToAvoid; ++iElem)
-					llc_necall(output.append(::llc::vcs{"{},"}), "%s", "Out of memory?");
-				llc_necall(output.resize(output.size()-1), "%s", "Out of memory?");
+					if_fail_fef(output.append(::llc::vcs{"{},"}), "%s", "Out of memory?");
+				if_fail_fef(output.resize(output.size()-1), "%s", "Out of memory?");
 			}
 		}
 	}
 
-	llc_necall(output.push_back(']'), "%s", "Out of memory?");
+	if_fail_fef(output.push_back(']'), "%s", "Out of memory?");
 	return 0;
 }
 
@@ -267,10 +269,10 @@ static	int64_t			pushNewBlock
 		newBlock->Bytes.push_back('[');
 		loadCache.Deflated.clear();
 		ree_if(0 == recordToAdd.Tree.size(), "Invalid json record! %s.", "Forgot to build the reader from the record?")
-		llc_necall(::llc::jsonWrite(recordToAdd[0], recordToAdd.View, *(::llc::string*)&loadCache.Deflated), "Failed to write json record! %s", "Invalid format?");
+		if_fail_fef(::llc::jsonWrite(recordToAdd[0], recordToAdd.View, *(::llc::string*)&loadCache.Deflated), "Failed to write json record! %s", "Invalid format?");
 		newBlock->Bytes.append(loadCache.Deflated.cc());
 		newBlock->Bytes.push_back(']');
-		llc_necall(::llc::jsonParse(newBlock->Reader, newBlock->Bytes), "%s", "Failed to parse new block.");
+		if_fail_fef(::llc::jsonParse(newBlock->Reader, newBlock->Bytes), "%s", "Failed to parse new block.");
 		const uint32_t										indexBlock			= database.Val.Blocks.push_back(newBlock);
 		database.Val.BlockIndices.push_back(idNewBlock);
 		database.Val.BlocksOnDisk.push_back(idNewBlock);
@@ -286,9 +288,9 @@ static	int64_t			pushNewBlock
 		::llc::view_bit<uint32_t>							dirty						= {database.Val.BlockDirty.begin(), database.Val.Blocks.size()};
 		if(dirty[idxBlock]) {
 			::blt::SWriteCache								writeCache						= {loadCache};
-			llc_necall(::databaseFlush(writeCache, database, folder), "Failed to flush table '%.*s'. Not enough permissions?", LLC_VIEW_ARGS(database.Key));
+			if_fail_fef(::databaseFlush(writeCache, database, folder), "Failed to flush table '%.*s'. Not enough permissions?", LLC_VIEW_ARGS(database.Key));
 		}
-		llc_necall(idxBlock, "%s", "Out of memory?");
+		if_fail_fef(idxBlock, "%s", "Out of memory?");
 		::llc::pobj<::llc::SJSONFile>	& pBlock					= database.Val.Blocks[idxBlock];
 		::llc::SJSONFile				& newBlock					= *pBlock;
 		newBlock.Bytes.clear();
@@ -296,10 +298,10 @@ static	int64_t			pushNewBlock
 		newBlock.Bytes.push_back('[');
 		loadCache.Deflated.clear();
 		ree_if(0 == recordToAdd.Tree.size(), "Invalid json record! %s.", "Forgot to build the reader from the record?")
-		llc_necall(::llc::jsonWrite(recordToAdd[0], recordToAdd.View, *(::llc::string*)&loadCache.Deflated), "Failed to write json record! %s", "Invalid format?");
+		if_fail_fef(::llc::jsonWrite(recordToAdd[0], recordToAdd.View, *(::llc::string*)&loadCache.Deflated), "Failed to write json record! %s", "Invalid format?");
 		newBlock.Bytes.append(loadCache.Deflated.cc());
 		newBlock.Bytes.push_back(']');
-		llc_necall(::llc::jsonParse(newBlock.Reader, newBlock.Bytes), "%s", "Failed to parse new block.");
+		if_fail_fef(::llc::jsonParse(newBlock.Reader, newBlock.Bytes), "%s", "Failed to parse new block.");
 		database.Val.BlockIndices	[idxBlock]			= idNewBlock;
 		database.Val.BlocksOnDisk.push_back(idNewBlock);
 		database.Val.Offsets		[idxBlock]			= idNewBlock * database.Val.BlockSize;
@@ -318,11 +320,11 @@ static	int64_t								appendRecord
 	) {
 	loadCache.Deflated.clear();
 	loadCache.Deflated.push_back(',');
-	llc_necall(::llc::jsonWrite(recordToAdd.Tree[0], recordToAdd.View, *(::llc::string*)&loadCache.Deflated), "Failed to write json record! %s", "Invalid format?");
+	if_fail_fef(::llc::jsonWrite(recordToAdd.Tree[0], recordToAdd.View, *(::llc::string*)&loadCache.Deflated), "Failed to write json record! %s", "Invalid format?");
 	::llc::SJSONFile									& block				= *database.Blocks[indexBlock];
 	const uint32_t										insertPos			= block.Bytes.size() - 1;
 	const uint32_t										indexOfToken		= block.Reader.Token.size();
-	llc_necs(block.Bytes.insert(insertPos, loadCache.Deflated.cc()));
+	if_fail_fe(block.Bytes.insert(insertPos, loadCache.Deflated.cc()));
 	::llc::SJSONReaderState								& stateReader										= block.Reader.StateRead;
 	block.Reader.Token[0].Span.End					= block.Reader.Token[0].Span.Begin;
 	stateReader.Escaping							= false;
@@ -333,7 +335,7 @@ static	int64_t								appendRecord
 	stateReader.CurrentElement						= &block.Reader.Token[stateReader.IndexCurrentElement];
 	stateReader.DoneReading							= false;
 	for(stateReader.IndexCurrentChar = insertPos; stateReader.IndexCurrentChar < (int32_t)block.Bytes.size(); ++stateReader.IndexCurrentChar) {
-		llc_necall(::llc::jsonParseStep(block.Reader, block.Bytes), "%s", "Parse step failed.");
+		if_fail_fef(::llc::jsonParseStep(block.Reader, block.Bytes), "%s", "Parse step failed.");
 		bif_if(stateReader.DoneReading, "%i json characters read.", stateReader.IndexCurrentChar + 1);
 	}
 	ree_if(stateReader.NestLevel, "Nest level: %i (Needs to be zero).", stateReader.NestLevel);
@@ -359,7 +361,7 @@ static	int64_t								appendRecord
 	arrayNode.Children.push_back(recordNode);
 	//::llc::jsonTreeRebuild(block.Reader.Token, block.Reader.Tree);
 	//block.Reader.Reset();
-	//llc_necall(::llc::jsonParse(block.Reader, block.Bytes), "%s", "Failed to read JSON!");
+	//if_fail_fef(::llc::jsonParse(block.Reader, block.Bytes), "%s", "Failed to read JSON!");
 	database.BlockDirty.resize((database.Blocks.size() / 32) + 1, 0);
 	::llc::view_bit<uint32_t>{database.BlockDirty.begin(), database.Blocks.size()}[indexBlock]	= true;
 	return database.Offsets[indexBlock] + arrayNode.Children.size() - 1;
@@ -405,7 +407,7 @@ int64_t											blt::queryProcess
 				const uint32_t										idBlock				= database.Val.MaxBlockOnDisk;//::llc::max(::llc::view_const_uint32{database.Val.BlocksOnDisk});
 				uint32_t											indexRecord			= (uint32_t)-1;
 				uint32_t											indexBlock			= (uint32_t)-1;
-				llc_necall(::blt::recordLoad(loadCache, database, idBlock * (uint64_t)database.Val.BlockSize, indexRecord, indexBlock, folder), "Failed to load block for record: %lli.", query.Detail);
+				if_fail_fef(::blt::recordLoad(loadCache, database, idBlock * (uint64_t)database.Val.BlockSize, indexRecord, indexBlock, folder), "Failed to load block for record: %lli.", query.Detail);
 				::llc::SJSONFile									& block				= *database.Val.Blocks[indexBlock];
 				const ::llc::SJSONNode								& tableNode			= *block.Reader[0];
 				if(database.Val.BlockSize && tableNode.Children.size() >= database.Val.BlockSize)

@@ -32,6 +32,7 @@ sttc ::llc::err_t testRequest(::llc::u2_t & checkCount) {
 	BLT_TEST_CHECK(checkCount, 0 <= ::blt::requestProcess(expressionReader, query, request, expansionKeys), "%s", "requestProcess() rejected a valid request.");
 	BLT_TEST_CHECK(checkCount, query.Database == LLC_CXS("company"), "Unexpected database: '%.*s'.", LLC_VIEW_ARGS(query.Database));
 	BLT_TEST_CHECK(checkCount, query.Command == LLC_CXS("get"), "Unexpected command: '%.*s'.", LLC_VIEW_ARGS(query.Command));
+	BLT_TEST_CHECK(checkCount, query.Path.size() == 0, "Unexpected expression path: '%.*s'.", LLC_VIEW_ARGS(query.Path));
 	BLT_TEST_CHECK(checkCount, query.Detail == 3, "Unexpected detail: %" LLC_FMT_S3 ".", query.Detail);
 	BLT_TEST_CHECK(checkCount, query.Range.Offset == 4, "Unexpected range offset: %" LLC_FMT_U3 ".", query.Range.Offset);
 	BLT_TEST_CHECK(checkCount, query.Range.Count == 2, "Unexpected range count: %" LLC_FMT_U3 ".", query.Range.Count);
@@ -41,15 +42,29 @@ sttc ::llc::err_t testRequest(::llc::u2_t & checkCount) {
 	BLT_TEST_CHECK(checkCount, query.ExpansionKeys.begin() == expansionKeys.begin(), "%s", "Query expansion view does not reference its storage.");
 	BLT_TEST_CHECK(checkCount, query.Record == request.ContentBody, "%s", "Request body was not retained as the query record.");
 	BLT_TEST_CHECK(checkCount, query.RecordReader.Tree.size() == 1, "Unexpected record root count: %" LLC_FMT_U2 ".", query.RecordReader.Tree.size());
+
+	::blt::SBlitterRequest expressionRequest = {"/company.owner/get", "{}", {}};
+	::blt::SBlitterQuery expressionQuery = {};
+	::llc::SExpressionReader expressionPathReader = {};
+	::llc::aobj<::llc::vcsc_t> expressionExpansionKeys = {};
+	BLT_TEST_CHECK(checkCount, 0 <= ::blt::requestProcess(expressionPathReader, expressionQuery, expressionRequest, expressionExpansionKeys), "%s", "requestProcess() rejected a valid expression path.");
+	BLT_TEST_CHECK(checkCount, expressionQuery.Database == LLC_CXS("company"), "Unexpected expression database: '%.*s'.", LLC_VIEW_ARGS(expressionQuery.Database));
+	BLT_TEST_CHECK(checkCount, expressionQuery.Command == LLC_CXS("get"), "Unexpected expression command: '%.*s'.", LLC_VIEW_ARGS(expressionQuery.Command));
+	BLT_TEST_CHECK(checkCount, expressionQuery.Path == LLC_CXS("owner"), "Unexpected expression path: '%.*s'.", LLC_VIEW_ARGS(expressionQuery.Path));
+	BLT_TEST_CHECK(checkCount, expressionQuery.Detail == -1, "Unexpected expression detail: %" LLC_FMT_S3 ".", expressionQuery.Detail);
+	BLT_TEST_CHECK(checkCount, expressionQuery.Range.Offset == 0, "Unexpected default range offset: %" LLC_FMT_U3 ".", expressionQuery.Range.Offset);
+	BLT_TEST_CHECK(checkCount, expressionQuery.Range.Count == ::blt::MAX_TABLE_RECORD_COUNT, "Unexpected default range count: %" LLC_FMT_U3 ".", expressionQuery.Range.Count);
+	BLT_TEST_CHECK(checkCount, expressionQuery.Record == expressionRequest.ContentBody, "%s", "Expression request body was not retained as the query record.");
+	BLT_TEST_CHECK(checkCount, expressionQuery.RecordReader.Tree.size() == 1, "Unexpected expression record root count: %" LLC_FMT_U2 ".", expressionQuery.RecordReader.Tree.size());
 	return 0;
 }
 
 sttc ::llc::err_t testModel(::llc::u2_t & checkCount) {
 	::blt::STableDescription description = {};
-	llc_necall(description.Fields.push_back({"name", ::llc::JSON_TYPE_STRING}), "%s", "Failed to add name field.");
-	llc_necall(description.Fields.push_back({"active", ::llc::JSON_TYPE_BOOLEAN}), "%s", "Failed to add active field.");
-	llc_necall(description.IndicesFieldToMap.push_back(-1), "%s", "Failed to add name mapping.");
-	llc_necall(description.IndicesFieldToMap.push_back(-1), "%s", "Failed to add active mapping.");
+	if_fail_fef(description.Fields.push_back({"name", ::llc::JSON_TYPE_STRING}), "%s", "Failed to add name field.");
+	if_fail_fef(description.Fields.push_back({"active", ::llc::JSON_TYPE_BOOLEAN}), "%s", "Failed to add active field.");
+	if_fail_fef(description.IndicesFieldToMap.push_back(-1), "%s", "Failed to add name mapping.");
+	if_fail_fef(description.IndicesFieldToMap.push_back(-1), "%s", "Failed to add active mapping.");
 
 	::llc::string output = {};
 	BLT_TEST_CHECK(checkCount, 0 <= ::blt::outputModel(output, description), "%s", "outputModel() failed.");
@@ -58,7 +73,7 @@ sttc ::llc::err_t testModel(::llc::u2_t & checkCount) {
 	::blt::TNamedBlitterDB database = {"company", {}};
 	database.Val.Description = description;
 	::llc::aobj<::blt::TNamedBlitterDB> databases = {};
-	llc_necall(databases.push_back(database), "%s", "Failed to add database.");
+	if_fail_fef(databases.push_back(database), "%s", "Failed to add database.");
 	::blt::SBlitterQuery query = {};
 	query.Database = "company";
 	query.Command = "model";
@@ -73,13 +88,15 @@ sttc ::llc::err_t testModel(::llc::u2_t & checkCount) {
 sttc ::llc::err_t testRecord(::llc::u2_t & checkCount) {
 	::blt::TNamedBlitterDB database = {"company", {}};
 	database.Val.BlockSize = 2;
-	llc_necall(database.Val.Blocks.push_back({}), "%s", "Failed to add block.");
-	llc_necall(database.Val.BlockIndices.push_back(0), "%s", "Failed to add block index.");
-	llc_necall(database.Val.Offsets.push_back(0), "%s", "Failed to add block offset.");
-	llc_necall(database.Val.BlockTimes.push_back(0), "%s", "Failed to add block time.");
+	if_fail_fef(database.Val.Blocks.push_back({}), "%s", "Failed to add block.");
+	database.Val.Blocks[0].create();
+	BLT_TEST_CHECK(checkCount, database.Val.Blocks[0], "%s", "Block owner did not create a JSON file.");
+	if_fail_fef(database.Val.BlockIndices.push_back(0), "%s", "Failed to add block index.");
+	if_fail_fef(database.Val.Offsets.push_back(0), "%s", "Failed to add block offset.");
+	if_fail_fef(database.Val.BlockTimes.push_back(0), "%s", "Failed to add block time.");
 	::llc::SJSONFile & block = *database.Val.Blocks[0];
 	block.Bytes = "[\"alpha\",\"beta\"]";
-	llc_necall(::llc::jsonParse(block.Reader, block.Bytes), "%s", "Failed to parse record block.");
+	if_fail_fef(::llc::jsonParse(block.Reader, block.Bytes), "%s", "Failed to parse record block.");
 
 	::llc::SLoadCache loadCache = {};
 	::llc::vcst_t record = {};

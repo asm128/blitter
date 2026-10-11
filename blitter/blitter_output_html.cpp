@@ -15,19 +15,19 @@
 //	::blt::retrieve_all_apis(responseFromAPIs, jsonFromAPIs, instance.APIs, tableDesc.FieldMaps);
 //	::llc::array_pod<byte_t>							jsScriptFile					= {};
 //	::llc::fileToMemory(::llc::view_const_string{"bltapi.js"}, jsScriptFile);
-//	llc_necall(output.append_string("<script type=\"text/javascript\">")	, "%s", "Out of memory?");
-//	llc_necall(output.append(jsScriptFile)									, "%s", "Out of memory?");
-//	llc_necall(output.append_string("</script>")							, "%s", "Out of memory?");
-//	llc_necall(output.append_string("<form method=\"POST\" action=\"")		, "%s", "Out of memory?");
-//	llc_necall(output.append(uriAction)										, "%s", "Out of memory?");
-//	llc_necall(output.append_string("\" onsubmit=\"formSubmit('")			, "%s", "Out of memory?");
-//	llc_necall(output.append(tableDesc.TableName)							, "%s", "Out of memory?");
-//	llc_necall(output.append_string("', 'en-US'); return false;\" ")		, "%s", "Out of memory?");
-//	llc_necall(output.append_string("\" id=\"")								, "%s", "Out of memory?");
-//	llc_necall(output.append(tableDesc.TableName)							, "%s", "Out of memory?");
-//	llc_necall(output.append_string("\">")									, "%s", "Out of memory?");
+//	if_fail_fef(output.append_string("<script type=\"text/javascript\">")	, "%s", "Out of memory?");
+//	if_fail_fef(output.append(jsScriptFile)									, "%s", "Out of memory?");
+//	if_fail_fef(output.append_string("</script>")							, "%s", "Out of memory?");
+//	if_fail_fef(output.append_string("<form method=\"POST\" action=\"")		, "%s", "Out of memory?");
+//	if_fail_fef(output.append(uriAction)										, "%s", "Out of memory?");
+//	if_fail_fef(output.append_string("\" onsubmit=\"formSubmit('")			, "%s", "Out of memory?");
+//	if_fail_fef(output.append(tableDesc.TableName)							, "%s", "Out of memory?");
+//	if_fail_fef(output.append_string("', 'en-US'); return false;\" ")		, "%s", "Out of memory?");
+//	if_fail_fef(output.append_string("\" id=\"")								, "%s", "Out of memory?");
+//	if_fail_fef(output.append(tableDesc.TableName)							, "%s", "Out of memory?");
+//	if_fail_fef(output.append_string("\">")									, "%s", "Out of memory?");
 //	// -- Generate input fields
-//	llc_necall(output.append_string("<table>"), "%s", "Out of memory?");
+//	if_fail_fef(output.append_string("<table>"), "%s", "Out of memory?");
 //	for(uint32_t iField = 0; iField < tableDesc.Fields.size(); ++iField) {
 //		const ::llc::vcst_t						fieldName					= tableDesc.Fields[iField].Field;
 //		output.append_string("\n<tr><td>");
@@ -134,7 +134,7 @@
 //		}
 //		output.append_string("\n</td></tr>");
 //	}
-//	llc_necall(output.append_string("</table><input type=\"submit\" value=\"Save\"/></form>"), "%s", "Out of memory?");
+//	if_fail_fef(output.append_string("</table><input type=\"submit\" value=\"Save\"/></form>"), "%s", "Out of memory?");
 //	return 0;
 //}
 //
@@ -143,18 +143,18 @@
 //	output											= ::llc::view_const_string{"Content-type: text/html\r\n\r\n"};
 //	::llc::array_pod<byte_t>							jsScriptFile					= {};
 //	::llc::fileToMemory(::llc::view_const_string{"bltapi.js"}, jsScriptFile);
-//	llc_necall(output.append_string("<script type=\"text/javascript\">")	, "%s", "Out of memory?");
-//	llc_necall(output.append(jsScriptFile)									, "%s", "Out of memory?");
-//	llc_necall(output.append_string("</script>")							, "%s", "Out of memory?");
-//	llc_necall(output.append_string("<form method=\"POST\" action=\"")		, "%s", "Out of memory?");
-//	llc_necall(output.append(uriAction)										, "%s", "Out of memory?");
-//	llc_necall(output.append_string("\" onsubmit=\"formSubmit('")			, "%s", "Out of memory?");
-//	llc_necall(output.append(tableDesc.TableName)							, "%s", "Out of memory?");
-//	llc_necall(output.append_string("', 'en-US'); return false;\" ")		, "%s", "Out of memory?");
-//	llc_necall(output.append_string("\" id=\"")								, "%s", "Out of memory?");
-//	llc_necall(output.append(tableDesc.TableName)							, "%s", "Out of memory?");
-//	llc_necall(output.append_string("\">")									, "%s", "Out of memory?");
-//	llc_necall(output.append_string("<table>")								, "%s", "Out of memory?");
+//	if_fail_fef(output.append_string("<script type=\"text/javascript\">")	, "%s", "Out of memory?");
+//	if_fail_fef(output.append(jsScriptFile)									, "%s", "Out of memory?");
+//	if_fail_fef(output.append_string("</script>")							, "%s", "Out of memory?");
+//	if_fail_fef(output.append_string("<form method=\"POST\" action=\"")		, "%s", "Out of memory?");
+//	if_fail_fef(output.append(uriAction)										, "%s", "Out of memory?");
+//	if_fail_fef(output.append_string("\" onsubmit=\"formSubmit('")			, "%s", "Out of memory?");
+//	if_fail_fef(output.append(tableDesc.TableName)							, "%s", "Out of memory?");
+//	if_fail_fef(output.append_string("', 'en-US'); return false;\" ")		, "%s", "Out of memory?");
+//	if_fail_fef(output.append_string("\" id=\"")								, "%s", "Out of memory?");
+//	if_fail_fef(output.append(tableDesc.TableName)							, "%s", "Out of memory?");
+//	if_fail_fef(output.append_string("\">")									, "%s", "Out of memory?");
+//	if_fail_fef(output.append_string("<table>")								, "%s", "Out of memory?");
 //	::llc::array_obj<::llc::SHTTPResponse>				responseFromAPIs				= {};
 //	::llc::array_obj<::llc::SJSONReader>				jsonFromAPIs					= {};
 //	::blt::retrieve_all_apis(responseFromAPIs, jsonFromAPIs, instance.APIs, tableDesc.FieldMaps);
@@ -260,6 +260,6 @@
 //		}
 //		output.append_string("\n</td></tr>");
 //	}
-//	llc_necall(output.append_string("</table><input type=\"submit\" value=\"Add\"/></form>"), "%s", "Out of memory?");
+//	if_fail_fef(output.append_string("</table><input type=\"submit\" value=\"Add\"/></form>"), "%s", "Out of memory?");
 //	return 0;
 //}

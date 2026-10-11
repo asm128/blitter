@@ -47,7 +47,7 @@ The CGI adapter derives the database, command, and optional numeric detail from 
 
 [`blitter/blitter.json`](blitter/blitter.json) is a sample configuration, not a neutral template: it names specific historical tables and contains an embedded sample key. Treat it as evidence of the schema rather than production configuration.
 
-[`blitter/refresh.bat`](blitter/refresh.bat) is a historical staging helper that creates output folders, copies the configuration into old build layouts, and copies selected executables. It is not a general setup script.
+[`blitter/refresh.bat`](blitter/refresh.bat) is a historical manual staging helper that creates output folders, copies the configuration into old build layouts, and copies selected executables. It is not invoked by the library build and is not a general setup script.
 
 ## Evidence boundary
 

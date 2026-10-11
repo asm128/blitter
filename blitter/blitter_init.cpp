@@ -16,7 +16,7 @@
 LLC_USING_TYPEINT();
 
 ::llc::err_t			blt::loadConfig				(::blt::SBlitter & appState, ::llc::vcst_t jsonFileName)	{
-	llc_necall(::llc::jsonFileRead(appState.Config, jsonFileName), "Failed to load configuration file: %.*s.", LLC_VIEW_ARGS(jsonFileName));
+	if_fail_fef(::llc::jsonFileRead(appState.Config, jsonFileName), "Failed to load configuration file: %.*s.", LLC_VIEW_ARGS(jsonFileName));
 	const ::llc::err_t			indexApp					= ::llc::jsonExpressionResolve(::llc::vcst_t{"application.blitter"	}, appState.Config.Reader, (uint32_t)0, appState.Folder);
 	::llc::err_t				indexDB;
 	if_fail_fef(indexDB = ::llc::jsonExpressionResolve(::llc::vcst_t{"database"}, appState.Config.Reader, (u2_t)indexApp, appState.Folder), "'database' not found in '%s'.", "application.blitter");
@@ -25,7 +25,7 @@ LLC_USING_TYPEINT();
 		warning_printf("'path.database' not found in '%s'. Using current path as database root.", "application.blitter");
 		appState.Folder									= "./";
 	}
-	llc_necall(::blt::configDatabases(appState.Databases, appState.Config.Reader, indexDB, {}, appState.Folder), "%s", "Failed to load query.");
+	if_fail_fef(::blt::configDatabases(appState.Databases, appState.Config.Reader, indexDB, {}, appState.Folder), "%s", "Failed to load query.");
 	return 0;
 }
 
@@ -38,30 +38,30 @@ sttc ::llc::err_t		dbFileExtension				(const ::blt::DATABASE_HOST & hostType, bo
 }
 
 ::llc::err_t			blt::blockFileName			(::llc::string & filename, ::llc::vcst_t dbName, bool bEncrypted, const ::blt::DATABASE_HOST hostType, const uint32_t block) {
-	llc_necall(filename.append(dbName), "%s", "Out of memory?");
+	if_fail_fef(filename.append(dbName), "%s", "Out of memory?");
 	char												temp[64]					= {};
 	::llc::vcst_t							extension					= {};
 	::dbFileExtension(hostType, bEncrypted, extension);
 	sprintf_s(temp, ".%u.%s", block, extension.begin());
-	llc_necall(filename.append(::llc::vcst_t{temp}), "%s", "Out of memory?");
+	if_fail_fef(filename.append(::llc::vcst_t{temp}), "%s", "Out of memory?");
 	return 0;
 }
 
 ::llc::err_t			blt::tableFolderName		(::llc::string & foldername, ::llc::vcst_t dbName, const uint32_t blockSize) {
-	llc_necall(foldername.append(dbName), "%s", "Out of memory?");
+	if_fail_fef(foldername.append(dbName), "%s", "Out of memory?");
 	char												temp[128]					= {};
 	sprintf_s(temp, ".%u.db", blockSize);
-	llc_necall(foldername.append(::llc::vcst_t{temp}), "%s", "Out of memory?");
+	if_fail_fef(foldername.append(::llc::vcst_t{temp}), "%s", "Out of memory?");
 	return 0;
 }
 
 ::llc::err_t			blt::tableFileName			(::llc::string & filename, const ::blt::DATABASE_HOST & hostType, bool bEncrypted, ::llc::vcst_t jsonDBKey) {
-	llc_necall(filename.append(jsonDBKey), "%s", "Out of memory?");
+	if_fail_fef(filename.append(jsonDBKey), "%s", "Out of memory?");
 	char												temp[64]					= {};
 	::llc::vcst_t							extension					= {};
 	::dbFileExtension(hostType, bEncrypted, extension);
 	sprintf_s(temp, ".%s", extension.begin());
-	llc_necall(filename.append(::llc::vcst_t{temp}), "%s", "Out of memory?");
+	if_fail_fef(filename.append(::llc::vcst_t{temp}), "%s", "Out of memory?");
 	return 0;
 }
 
@@ -69,42 +69,42 @@ sttc ::llc::err_t		dbFileExtension				(const ::blt::DATABASE_HOST & hostType, bo
 	finalFolderName										= dbPath;
 	if(finalFolderName.size()) {
 		if(finalFolderName[finalFolderName.size()-1] != '/' && finalFolderName[finalFolderName.size()-1] != '\\')
-			llc_necall(finalFolderName.push_back('/'), "%s", "Out of memory?");
-		llc_necall(::blt::tableFolderName(finalFolderName, dbName, blockSize), "%s", "??");
-		llc_necall(::llc::pathCreate({finalFolderName.begin(), finalFolderName.size()}), "Failed to create database folder: %s.", finalFolderName.begin());
+			if_fail_fef(finalFolderName.push_back('/'), "%s", "Out of memory?");
+		if_fail_fef(::blt::tableFolderName(finalFolderName, dbName, blockSize), "%s", "??");
+		if_fail_fef(::llc::pathCreate({finalFolderName.begin(), finalFolderName.size()}), "Failed to create database folder: %s.", finalFolderName.begin());
 		info_printf("Output folder: %s.", finalFolderName.begin());
 		if(finalFolderName[finalFolderName.size()-1] != '/' && finalFolderName[finalFolderName.size()-1] != '\\')
-			llc_necall(finalFolderName.push_back('/'), "%s", "Out of memory?");
+			if_fail_fef(finalFolderName.push_back('/'), "%s", "Out of memory?");
 	}
 	else if(0 == finalFolderName.size())
-		llc_necall(finalFolderName.append(::llc::vcst_t{"./"}), "%s", "Out of memory?");
+		if_fail_fef(finalFolderName.append(::llc::vcst_t{"./"}), "%s", "Out of memory?");
 	return 0;
 }
 
 static	::llc::err_t		dbFileLoad					(::llc::SLoadCache & loadCache, ::blt::TNamedBlitterDB & jsonDB, ::llc::vcst_t folder, ::llc::vcst_t fileName, uint32_t idBlock)	{
 	if(jsonDB.Val.Blocks.size() < ::blt::MAX_TABLE_BLOCKS_IN_MEMORY) {
 		const int32_t										idxBlock					= jsonDB.Val.Blocks.push_back({});
-		llc_necall(idxBlock																					, "%s", "Out of memory?");
-		llc_necall(jsonDB.Val.BlockIndices.push_back(idBlock)												, "%s", "Out of memory?");
-		llc_necall(jsonDB.Val.Offsets.push_back(idBlock * (int64_t)jsonDB.Val.BlockSize)					, "%s", "Out of memory?");
-		llc_necall(jsonDB.Val.BlockDirty.resize(jsonDB.Val.BlockIndices.size() / sizeof(uint32_t) + 1, 0U)	, "%s", "Out of memory?");
-		llc_necall(jsonDB.Val.BlockTimes.push_back(::llc::timeCurrentInUs())								, "%s", "Out of memory?");
+		if_fail_fef(idxBlock																					, "%s", "Out of memory?");
+		if_fail_fef(jsonDB.Val.BlockIndices.push_back(idBlock)												, "%s", "Out of memory?");
+		if_fail_fef(jsonDB.Val.Offsets.push_back(idBlock * (int64_t)jsonDB.Val.BlockSize)					, "%s", "Out of memory?");
+		if_fail_fef(jsonDB.Val.BlockDirty.resize(jsonDB.Val.BlockIndices.size() / sizeof(uint32_t) + 1, 0U)	, "%s", "Out of memory?");
+		if_fail_fef(jsonDB.Val.BlockTimes.push_back(::llc::timeCurrentInUs())								, "%s", "Out of memory?");
 		jsonDB.Val.Blocks[idxBlock].create();
 		::llc::SJSONFile									& dbBlock					= *jsonDB.Val.Blocks[idxBlock];
-		llc_necall(::llc::fileToMemorySecure(loadCache, fileName, jsonDB.Val.EncryptionKey.cu8(), llc::bit_true(jsonDB.Val.HostType, ::blt::DATABASE_HOST_DEFLATE), dbBlock.Bytes), "Failed to open block file: %.*s.", LLC_VIEW_ARGS(fileName));
-		llc_necall(::llc::jsonParse(dbBlock.Reader, dbBlock.Bytes.cc()), "Failed to parse database block file: %.*s.", LLC_VIEW_ARGS(fileName));
+		if_fail_fef(::llc::fileToMemorySecure(loadCache, fileName, jsonDB.Val.EncryptionKey.cu8(), llc::bit_true(jsonDB.Val.HostType, ::blt::DATABASE_HOST_DEFLATE), dbBlock.Bytes), "Failed to open block file: %.*s.", LLC_VIEW_ARGS(fileName));
+		if_fail_fef(::llc::jsonParse(dbBlock.Reader, dbBlock.Bytes.cc()), "Failed to parse database block file: %.*s.", LLC_VIEW_ARGS(fileName));
 		return idxBlock;
 	}
 	else {
 		const uint64_t										* time						= 0;
 		const uint32_t										idxBlock					= ::llc::min(::llc::view_array<const uint64_t>{jsonDB.Val.BlockTimes}, &time);
-		llc_necall(idxBlock, "%s", "Out of memory?");
+		if_fail_fef(idxBlock, "%s", "Out of memory?");
 		::llc::view_bit<uint32_t>							dirty						= {jsonDB.Val.BlockDirty.begin(), jsonDB.Val.Blocks.size()};
 		if(dirty[idxBlock]) {
 			::llc::string						folderName						= {};
 			::blt::SWriteCache								writeCache						= {loadCache};
-			llc_necall(::blt::tableFolderInit(folderName, folder, jsonDB.Key, jsonDB.Val.BlockSize), "Failed to initialize folder for table '%.*s'. Not enough permissions?", LLC_VIEW_ARGS(jsonDB.Key));
-			llc_necall(::blt::blockWrite(writeCache, folderName, jsonDB.Key, jsonDB.Val.EncryptionKey, jsonDB.Val.HostType, jsonDB.Val.Blocks[idxBlock]->Bytes.cu8(), jsonDB.Val.BlockIndices[idxBlock]), "%s", "Unknown error!");
+			if_fail_fef(::blt::tableFolderInit(folderName, folder, jsonDB.Key, jsonDB.Val.BlockSize), "Failed to initialize folder for table '%.*s'. Not enough permissions?", LLC_VIEW_ARGS(jsonDB.Key));
+			if_fail_fef(::blt::blockWrite(writeCache, folderName, jsonDB.Key, jsonDB.Val.EncryptionKey, jsonDB.Val.HostType, jsonDB.Val.Blocks[idxBlock]->Bytes.cu8(), jsonDB.Val.BlockIndices[idxBlock]), "%s", "Unknown error!");
 			dirty[idxBlock]									= false;
 		}
 
@@ -114,8 +114,8 @@ static	::llc::err_t		dbFileLoad					(::llc::SLoadCache & loadCache, ::blt::TName
 		::llc::SJSONFile									& dbBlock					= *jsonDB.Val.Blocks[idxBlock];
 		dbBlock.Bytes	.clear();
 		dbBlock.Reader	.Reset();
-		llc_necall(::llc::fileToMemorySecure(loadCache, fileName, jsonDB.Val.EncryptionKey.cu8(), llc::bit_true(jsonDB.Val.HostType, ::blt::DATABASE_HOST_DEFLATE), dbBlock.Bytes), "Failed to open block file: %.*s.", LLC_VIEW_ARGS(fileName));
-		llc_necall(::llc::jsonParse(dbBlock.Reader, dbBlock.Bytes.cc()), "Failed to parse database block file: %.*s.", LLC_VIEW_ARGS(fileName));
+		if_fail_fef(::llc::fileToMemorySecure(loadCache, fileName, jsonDB.Val.EncryptionKey.cu8(), llc::bit_true(jsonDB.Val.HostType, ::blt::DATABASE_HOST_DEFLATE), dbBlock.Bytes), "Failed to open block file: %.*s.", LLC_VIEW_ARGS(fileName));
+		if_fail_fef(::llc::jsonParse(dbBlock.Reader, dbBlock.Bytes.cc()), "Failed to parse database block file: %.*s.", LLC_VIEW_ARGS(fileName));
 		dirty[idxBlock]									= true;
 		return idxBlock;
 	}
@@ -124,10 +124,10 @@ static	::llc::err_t		dbFileLoad					(::llc::SLoadCache & loadCache, ::blt::TName
 ::llc::err_t			blt::tableFileLoad			(::llc::SLoadCache & loadCache, ::blt::TNamedBlitterDB & jsonDB, ::llc::vcst_t folder)	{
 	rni_if(jsonDB.Val.Blocks.size() && jsonDB.Val.Blocks[0]->Bytes.size(), "Table already loaded: '%.*s'.", LLC_VIEW_ARGS(jsonDB.Key));
 	::llc::string							fileName					= folder;
-	llc_necall(fileName.push_back('/')		, "%s", "Out of memory?");
-	llc_necall(::blt::tableFileName(fileName, jsonDB.Val.HostType, jsonDB.Val.EncryptionKey.size() > 0,jsonDB.Key), "%s", "Out of memory?");
+	if_fail_fef(fileName.push_back('/')		, "%s", "Out of memory?");
+	if_fail_fef(::blt::tableFileName(fileName, jsonDB.Val.HostType, jsonDB.Val.EncryptionKey.size() > 0,jsonDB.Key), "%s", "Out of memory?");
 	info_printf("Loading database file: %.*s.", LLC_VIEW_ARGS(fileName));
-	llc_necall(::dbFileLoad(loadCache, jsonDB, folder, fileName, 0), "Failed to load database from file: %.*s.", LLC_VIEW_ARGS(fileName));
+	if_fail_fef(::dbFileLoad(loadCache, jsonDB, folder, fileName, 0), "Failed to load database from file: %.*s.", LLC_VIEW_ARGS(fileName));
 	jsonDB.Val.BlocksOnDisk.clear();
 	jsonDB.Val.MaxBlockOnDisk						= 0;
 	return jsonDB.Val.BlocksOnDisk.push_back(0);
@@ -142,18 +142,18 @@ static	::llc::err_t		dbFileLoad					(::llc::SLoadCache & loadCache, ::blt::TName
 			return blockIndex;
 		}
 	}
-	llc_necall(::llc::find(block, {jsonDB.Val.BlocksOnDisk}), "Block %u doesn't exist.", block);
+	if_fail_fef(::llc::find(block, {jsonDB.Val.BlocksOnDisk}), "Block %u doesn't exist.", block);
 	::llc::string							fileName						= folder;
-	llc_necall(fileName.push_back('/'), "%s", "Out of memory?");
-	llc_necall(::blt::tableFolderName(fileName, jsonDB.Key, jsonDB.Val.BlockSize), "%s", "Out of memory?");
-	llc_necall(fileName.push_back('/'), "%s", "Out of memory?");
-	llc_necall(::blt::blockFileName(fileName, jsonDB.Key, jsonDB.Val.EncryptionKey.size() > 0, jsonDB.Val.HostType, block), "%s", "Out of memory?");
+	if_fail_fef(fileName.push_back('/'), "%s", "Out of memory?");
+	if_fail_fef(::blt::tableFolderName(fileName, jsonDB.Key, jsonDB.Val.BlockSize), "%s", "Out of memory?");
+	if_fail_fef(fileName.push_back('/'), "%s", "Out of memory?");
+	if_fail_fef(::blt::blockFileName(fileName, jsonDB.Key, jsonDB.Val.EncryptionKey.size() > 0, jsonDB.Val.HostType, block), "%s", "Out of memory?");
 	info_printf("Loading block file: %.*s.", LLC_VIEW_ARGS(fileName));
 	return ::dbFileLoad(loadCache, jsonDB, folder, fileName, block);
 }
 static	::llc::err_t		table_description_load			(::blt::STableDescription & tableDesc, const ::llc::SJSONReader & configReader, const uint32_t iNode, ::llc::vcst_t tableName)	{
 	int32_t												indexOfTable					= iNode;//::llc::jsonExpressionResolve(tableName, configReader, iNode);
-	llc_necall(indexOfTable, "API configuration (%.*s) not found in JSON file.", LLC_VIEW_ARGS(tableName));
+	if_fail_fef(indexOfTable, "API configuration (%.*s) not found in JSON file.", LLC_VIEW_ARGS(tableName));
 	::llc::vcst_t							strValue						= {};
 	::llc::jsonExpressionResolve(::llc::vcst_t{"public"}, configReader, indexOfTable, strValue);
 	tableDesc.Public								= strValue == ::llc::vcst_t{"true"};
@@ -161,7 +161,7 @@ static	::llc::err_t		table_description_load			(::blt::STableDescription & tableD
 	int32_t												indexOfFields;
 	if_fail_vwf(0, indexOfFields = ::llc::jsonExpressionResolve(::llc::vcst_t{"fields"}, configReader, indexOfTable), "Fields for table (%.*s) not found in JSON file.", LLC_VIEW_ARGS(tableName));
 	::llc::aobj<::llc::vcst_t>			namesOfFields;
-	llc_necall(::llc::jsonObjectKeyList(configReader, indexOfFields, namesOfFields), "Failed to list fields: %s.", "Unknown reason");
+	if_fail_fef(::llc::jsonObjectKeyList(configReader, indexOfFields, namesOfFields), "Failed to list fields: %s.", "Unknown reason");
 	tableDesc.Fields.resize(namesOfFields.size());
 	for(uint32_t iKey = 0; iKey < namesOfFields.size(); ++iKey) {
 		::llc::SJSONFieldBinding							& fieldDesc						= tableDesc.Fields[iKey];
@@ -181,8 +181,8 @@ static	::llc::err_t		table_description_load			(::blt::STableDescription & tableD
 			tableDesc.FieldMaps.push_back({fieldName, otherTableName});
 		}
 	}
-	llc_necall(::llc::jsonMapToFields(tableDesc.IndicesMapToField, tableDesc.Fields, tableDesc.FieldMaps), "Failed to generate field indices for table '%.*s'.", LLC_VIEW_ARGS(tableName));
-	llc_necall(::llc::jsonFieldsToMap(tableDesc.IndicesFieldToMap, tableDesc.Fields, tableDesc.FieldMaps), "Failed to generate field indices for table '%.*s'.", LLC_VIEW_ARGS(tableName));
+	if_fail_fef(::llc::jsonMapToFields(tableDesc.IndicesMapToField, tableDesc.Fields, tableDesc.FieldMaps), "Failed to generate field indices for table '%.*s'.", LLC_VIEW_ARGS(tableName));
+	if_fail_fef(::llc::jsonFieldsToMap(tableDesc.IndicesFieldToMap, tableDesc.Fields, tableDesc.FieldMaps), "Failed to generate field indices for table '%.*s'.", LLC_VIEW_ARGS(tableName));
 	tableDesc.TableName								= tableName;
 	return 0;
 }
@@ -193,21 +193,21 @@ static	::llc::err_t		table_description_load			(::blt::STableDescription & tableD
 		? ::llc::jsonExpressionResolve(::llc::vcst_t{"application.blitter.database"}, configReader, 0, jsonResult)
 		: indexConfigNode
 		;
-	llc_necall(indexObjectDatabases, "%s", "Failed to get database config from JSON file.");
+	if_fail_fef(indexObjectDatabases, "%s", "Failed to get database config from JSON file.");
 	jsonResult										= "";
 	const ::llc::err_t							databaseArraySize			= ::llc::jsonArraySize(*configReader[indexObjectDatabases]);
-	llc_necall(databaseArraySize, "%s", "Failed to get database count from config file.");
+	if_fail_fef(databaseArraySize, "%s", "Failed to get database count from config file.");
 	char												temp[64]					= {};
-	llc_necall(databases.resize(databaseArraySize), "%s", "Out of memory?");
+	if_fail_fef(databases.resize(databaseArraySize), "%s", "Out of memory?");
 	::llc::SLoadCache									loadCache;
 	for(uint32_t iDatabase = 0, countDatabases = (uint32_t)databaseArraySize; iDatabase < countDatabases; ++iDatabase) {
 		sprintf_s(temp, "['%u']", iDatabase);
 		const int32_t										iJSONTable					=::llc::jsonExpressionResolve(::llc::vcst_t{temp}, configReader, indexObjectDatabases, jsonResult);
-		llc_necall(iJSONTable, "Failed to load config from json! Last contents found: %s.", jsonResult.begin());
-		llc_necall(::llc::jsonExpressionResolve(::llc::vcst_t{"name"}, configReader, iJSONTable, jsonResult), "Failed to load config from json! Last contents found: %s.", jsonResult.begin());
+		if_fail_fef(iJSONTable, "Failed to load config from json! Last contents found: %s.", jsonResult.begin());
+		if_fail_fef(::llc::jsonExpressionResolve(::llc::vcst_t{"name"}, configReader, iJSONTable, jsonResult), "Failed to load config from json! Last contents found: %s.", jsonResult.begin());
 		::blt::TNamedBlitterDB								& jsonDB					= databases[iDatabase];
 		jsonDB.Key										= jsonResult;
-		llc_necall(::table_description_load(jsonDB.Val.Description, configReader, iJSONTable, jsonDB.Key), "%s", "Unknown error");
+		if_fail_fef(::table_description_load(jsonDB.Val.Description, configReader, iJSONTable, jsonDB.Key), "%s", "Unknown error");
 		{	// -- Load database block size
 			int32_t												indexBlockNode;
 			if_fail_wf(indexBlockNode = ::llc::jsonExpressionResolve(::llc::vcst_t{"block"}, configReader, iJSONTable, jsonResult), "Failed to load config from json! Last contents found: %.*s.", LLC_VIEW_ARGS(jsonResult))
@@ -237,17 +237,17 @@ static	::llc::err_t		table_description_load			(::blt::STableDescription & tableD
 			if_fail_wf(indexBindArray = ::llc::jsonExpressionResolve(::llc::vcst_t{"bind"}, configReader, iJSONTable, jsonResult), "No bindings found for database file: %.*s.", LLC_VIEW_ARGS(jsonDB.Key))
 			else {
 				::llc::err_t			sizeBindArray				= ::llc::jsonArraySize(*configReader[indexBindArray]);
-				llc_necall(sizeBindArray, "Cannot get size of array: %s.", "??");
-				llc_necall(jsonDB.Val.Bindings.resize(sizeBindArray), "%s", "Out of memory?");;
+				if_fail_fef(sizeBindArray, "Cannot get size of array: %s.", "??");
+				if_fail_fef(jsonDB.Val.Bindings.resize(sizeBindArray), "%s", "Out of memory?");;
 				for(uint32_t iBind = 0; iBind < jsonDB.Val.Bindings.size(); ++iBind) {
 					sprintf_s(temp, "['%u']", iBind);
-					llc_necall(::llc::jsonExpressionResolve(::llc::vcst_t{temp}, configReader, indexBindArray, jsonResult), "Failed to load config from json! Last contents found: %s.", jsonResult.begin());
+					if_fail_fef(::llc::jsonExpressionResolve(::llc::vcst_t{temp}, configReader, indexBindArray, jsonResult), "Failed to load config from json! Last contents found: %s.", jsonResult.begin());
 					jsonDB.Val.Bindings[iBind]						= jsonResult;
 				}
 			}
 		}
 		::llc::string							dbfilename					= {};
-		llc_necall(::blt::tableFileName(dbfilename, jsonDB.Val.HostType, jsonDB.Val.EncryptionKey.size() > 0, jsonDB.Key), "%s", "??");
+		if_fail_fef(::blt::tableFileName(dbfilename, jsonDB.Val.HostType, jsonDB.Val.EncryptionKey.size() > 0, jsonDB.Key), "%s", "??");
 		if(llc::bit_true(jsonDB.Val.HostType, ::blt::DATABASE_HOST_REMOTE))
 			continue;
 
@@ -255,11 +255,11 @@ static	::llc::err_t		table_description_load			(::blt::STableDescription & tableD
 			::llc::vcst_t								extension;
 			::dbFileExtension(jsonDB.Val.HostType, jsonDB.Val.EncryptionKey.size() > 0, extension);
 			::llc::string								folderName			= folder;
-			llc_necall(folderName.push_back('/'), "Failed to load database: %s. Out of memory?", dbfilename.begin());
-			llc_necall(::blt::tableFolderName(folderName, jsonDB.Key, jsonDB.Val.BlockSize), "Failed to load database: %s. Out of memory?", dbfilename.begin());
+			if_fail_fef(folderName.push_back('/'), "Failed to load database: %s. Out of memory?", dbfilename.begin());
+			if_fail_fef(::blt::tableFolderName(folderName, jsonDB.Key, jsonDB.Val.BlockSize), "Failed to load database: %s. Out of memory?", dbfilename.begin());
 			::llc::aobj<::llc::string>				blockFiles;
 			if_fail(::llc::pathList(folderName, blockFiles))
-				llc_necall(::llc::pathCreate(folderName), "Failed to load database: %s. Out of memory?", dbfilename.begin());
+				if_fail_fef(::llc::pathCreate(folderName), "Failed to load database: %s. Out of memory?", dbfilename.begin());
 
 			for(uint32_t iFile = 0; iFile < blockFiles.size(); ++iFile) {
 				const ::llc::vcst_t							pathBlock			= blockFiles[iFile];
@@ -269,11 +269,11 @@ static	::llc::err_t		table_description_load			(::blt::STableDescription & tableD
 				}
 				const ::llc::vcst_t							blockDigits			= {&pathBlock[folderName.size() + jsonDB.Key.size() + 2], pathBlock.size() - folderName.size() - extension.size() - jsonDB.Key.size() - 3};
 				uint64_t												blockIndex			= 0;
-				llc_necall(::llc::parseIntegerDecimal(blockDigits, blockIndex), "Failed to load database: %s. Out of memory?", dbfilename.begin());
+				if_fail_fef(::llc::parseIntegerDecimal(blockDigits, blockIndex), "Failed to load database: %s. Out of memory?", dbfilename.begin());
 				bool													bAdd				= true;
 				for(uint32_t i = 0; i < jsonDB.Val.BlocksOnDisk.size(); ++i)
 					if(((uint32_t)blockIndex) < jsonDB.Val.BlocksOnDisk[i]) {
-						llc_necall(jsonDB.Val.BlocksOnDisk.insert(i, (uint32_t)blockIndex), "%s.", "Out of memory?");
+						if_fail_fef(jsonDB.Val.BlocksOnDisk.insert(i, (uint32_t)blockIndex), "%s.", "Out of memory?");
 						jsonDB.Val.MaxBlockOnDisk							= ::llc::max(jsonDB.Val.MaxBlockOnDisk, (int32_t)blockIndex);
 						bAdd												= false;
 						break;
@@ -281,7 +281,7 @@ static	::llc::err_t		table_description_load			(::blt::STableDescription & tableD
 
 				if(bAdd) {
 					jsonDB.Val.MaxBlockOnDisk							= ::llc::max(jsonDB.Val.MaxBlockOnDisk, (int32_t)blockIndex);
-					llc_necall(jsonDB.Val.BlocksOnDisk.push_back((uint32_t)blockIndex), "Failed to load database: %s. Out of memory?", dbfilename.begin());
+					if_fail_fef(jsonDB.Val.BlocksOnDisk.push_back((uint32_t)blockIndex), "Failed to load database: %s. Out of memory?", dbfilename.begin());
 				}
 			}
 			for(uint32_t i = 0; i < jsonDB.Val.BlocksOnDisk.size(); ++i)
@@ -290,12 +290,12 @@ static	::llc::err_t		table_description_load			(::blt::STableDescription & tableD
 		}
 		// -- Load json database file.
 		if(0 == databasesToLoad.size()) {
-			llc_necall(::blt::tableFileLoad(loadCache, jsonDB, folder), "Failed to load database: %s.", dbfilename.begin());
+			if_fail_fef(::blt::tableFileLoad(loadCache, jsonDB, folder), "Failed to load database: %s.", dbfilename.begin());
 		}
 		else {
 			for(uint32_t iDB = 0; iDB < databasesToLoad.size(); ++iDB)
 				if(databasesToLoad[iDB] == jsonDB.Key) {
-					llc_necall(::blt::tableFileLoad(loadCache, jsonDB, folder), "Failed to load database: %s.", dbfilename.begin());
+					if_fail_fef(::blt::tableFileLoad(loadCache, jsonDB, folder), "Failed to load database: %s.", dbfilename.begin());
 					break;
 				}
 		}
@@ -304,13 +304,16 @@ static	::llc::err_t		table_description_load			(::blt::STableDescription & tableD
 }
 
 static	::llc::err_t		queryLoad						(::blt::SBlitterQuery& query, const ::llc::view_array<const ::llc::TKeyValConstString> keyvals, ::llc::aobj<::llc::vcsc_t> & expansionKeyStorage) {
-	::llc::keyvalNumeric("offset", keyvals, query.Range.Offset);
-	if(0 > ::llc::keyvalNumeric("limit", keyvals, query.Range.Count))
+	if(0 <= ::llc::find(::llc::vcst_t{"offset"}, keyvals))
+		::llc::keyvalNumeric("offset", keyvals, query.Range.Offset);
+	if(0 <= ::llc::find(::llc::vcst_t{"limit"}, keyvals))
+		::llc::keyvalNumeric("limit", keyvals, query.Range.Count);
+	else if(0 <= ::llc::find(::llc::vcst_t{"count"}, keyvals))
 		::llc::keyvalNumeric("count", keyvals, query.Range.Count);
 
 	const ::llc::err_t							indexExpand						= ::llc::find(::llc::vcst_t{"expand"}, keyvals);
 	if(0 <= indexExpand) {
-		llc_necall(::llc::split(::llc::vcst_t{keyvals[indexExpand].Val}, '.', expansionKeyStorage), "%s", "Out of memory?");
+		if_fail_fef(::llc::split(::llc::vcst_t{keyvals[indexExpand].Val}, '.', expansionKeyStorage), "%s", "Out of memory?");
 		query.ExpansionKeys								= expansionKeyStorage;
 	}
 	return 0;
@@ -333,22 +336,23 @@ static	::llc::err_t		queryLoad						(::blt::SBlitterQuery& query, const ::llc::v
 				query.Detail									= (int64_t)detail;
 			}
 		}
-		info_printf("Parameters: \nDatabase: %.*s.\nCommand: %.*s.\nDetail: %llu.", LLC_VIEW_ARGS(query.Database), LLC_VIEW_ARGS(query.Command), query.Detail);
+		info_printf("Parameters: \nDatabase: %.*s.\nCommand: %.*s.\nDetail: %" LLC_FMT_S3 ".", LLC_VIEW_ARGS(query.Database), LLC_VIEW_ARGS(query.Command), query.Detail);
 	}
 	{ // retrieve path and database and read expression if any
 		const ::llc::err_t							indexPath						= ::llc::find('.', query.Database);
-		if(((uint32_t)indexPath + 1) < query.Database.size())
-			query.Path										= {&query.Database[indexPath + 1]	, query.Database.size() - (indexPath + 1)};
-
-		if(0 <= indexPath)
+		query.Path										= {};
+		if(0 <= indexPath) {
+			if(((::llc::u2_t)indexPath + 1) < query.Database.size())
+				query.Path										= {&query.Database[indexPath + 1]	, query.Database.size() - (indexPath + 1)};
 			query.Database									= {query.Database.begin()			, (uint32_t)indexPath};
+		}
 
 		if(query.Path.size())
-			llc_necall(::llc::expressionReaderParse(expressionReader, {query.Path.begin(), query.Path.size()}), "Error: %s", "Invalid path syntax?");
+			if_fail_fef(::llc::expressionReaderParse(expressionReader, {query.Path.begin(), query.Path.size()}), "Error: %s", "Invalid path syntax?");
 	}
 	query.Record									= request.ContentBody;
-	llc_necall(::llc::jsonParse(query.RecordReader, query.Record), "Failed to parse JSON record '%.*s'", LLC_VIEW_ARGS(query.Record));
+	if_fail_fef(::llc::jsonParse(query.RecordReader, query.Record), "Failed to parse JSON record '%.*s'", LLC_VIEW_ARGS(query.Record));
 	// --- Retrieve query data from querystring.
-	llc_necall(::queryLoad(query, request.QueryStringKeyVals, expansionKeyStorage), "%s", "Out of memory?");
+	if_fail_fef(::queryLoad(query, request.QueryStringKeyVals, expansionKeyStorage), "%s", "Out of memory?");
 	return 0;
 }

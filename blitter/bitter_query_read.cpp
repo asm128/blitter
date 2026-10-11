@@ -13,7 +13,7 @@
 		? ::blt::tableFileLoad(loadCache, database, folder)
 		: ::blt::blockFileLoad(loadCache, database, folder, indexBlock)
 		;
-	llc_necall(iBlockElem, "Failed to load database file: %s.", "??");
+	if_fail_fef(iBlockElem, "Failed to load database file: %s.", "??");
 	const uint64_t				offsetRecord							= database.Val.Offsets[iBlockElem];
 	relativeIndex			= ::llc::max(0U, (uint32_t)(absoluteIndex - offsetRecord));
 	blockIndex				= iBlockElem;
@@ -29,7 +29,7 @@
 	, uint32_t					& blockIndex
 	, const ::llc::vcst_t		& folder
 	) {
-	llc_necall(::blt::recordLoad(loadCache, database, absoluteIndex, relativeIndex, blockIndex, folder), "%s", "Failed to load record indices.");
+	if_fail_fef(::blt::recordLoad(loadCache, database, absoluteIndex, relativeIndex, blockIndex, folder), "%s", "Failed to load record indices.");
 
 	const ::llc::SJSONReader	& readerBlock							= database.Val.Blocks[blockIndex]->Reader;
 	ree_if(0 == readerBlock.Tree.size(), "%s", "Invalid block data.");
@@ -79,7 +79,7 @@
 		{ viewRecordFirst.begin()
 		, charCount
 		};
-	llc_necall(output_records.push_back(rangeInfo), "%s", "Out of memory?");
+	if_fail_fef(output_records.push_back(rangeInfo), "%s", "Out of memory?");
 	return 0;
 }
 
@@ -110,21 +110,21 @@
 
 	if(0 == database.Val.BlockSize) {
 		int32_t						iNewBlock			= ::blt::tableFileLoad(loadCache, database, folder);
-		llc_necall(iNewBlock, "%s", "Missing table found.");	// We need to improve this in order to support missing blocks.
-		llc_necall(::recordRangeBlock(database, range, 0, iNewBlock, output_records), "Error accessing range for block: %u.", 0);
+		if_fail_fef(iNewBlock, "%s", "Missing table found.");	// We need to improve this in order to support missing blocks.
+		if_fail_fef(::recordRangeBlock(database, range, 0, iNewBlock, output_records), "Error accessing range for block: %u.", 0);
 	}
 	else {
 		::llc::au2_t				blocksToProcess		= {};
 		for(uint32_t iBlockOnDisk = 0; iBlockOnDisk < database.Val.BlocksOnDisk.size(); ++iBlockOnDisk) {
 			const uint32_t				blockOnDisk			= database.Val.BlocksOnDisk[iBlockOnDisk];
 			if(::llc::in_range(blockOnDisk, blockRange.Offset, blockRange.Offset + blockRange.Count))
-				llc_necall(blocksToProcess.push_back(blockOnDisk), "%s.", "Out of memory?");
+				if_fail_fef(blocksToProcess.push_back(blockOnDisk), "%s.", "Out of memory?");
 		}
 		for(uint32_t iBlock = 0; iBlock < blocksToProcess.size(); ++iBlock) {
 			const uint32_t				idBlockToLoad		= blocksToProcess[iBlock];
 			int32_t						iNewBlock			= ::blt::blockFileLoad(loadCache, database, folder, idBlockToLoad);
-			llc_necall(iNewBlock, "Missing block found: %u. This shouldn't happen because we already filtered which blocks are on disk, so either the block is corrupted and it has to be restored before the query executes.", idBlockToLoad);	// We need to improve this in order to support missing blocks.
-			llc_necall(::recordRangeBlock(database, range, idBlockToLoad, iNewBlock, output_records), "Error accessing range for block: %u.", idBlockToLoad);
+			if_fail_fef(iNewBlock, "Missing block found: %u. This shouldn't happen because we already filtered which blocks are on disk, so either the block is corrupted and it has to be restored before the query executes.", idBlockToLoad);	// We need to improve this in order to support missing blocks.
+			if_fail_fef(::recordRangeBlock(database, range, idBlockToLoad, iNewBlock, output_records), "Error accessing range for block: %u.", idBlockToLoad);
 		}
 	}
 	return 0;

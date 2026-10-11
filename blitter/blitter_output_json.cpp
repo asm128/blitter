@@ -2,10 +2,10 @@
 #include "llc_string_compose.h"
 
 ::llc::error_t			blt::outputModel			(::llc::string & output, const ::blt::STableDescription & tableDesc)				{
-	llc_necall(output.push_back('{'), "%s", "Out of memory?");
+	if_fail_fef(output.push_back('{'), "%s", "Out of memory?");
 	for(uint32_t iField = 0; iField < tableDesc.Fields.size(); ++iField) {
 		::llc::append_strings(output, '"', tableDesc.Fields[iField].Field, '"');
-		llc_necall(output.push_back(':'), "%s", "Out of memory?");
+		if_fail_fef(output.push_back(':'), "%s", "Out of memory?");
 		const ::llc::JSON_TYPE							type							= tableDesc.Fields[iField].Type;
 		switch(type) {
 		case ::llc::JSON_TYPE_NULL			: output.append_string("null");		break;
@@ -28,6 +28,6 @@
 		if(iField + 1 < tableDesc.Fields.size())
 			output.push_back(',');
 	}
-	llc_necall(output.push_back('}'), "%s", "Out of memory?");
+	if_fail_fef(output.push_back('}'), "%s", "Out of memory?");
 	return 0;
 }
