@@ -1,24 +1,24 @@
-# `test_blitter` exploratory driver
+# `test_blitter` core test suite
 
-`test_blitter` calls the Blitter library directly to explore queries, relationship expansion, insertion behavior, and insertion timing. Despite its name, the retained active program is not an isolated or assertion-based automated test suite.
+`test_blitter` exercises the transport-independent Blitter core without loading a configuration file or touching persistent storage.
 
 ## Components
 
-[`test_blitter.cpp`](test_blitter.cpp) contains:
+[`blitter_test.cpp`](blitter_test.cpp) verifies:
 
-- `testQuery()`, which fills an `SBlitterQuery` and invokes `queryProcess()` for reads or model-style operations.
-- `testPush()`, which parses a supplied JSON value into the query's `RecordReader` and invokes `queryProcess()` for writes.
-- A large set of commented examples covering range reads, detail reads, and multi-hop expansions such as publisher-to-company relationships.
-- Active timed insertion loops against configured `company`, `user`, and `publisher` tables.
+- table and block file names for the supported storage flags;
+- request path, range and expansion parsing;
+- model output both directly and through `queryProcess()`;
+- resident-record lookup and absolute-to-block index mapping.
 
-## Mutation warning
+## Stress testing
 
-The active path sets `iterations` to 1,000,000 and performs repeated `push_back` operations. It loads `./blitter.json`, can create or modify database blocks, and has its final `blitterFlush()` call commented out. Do not treat this executable as a harmless test discovery command or run it against valued data.
+The former million-iteration insertion driver was removed. It mixed exploratory examples, mutation and timing in the normal test executable without isolating failures or flushing the data it changed. Future stress tests belong in a separate executable with bounded inputs, deterministic seeds and explicit invariants.
 
 ## Relationship to the system
 
-The driver bypasses CGI and constructs the same `SBlitterQuery` consumed by the [`blitter` core](../blitter/README.md). It therefore demonstrates the transport-independent query boundary used by [`blit`](../blit/README.md), but it does not establish production correctness or a stable API contract.
+The suite bypasses CGI and exercises the same request and query boundaries consumed by the [`blitter` core](../blitter/README.md). The CGI adapter remains a separate transport concern.
 
 ## Status
 
-The project was inspected statically only. No benchmark, query, build, or runtime validation was performed. See the [solution overview](../README.md) for the wider evidence boundary.
+The project is intended to build and run against the independent LLC repository checked out beside Blitter. See the [solution overview](../README.md) for the wider migration boundary.

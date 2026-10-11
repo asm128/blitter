@@ -15,7 +15,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="test_blitter.cpp">
+    <ClCompile Include="blitter_test.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

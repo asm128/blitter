@@ -1,5 +1,5 @@
 #include "blitter.h"
-#include "gpk_minmax.h"
+#include "llc_minmax.h"
 
 #ifndef BLITTER_PROCESS_H_29038679283
 #define BLITTER_PROCESS_H_29038679283
@@ -7,47 +7,47 @@
 namespace blt
 {
 	struct SRangeBlockInfo {
-		::gpk::vcst_t			OutputRecords			= {};
-		::gpk::minmaxu2_t		RelativeIndices			= {};
+		::llc::vcst_t			OutputRecords			= {};
+		::llc::minmaxu2_t		RelativeIndices			= {};
 		uint32_t				BlockIndex				= 0;
 		uint32_t				BlockId					= 0;
 	};
 
-	::gpk::error_t			recordRange
-		( ::gpk::SLoadCache						& loadCache
+	::llc::error_t			recordRange
+		( ::llc::SLoadCache						& loadCache
 		, ::blt::TNamedBlitterDB				& database
-		, const ::gpk::rangeu3_t				& range
-		, const ::gpk::vcst_t					& folder
-		, ::gpk::aobj<::blt::SRangeBlockInfo>	& output_records
-		, ::gpk::rangeu2_t						& blockRange
+		, const ::llc::rangeu3_t				& range
+		, const ::llc::vcst_t					& folder
+		, ::llc::aobj<::blt::SRangeBlockInfo>	& output_records
+		, ::llc::rangeu2_t						& blockRange
 		);
 
 
-	::gpk::error_t			recordLoad
-		( ::gpk::SLoadCache			& loadCache
+	::llc::error_t			recordLoad
+		( ::llc::SLoadCache			& loadCache
 		, ::blt::TNamedBlitterDB	& database
 		, const uint64_t			absoluteIndex
 		, uint32_t					& relativeIndex
 		, uint32_t					& blockIndex
-		, const ::gpk::vcst_t		& folder
+		, const ::llc::vcst_t		& folder
 		);
 
-	::gpk::error_t			recordGet
-		( ::gpk::SLoadCache			& loadCache
+	::llc::error_t			recordGet
+		( ::llc::SLoadCache			& loadCache
 		, ::blt::TNamedBlitterDB	& database
 		, const uint64_t			absoluteIndex
-		, ::gpk::vcst_t				& output_record
+		, ::llc::vcst_t				& output_record
 		, uint32_t					& relativeIndex
 		, uint32_t					& blockIndex
-		, const ::gpk::vcst_t			& folder
+		, const ::llc::vcst_t			& folder
 		);
 
-	stin	::gpk::err_t	recordGet
-		( ::gpk::SLoadCache			& loadCache
+	stin	::llc::err_t	recordGet
+		( ::llc::SLoadCache			& loadCache
 		, ::blt::TNamedBlitterDB	& database
 		, const uint64_t			absoluteIndex
-		, ::gpk::vcst_t				& output_record
-		, const ::gpk::vcst_t		& folder
+		, ::llc::vcst_t				& output_record
+		, const ::llc::vcst_t		& folder
 	) {
 		uint32_t											indexRelative					= (uint32_t)-1;
 		uint32_t											indexBlock						= (uint32_t)-1;

@@ -12,7 +12,7 @@ This tree is documentation and design evidence, not a currently supported databa
 | [`blit`](blit/README.md) | CGI application | Adapts an HTTP/CGI request into an `SBlitterQuery` and returns the core's JSON output. |
 | [`season`](season/README.md) | Console application | Splits a JSON array into block files compatible with a block-sized Blitter table. |
 | [`reason`](reason/README.md) | Console application | Writes a JSON array as one optional compressed/encrypted table file. |
-| [`test_blitter`](test_blitter/README.md) | Console application | Exploratory query driver and large insertion benchmark; not an isolated automated test suite. |
+| [`test_blitter`](test_blitter/README.md) | Console application | Deterministic tests for the transport-independent request, query, model, naming, and resident-record contracts. |
 
 The solution also references external `llc` and `zlibvc` projects outside this repository. The retained Visual Studio projects use C++20 and historical include, library, output, and post-build paths tied to the surrounding GPK workspace.
 
