@@ -27,7 +27,7 @@ sttc ::llc::err_t testRequest(::llc::u2_t & checkCount) {
 	::blt::SBlitterRequest request = {"/company/get/3", "{}", queryValues};
 	::blt::SBlitterQuery query = {};
 	::llc::SExpressionReader expressionReader = {};
-	::llc::aobj<::llc::vcsc_t> expansionKeys = {};
+	::llc::aobj<::llc::vcst_t> expansionKeys = {};
 
 	BLT_TEST_CHECK(checkCount, 0 <= ::blt::requestProcess(expressionReader, query, request, expansionKeys), "%s", "requestProcess() rejected a valid request.");
 	BLT_TEST_CHECK(checkCount, query.Database == LLC_CXS("company"), "Unexpected database: '%.*s'.", LLC_VIEW_ARGS(query.Database));
@@ -46,7 +46,7 @@ sttc ::llc::err_t testRequest(::llc::u2_t & checkCount) {
 	::blt::SBlitterRequest expressionRequest = {"/company.owner/get", "{}", {}};
 	::blt::SBlitterQuery expressionQuery = {};
 	::llc::SExpressionReader expressionPathReader = {};
-	::llc::aobj<::llc::vcsc_t> expressionExpansionKeys = {};
+	::llc::aobj<::llc::vcst_t> expressionExpansionKeys = {};
 	BLT_TEST_CHECK(checkCount, 0 <= ::blt::requestProcess(expressionPathReader, expressionQuery, expressionRequest, expressionExpansionKeys), "%s", "requestProcess() rejected a valid expression path.");
 	BLT_TEST_CHECK(checkCount, expressionQuery.Database == LLC_CXS("company"), "Unexpected expression database: '%.*s'.", LLC_VIEW_ARGS(expressionQuery.Database));
 	BLT_TEST_CHECK(checkCount, expressionQuery.Command == LLC_CXS("get"), "Unexpected expression command: '%.*s'.", LLC_VIEW_ARGS(expressionQuery.Command));

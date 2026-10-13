@@ -70,7 +70,7 @@ namespace blt
 		::llc::vcst_t					Path								= "";
 		::llc::vcst_t					Record								= "";
 		::llc::rangeu3_t				Range								= {0, MAX_TABLE_RECORD_COUNT};
-		::llc::view<::llc::vcsc_t>		ExpansionKeys						= {};
+		::llc::view<::llc::vcst_t>		ExpansionKeys						= {};
 		int64_t							Detail								= -1;
 		::llc::SJSONReader				RecordReader						= {};
 	};
@@ -108,7 +108,7 @@ namespace blt
 		::blt::SBlitterQuery				Query					= {};
 		::llc::SJSONFile					Config					= {};
 		::llc::vcs							Folder					= {};
-		::llc::aobj<::llc::vcsc_t>			ExpansionKeyStorage		= {};
+		::llc::aobj<::llc::vcst_t>			ExpansionKeyStorage		= {};
 		::llc::SExpressionReader			ExpressionReader		= {};
 		::llc::SLoadCache					LoadCache				= {};
 	};
@@ -123,7 +123,7 @@ namespace blt
 
 	::llc::error_t			blitterFlush			(::blt::SBlitter & appState);
 
-	::llc::error_t			requestProcess			(::llc::SExpressionReader & expressionReader, ::blt::SBlitterQuery & query, const ::blt::SBlitterRequest & request, ::llc::aobj<::llc::vcsc_t> & expansionKeyStorage);
+	::llc::error_t			requestProcess			(::llc::SExpressionReader & expressionReader, ::blt::SBlitterQuery & query, const ::blt::SBlitterRequest & request, ::llc::aobj<::llc::vcst_t> & expansionKeyStorage);
 	stacxpr	uint32_t		CRC_SEED				= 18973;
 } // namespace
 

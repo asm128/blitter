@@ -303,7 +303,7 @@ static	::llc::err_t		table_description_load			(::blt::STableDescription & tableD
 	return 0;
 }
 
-static	::llc::err_t		queryLoad						(::blt::SBlitterQuery& query, const ::llc::view_array<const ::llc::TKeyValConstString> keyvals, ::llc::aobj<::llc::vcsc_t> & expansionKeyStorage) {
+static	::llc::err_t		queryLoad						(::blt::SBlitterQuery& query, const ::llc::view_array<const ::llc::TKeyValConstString> keyvals, ::llc::aobj<::llc::vcst_t> & expansionKeyStorage) {
 	if(0 <= ::llc::find(::llc::vcst_t{"offset"}, keyvals))
 		::llc::keyvalNumeric("offset", keyvals, query.Range.Offset);
 	if(0 <= ::llc::find(::llc::vcst_t{"limit"}, keyvals))
@@ -319,10 +319,10 @@ static	::llc::err_t		queryLoad						(::blt::SBlitterQuery& query, const ::llc::v
 	return 0;
 }
 
-::llc::err_t			blt::requestProcess				(::llc::SExpressionReader & expressionReader, ::blt::SBlitterQuery & query, const ::blt::SBlitterRequest & request, ::llc::aobj<::llc::vcsc_t> & expansionKeyStorage)						{
+::llc::err_t			blt::requestProcess				(::llc::SExpressionReader & expressionReader, ::blt::SBlitterQuery & query, const ::blt::SBlitterRequest & request, ::llc::aobj<::llc::vcst_t> & expansionKeyStorage)						{
 	// --- Generate response
 	{
-		::llc::aobj<::llc::vcsc_t>			pathSplit						= {};
+		::llc::aobj<::llc::vcst_t>			pathSplit						= {};
 		::llc::split(request.Path, '/', pathSplit);
 		query.Database									= (0 < pathSplit.size()) ? ::llc::vcst_t{pathSplit[0].begin(), pathSplit[0].size()} : request.Path;
 		query.Command									= (1 < pathSplit.size()) ? ::llc::vcst_t{pathSplit[1].begin(), pathSplit[1].size()} : ::llc::vcst_t{};
