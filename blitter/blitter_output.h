@@ -5,7 +5,7 @@
 
 namespace blt
 {
-	::llc::error_t			outputModel			(::llc::string & output, const ::blt::STableDescription & tableDesc);
+	::gpk::error_t			outputModel			(::gpk::achar & output, const ::blt::STableDescription & tableDesc);
 } // namespace
 
 #endif // BLITTER_OUTPUT_H_203472908347

@@ -1,5 +1,4 @@
 #include "blitter.h"
-#include "llc_minmax.h"
 
 #ifndef BLITTER_PROCESS_H_29038679283
 #define BLITTER_PROCESS_H_29038679283
@@ -7,47 +6,47 @@
 namespace blt
 {
 	struct SRangeBlockInfo {
-		::llc::vcst_t			OutputRecords			= {};
-		::llc::minmaxu2_t		RelativeIndices			= {};
+		::gpk::vcc				OutputRecords			= {};
+		::gpk::minmaxu32		RelativeIndices			= {};
 		uint32_t				BlockIndex				= 0;
 		uint32_t				BlockId					= 0;
 	};
 
-	::llc::error_t			recordRange
-		( ::llc::SLoadCache						& loadCache
+	::gpk::error_t			recordRange
+		( ::gpk::SLoadCache						& loadCache
 		, ::blt::TNamedBlitterDB				& database
-		, const ::llc::rangeu3_t				& range
-		, const ::llc::vcst_t					& folder
-		, ::llc::aobj<::blt::SRangeBlockInfo>	& output_records
-		, ::llc::rangeu2_t						& blockRange
+		, const ::gpk::rangeu64					& range
+		, const ::gpk::vcc						& folder
+		, ::gpk::aobj<::blt::SRangeBlockInfo>	& output_records
+		, ::gpk::rangeu32						& blockRange
 		);
 
 
-	::llc::error_t			recordLoad
-		( ::llc::SLoadCache			& loadCache
+	::gpk::error_t			recordLoad
+		( ::gpk::SLoadCache			& loadCache
 		, ::blt::TNamedBlitterDB	& database
 		, const uint64_t			absoluteIndex
 		, uint32_t					& relativeIndex
 		, uint32_t					& blockIndex
-		, const ::llc::vcst_t		& folder
+		, const ::gpk::vcc			& folder
 		);
 
-	::llc::error_t			recordGet
-		( ::llc::SLoadCache			& loadCache
+	::gpk::error_t			recordGet
+		( ::gpk::SLoadCache			& loadCache
 		, ::blt::TNamedBlitterDB	& database
 		, const uint64_t			absoluteIndex
-		, ::llc::vcst_t				& output_record
+		, ::gpk::vcc				& output_record
 		, uint32_t					& relativeIndex
 		, uint32_t					& blockIndex
-		, const ::llc::vcst_t			& folder
+		, const ::gpk::vcc			& folder
 		);
 
-	stin	::llc::err_t	recordGet
-		( ::llc::SLoadCache			& loadCache
-		, ::blt::TNamedBlitterDB	& database
-		, const uint64_t			absoluteIndex
-		, ::llc::vcst_t				& output_record
-		, const ::llc::vcst_t		& folder
+	static inline	::gpk::error_t				recordGet
+		( ::gpk::SLoadCache				& loadCache
+		, ::blt::TNamedBlitterDB		& database
+		, const uint64_t				absoluteIndex
+		, ::gpk::vcc					& output_record
+		, const ::gpk::vcc				& folder
 	) {
 		uint32_t											indexRelative					= (uint32_t)-1;
 		uint32_t											indexBlock						= (uint32_t)-1;
